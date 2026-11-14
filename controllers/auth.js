@@ -1,82 +1,66 @@
 const User = require('../models/User');
 
-//@desc     Register user
-//@route    POST /api/v1/auth/register
-//@access   Public
-exports.register = async (req, res, next) => {
-    try {
-        const { name, email, password, role } = req.body;
-
-        //Create user
-        const user = await User.create({
-            name,
-            email,
-            password,
-            role
-        });
-
-        sendTokenResponse(user, 201, res);
-    } catch (err) {
-        res.status(400).json({ success: false });
-        console.log(err.stack);
-    }
-};
-
-//@desc     Login user
-//@route    POST /api/v1/auth/login
-//@access   Public
-exports.login = async (req, res, next) => {
-    const { email, password } = req.body;
-
-    //Validate email & password
-    if (!email || !password) {
-        return res.status(400).json({ success: false, msg: 'Please provide an email and password' });
-    }
-
-    //Check for user
-    const user = await User.findOne({ email }).select('+password');
-
-    if (!user) {
-        return res.status(400).json({ success: false, msg: 'Invalid credentials' });
-    }
-
-    //Check if password matches
-    const isMatch = await user.matchPassword(password);
-
-    if (!isMatch) {
-        return res.status(401).json({ success: false, msg: 'Invalid credentials' });
-    }
-
-    sendTokenResponse(user, 200, res);
-};
-
-//Get token from model, create cookie and send response
 const sendTokenResponse = (user, statusCode, res) => {
-    //Create token
-    const token = user.getSignedJwtToken();
+  const token = user.getSignedJwtToken();
+  const days = Number(process.env.JWT_COOKIE_EXPIRE) || 30;
+  const options = {
+    expires: new Date(Date.now() + days * 24 * 60 * 60 * 1000),
+    httpOnly: true
+  };
+  if (process.env.NODE_ENV === 'production') options.secure = true;
 
-    const options = {
-        expires: new Date(Date.now() + process.env.JWT_COOKIE_EXPIRE * 24 * 60 * 60 * 1000),
-        httpOnly: true
-    };
-
-    if (process.env.NODE_ENV === 'production') {
-        options.secure = true;
+  res.status(statusCode).cookie('token', token, options).json({
+    success: true,
+    token,
+    data: {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      telephone: user.telephone,
+      role: user.role
     }
-
-    res.status(statusCode).cookie('token', token, options).json({
-        success: true,
-        token
-    });
+  });
 };
 
-//@desc     Get current Logged in user
-//@route    GET /api/v1/auth/me
-//@access   Private
-exports.getMe = async (req, res, next) => {
-    const user = await User.findById(req.user.id);
-    res.status(200).json({
-        success: true,
-        data: user
-    });
+// POST /api/v1/auth/register
+exports.register = async (req, res) => {
+  try {
+    const { name, telephone, email, password } = req.body || {};
+    // role is never taken from the client
+    const user = await User.create({ name, telephone, email, password, role: 'user' });
+    sendTokenResponse(user, 201, res);
+  } catch (err) {
+    if (err.code === 11000) {
+      return res.status(400).json({ success: false, message: 'Email already registered' });
+    }
+    if (err.name === 'ValidationError') {
+      const message = Object.values(err.errors).map((e) => e.message).join(', ');
+      return res.status(400).json({ success: false, message });
+    }
+    console.error(err.message);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+
+// POST /api/v1/auth/login
+exports.login = async (req, res) => {
+  try {
+    const { email, password } = req.body || {};
+    if (typeof email !== 'string' || typeof password !== 'string' || !email || !password) {
+      return res.status(400).json({ success: false, message: 'Please provide an email and password' });
+    }
+    const user = await User.findOne({ email: email.toLowerCase().trim() }).select('+password');
+    if (!user || !(await user.matchPassword(password))) {
+      return res.status(401).json({ success: false, message: 'Invalid credentials' });
+    }
+    sendTokenResponse(user, 200, res);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+
+// GET /api/v1/auth/me
+exports.getMe = async (req, res) => {
+  res.status(200).json({ success: true, data: req.user });
 };

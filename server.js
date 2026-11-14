@@ -1,51 +1,50 @@
+const path = require('path');
 const express = require('express');
 const dotenv = require('dotenv');
 const cookieParser = require('cookie-parser');
+const cors = require('cors');
+
+// Default dotenv behaviour: variables already exported in the shell win.
+dotenv.config({ path: path.join(__dirname, 'config', 'config.env') });
+
 const connectDB = require('./config/db');
 const User = require('./models/User');
 
-//Load env vars
-dotenv.config({ path: './config/config.env' });
-
-const seedUsers = async () => {
-    if (!(await User.findOne({ email: 'admin@gmail.com' }))) {
-        await User.create({ name: 'Admin', email: 'admin@gmail.com', password: '12345678', role: 'admin' });
-    }
-    if (!(await User.findOne({ email: 'user8@gmail.com' }))) {
-        await User.create({ name: 'User8', email: 'user8@gmail.com', password: '12345678', role: 'user' });
-    }
-};
-
-connectDB().then(seedUsers);
-
 const app = express();
 
-//Query parser
-app.set('query parser', 'extended');
-
-//Body parser
+app.use(cors());
 app.use(express.json());
-
-//Cookie parser
 app.use(cookieParser());
 
-//Route files
-const hospitals = require('./routes/hospitals');
-const auth = require('./routes/auth');
-const appointments = require('./routes/appointments');
+// Route mounting: one line per resource, added by later tasks.
+app.use('/api/v1/auth', require('./routes/auth'));
 
-app.use('/api/v1/hospitals', hospitals);
-app.use('/api/v1/auth', auth);
-app.use('/api/v1/appointments', appointments);
+const seedAdmin = async () => {
+  const email = process.env.SEED_ADMIN_EMAIL;
+  const password = process.env.SEED_ADMIN_PASSWORD;
+  if (!email || !password) return;
+  const existing = await User.findOne({ email: email.toLowerCase().trim() });
+  if (existing) return;
+  // Goes through the same bcrypt pre-save hook as every user.
+  await User.create({ name: 'Admin', telephone: '0000000000', email, password, role: 'admin' });
+};
 
-const PORT = process.env.PORT || 5000;
-
-const server = app.listen(
-    PORT,
-    console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`)
-);
-
-process.on('unhandledRejection', (err, promise) => {
-    console.log(`Error: ${err.message}`);
+const start = async () => {
+  await connectDB();
+  await seedAdmin();
+  const PORT = process.env.PORT;
+  const server = app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+  });
+  process.on('unhandledRejection', (err) => {
+    console.error(`Error: ${err.message}`);
     server.close(() => process.exit(1));
+  });
+};
+
+start().catch((err) => {
+  console.error(`Startup failed: ${err.message}`);
+  process.exit(1);
 });
+
+module.exports = app;
