@@ -4,6 +4,7 @@ const Booking = require('../models/Booking');
 const Provider = require('../models/Provider');
 const { loadOwnedBooking } = require('./bookings');
 const { computeSubtotal, computeDiscount, priceOf } = require('../utils/pricing');
+const { recordAudit, recordFailure, diffFields, PROMO_KEYS } = require('./audit');
 
 const MSG = {
   notFound: 'Promo code not found',
@@ -144,6 +145,17 @@ exports.applyPromo = async (req, res) => {
     const errors = await undoApply(state);
     errors.forEach((e) => console.error('promo undo step failed: ' + e.message));
   };
+  // Admin applies only: an 'edit' entry is appended BEFORE the claim (the intent, priced from the
+  // snapshot about to be used) and is never updated. After it, every outcome other than the success
+  // it describes appends a NEW 'failed' entry; a success that landed on a re-priced booking appends
+  // a NEW 'edit' entry with what actually landed. Owner applies write nothing.
+  let entry = null;
+  let preState = null;
+  let intendedAfter = null;
+  const failAudited = async (status, message, reason) => {
+    if (entry) await recordFailure(entry, reason);
+    return fail(res, status, message);
+  };
   try {
     const code = normaliseCode((req.body || {}).code);
     if (!code) return fail(res, 400, 'Please provide a promo code');
@@ -169,13 +181,26 @@ exports.applyPromo = async (req, res) => {
     // The redemption counts against the booking's owner, also when an admin applies it.
     const userId = booking.user.toString();
 
+    if (req.user.role === 'admin') {
+      const intended = priceOf(promo, snap.subtotal);
+      preState = { promo: null, discount: booking.discount, totalPrice: booking.totalPrice };
+      intendedAfter = { promo: promo._id, discount: intended.discount, totalPrice: intended.totalPrice };
+      const written = {
+        admin: req.user._id,
+        action: 'edit',
+        booking: booking._id,
+        ...diffFields(preState, intendedAfter, PROMO_KEYS)
+      };
+      await recordAudit(written);
+      entry = written;
+    }
     // (b) Claim the booking first: a duplicate apply never reaches the counter.
     const claim = await Booking.findOneAndUpdate(
       { _id: booking._id, promo: null },
       { $set: { promo: promo._id } },
       { new: true }
     );
-    if (!claim) return fail(res, 400, MSG.hasPromo);
+    if (!claim) return failAudited(400, MSG.hasPromo, 'booking already has a promo code (claimed concurrently)');
     state.claimed = { bookingId: booking._id, promoId: promo._id };
 
     // (c) Reserve the promo with one conditional atomic update.
@@ -190,7 +215,7 @@ exports.applyPromo = async (req, res) => {
       }
       if (!reservedDoc) {
         await undo(); // (d) release the claim only
-        return fail(res, 400, message);
+        return failAudited(400, message, message);
       }
     }
     state.reserved = { promoId: promo._id, userId };
@@ -212,12 +237,12 @@ exports.applyPromo = async (req, res) => {
       const fresh = await Booking.findById(booking._id);
       if (!fresh || !fresh.promo || fresh.promo.toString() !== promo._id.toString()) {
         await undo();
-        return fail(res, 404, 'Booking not found');
+        return failAudited(404, 'Booking not found', 'booking changed or removed concurrently, apply undone');
       }
       const freshProvider = await Provider.findById(fresh.provider);
       if (!freshProvider) {
         await undo();
-        return fail(res, 404, 'Provider not found');
+        return failAudited(404, 'Provider not found', 'provider missing, apply undone');
       }
       snap = {
         date: fresh.date,
@@ -228,7 +253,20 @@ exports.applyPromo = async (req, res) => {
     }
     if (!updated) {
       await undo();
-      return fail(res, 409, 'Booking was modified concurrently, please retry');
+      return failAudited(409, 'Booking was modified concurrently, please retry', 'booking modified concurrently, apply undone');
+    }
+    if (entry) {
+      // Written while the undo handles are still set: if this throws, the whole apply is undone.
+      const landed = { promo: promo._id, discount: updated.discount, totalPrice: updated.totalPrice };
+      if (diffFields(intendedAfter, landed, PROMO_KEYS)) {
+        await recordAudit({
+          admin: req.user._id,
+          action: 'edit',
+          booking: booking._id,
+          ...diffFields(preState, landed, PROMO_KEYS)
+        });
+        await recordFailure(entry, 'superseded: booking re-priced concurrently, see the later edit entry');
+      }
     }
     state.claimed = state.reserved = state.redemption = null; // success: nothing to undo
     res.status(200).json({ success: true, data: updated });
@@ -238,6 +276,7 @@ exports.applyPromo = async (req, res) => {
     } catch (undoErr) {
       console.error('promo undo failed: ' + undoErr.message);
     }
+    if (entry) await recordFailure(entry, 'apply failed with an error, undo attempted');
     handleError(err, res);
   }
 };

@@ -8,7 +8,7 @@
 //   2. calls the real getAuditLogs for deep pages, each must answer 200 in < 3000 ms.
 const mongoose = require('mongoose');
 const AuditLog = require('../models/AuditLog');
-const { parseAuditQuery, getAuditLogs } = require('../controllers/audit');
+const { parseAuditQuery, getAuditLogs, SORT } = require('../controllers/audit');
 
 const uri = process.env.MONGO_URI || '';
 const [noq, qs] = uri.split('?');
@@ -83,7 +83,7 @@ const fakeRes = () => ({
       const parsed = parseAuditQuery({ ...query, limit: '100' });
       if (parsed.error) throw new Error(`${name}: ${parsed.error}`);
       const explain = await AuditLog.find(parsed.filter)
-        .sort({ timestamp: -1, _id: -1 })
+        .sort(SORT)
         .skip(5000)
         .limit(100)
         .explain('queryPlanner');

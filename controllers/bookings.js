@@ -176,7 +176,11 @@ exports.updateBooking = async (req, res) => {
       if (!newProvider) return fail(res, 404, 'Provider not found');
     }
 
-    if (!touched) return res.status(200).json({ success: true, data: first });
+    if (!touched) {
+      // The response discloses the booking: for an admin that is a view, logged before answering.
+      if (isAdmin) await recordAudit({ admin: req.user._id, action: 'view', booking: first._id });
+      return res.status(200).json({ success: true, data: first });
+    }
 
     let current = first;
     for (let attempt = 0; attempt < MAX_EDIT_ATTEMPTS; attempt++) {
@@ -210,9 +214,9 @@ exports.updateBooking = async (req, res) => {
       const entry = change && { admin: req.user._id, action: 'edit', booking: current._id, ...change };
       if (entry) await recordAudit(entry);
 
-      let updated;
+      let doc;
       try {
-        updated = await Booking.findOneAndUpdate(
+        doc = await Booking.findOneAndUpdate(
           {
             _id: current._id,
             promo: current.promo || null,
@@ -224,12 +228,19 @@ exports.updateBooking = async (req, res) => {
           },
           { $set: next },
           { new: true }
-        ).populate(PROVIDER_POPULATE);
+        );
       } catch (err) {
-        if (entry) await recordFailure(entry, 'booking update failed');
+        // The write's own acknowledgement failed: it may or may not have been applied.
+        if (entry) await recordFailure(entry, 'booking update outcome unknown');
         throw err;
       }
-      if (updated) return res.status(200).json({ success: true, data: updated });
+      if (doc) {
+        // The write has committed; populate failures must not produce a failed marker.
+        const updated = await doc.populate(PROVIDER_POPULATE);
+        // Nothing changed (identical values): the response is still a read of the booking.
+        if (isAdmin && !entry) await recordAudit({ admin: req.user._id, action: 'view', booking: current._id });
+        return res.status(200).json({ success: true, data: updated });
+      }
       if (entry) await recordFailure(entry, 'booking modified concurrently');
 
       current = await Booking.findById(first._id);
@@ -241,44 +252,53 @@ exports.updateBooking = async (req, res) => {
   }
 };
 
+const MAX_DELETE_ATTEMPTS = 2;
+
 // DELETE /api/v1/bookings/:id
-// For an admin the 'delete' entry (the removed booking's fields) is written first; if the delete
-// then fails or removes nothing, a second 'failed' entry is appended.
+// For an admin the 'delete' entry (the removed booking's fields) is written first. The delete is
+// pinned to exactly those fields, so the entry's before is the document that was removed; if the
+// booking changed or vanished meanwhile a 'failed' entry is appended, then one bounded re-read
+// (404 if it is gone, 409 if it keeps changing).
 exports.deleteBooking = async (req, res) => {
   try {
-    const booking = await loadOwnedBooking(req, res);
+    let booking = await loadOwnedBooking(req, res);
     if (!booking) return;
-    const entry =
-      req.user.role === 'admin'
-        ? {
-            admin: req.user._id,
-            action: 'delete',
-            booking: booking._id,
-            before: {
-              user: booking.user,
-              provider: booking.provider._id || booking.provider,
-              date: booking.date,
-              returnDate: booking.returnDate,
-              totalPrice: booking.totalPrice,
-              discount: booking.discount,
-              promo: booking.promo || null
-            },
-            after: null
-          }
+    const isAdmin = req.user.role === 'admin';
+    for (let attempt = 0; attempt < MAX_DELETE_ATTEMPTS; attempt++) {
+      const fields = {
+        user: booking.user,
+        provider: booking.provider._id || booking.provider,
+        date: booking.date,
+        returnDate: booking.returnDate,
+        totalPrice: booking.totalPrice,
+        discount: booking.discount,
+        promo: booking.promo || null
+      };
+      const entry = isAdmin
+        ? { admin: req.user._id, action: 'delete', booking: booking._id, before: fields, after: null }
         : null;
-    if (entry) await recordAudit(entry);
-    let result;
-    try {
-      result = await Booking.deleteOne({ _id: booking._id });
-    } catch (err) {
-      if (entry) await recordFailure(entry, 'booking delete failed');
-      throw err;
+      if (entry) await recordAudit(entry);
+      let result;
+      try {
+        result = await Booking.deleteOne({
+          _id: booking._id,
+          promo: fields.promo,
+          discount: fields.discount,
+          totalPrice: fields.totalPrice,
+          date: fields.date,
+          returnDate: fields.returnDate,
+          provider: fields.provider
+        });
+      } catch (err) {
+        if (entry) await recordFailure(entry, 'booking delete outcome unknown');
+        throw err;
+      }
+      if (result && result.deletedCount === 1) return res.status(200).json({ success: true, data: {} });
+      if (entry) await recordFailure(entry, 'booking changed or removed concurrently');
+      booking = await Booking.findById(booking._id);
+      if (!booking) return fail(res, 404, 'Booking not found');
     }
-    if (!result || result.deletedCount !== 1) {
-      if (entry) await recordFailure(entry, 'booking already removed');
-      return fail(res, 404, 'Booking not found');
-    }
-    res.status(200).json({ success: true, data: {} });
+    return fail(res, 409, 'Booking was modified concurrently, please retry');
   } catch (err) {
     handleError(err, res);
   }
