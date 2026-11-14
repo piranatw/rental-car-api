@@ -21,6 +21,7 @@ app.use(cookieParser());
 app.use('/api/v1/auth', require('./routes/auth'));
 app.use('/api/v1/providers', require('./routes/providers'));
 app.use('/api/v1/bookings', require('./routes/bookings'));
+app.use('/api/v1/promos', require('./routes/promos'));
 
 const seedAdmin = async () => {
   const email = process.env.SEED_ADMIN_EMAIL;
