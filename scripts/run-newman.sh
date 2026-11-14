@@ -105,6 +105,10 @@ echo "=== Lock race check ==="
 node scripts/lock-race-check.js || overall=1
 echo "=== Promo race check ==="
 node scripts/promo-race.js || overall=1
+echo "=== Promo undo check ==="
+node scripts/promo-undo-check.js || overall=1
+echo "=== Promo edit race check ==="
+node scripts/promo-edit-race.js || overall=1
 echo "=== Timing check ==="
 node scripts/timing-check.js || overall=1
 echo "=== Env validator check ==="

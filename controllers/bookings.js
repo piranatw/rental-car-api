@@ -117,54 +117,72 @@ exports.addBooking = async (req, res) => {
   }
 };
 
+const MAX_EDIT_ATTEMPTS = 3;
+
 // PUT /api/v1/bookings/:id  (only date, returnDate, provider are accepted)
+// The write is pinned to the exact promo/dates/provider it was priced from; a concurrent apply or
+// edit makes it re-read and re-price (bounded), so price always follows the stored promo and dates.
 exports.updateBooking = async (req, res) => {
   try {
-    const booking = await loadOwnedBooking(req, res);
-    if (!booking) return;
+    const first = await loadOwnedBooking(req, res);
+    if (!first) return;
 
     const body = req.body || {};
     const touched = ['date', 'returnDate', 'provider'].some((k) => body[k] !== undefined);
 
+    let newDate = null;
+    let newReturnDate = null;
     if (body.date !== undefined) {
-      const d = parseDate(body.date);
-      if (!d) return fail(res, 400, 'Invalid date');
-      booking.date = d;
+      newDate = parseDate(body.date);
+      if (!newDate) return fail(res, 400, 'Invalid date');
     }
     if (body.returnDate !== undefined) {
-      const d = parseDate(body.returnDate);
-      if (!d) return fail(res, 400, 'Invalid returnDate');
-      booking.returnDate = d;
+      newReturnDate = parseDate(body.returnDate);
+      if (!newReturnDate) return fail(res, 400, 'Invalid returnDate');
     }
-
-    let provider;
+    let newProvider = null;
     if (body.provider !== undefined) {
       if (!mongoose.isValidObjectId(body.provider)) return fail(res, 404, 'Provider not found');
-      provider = await Provider.findById(body.provider);
-      if (!provider) return fail(res, 404, 'Provider not found');
-      booking.provider = provider._id;
-    } else if (touched) {
-      provider = await Provider.findById(booking.provider._id || booking.provider);
+      newProvider = await Provider.findById(body.provider);
+      if (!newProvider) return fail(res, 404, 'Provider not found');
     }
 
-    if (touched) {
+    if (!touched) return res.status(200).json({ success: true, data: first });
+
+    let current = first;
+    for (let attempt = 0; attempt < MAX_EDIT_ATTEMPTS; attempt++) {
+      const date = newDate || current.date;
+      const returnDate = newReturnDate || current.returnDate;
+      if (returnDate < date) return fail(res, 400, 'returnDate must not be before date');
+      const currentProviderId = current.provider._id || current.provider;
+      const provider = newProvider || (await Provider.findById(currentProviderId));
       if (!provider) return fail(res, 404, 'Provider not found');
-      const subtotal = computeSubtotal(provider.dailyRate, booking.date, booking.returnDate);
-      booking.totalPrice = subtotal;
-      booking.discount = 0;
-      if (booking.promo) {
+
+      const subtotal = computeSubtotal(provider.dailyRate, date, returnDate);
+      let discount = 0;
+      if (current.promo) {
         // A promo stays attached: re-derive the discount from the new subtotal.
-        const promo = await PromoCode.findById(booking.promo).lean();
-        if (promo) {
-          booking.discount = computeDiscount(promo, subtotal);
-          booking.totalPrice = Math.max(0, subtotal - booking.discount);
-        }
+        const promo = await PromoCode.findById(current.promo).lean();
+        if (promo) discount = computeDiscount(promo, subtotal);
       }
-    }
 
-    await booking.save();
-    await booking.populate(PROVIDER_POPULATE);
-    res.status(200).json({ success: true, data: booking });
+      const updated = await Booking.findOneAndUpdate(
+        {
+          _id: current._id,
+          promo: current.promo || null,
+          date: current.date,
+          returnDate: current.returnDate,
+          provider: currentProviderId
+        },
+        { $set: { date, returnDate, provider: provider._id, discount, totalPrice: Math.max(0, subtotal - discount) } },
+        { new: true }
+      ).populate(PROVIDER_POPULATE);
+      if (updated) return res.status(200).json({ success: true, data: updated });
+
+      current = await Booking.findById(first._id);
+      if (!current) return fail(res, 404, 'Booking not found');
+    }
+    return fail(res, 409, 'Booking was modified concurrently, please retry');
   } catch (err) {
     handleError(err, res);
   }

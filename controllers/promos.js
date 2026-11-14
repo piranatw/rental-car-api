@@ -86,14 +86,53 @@ const reservePromo = (promo, userId, now) => {
   return PromoCode.findOneAndUpdate(filter, { $inc: { redemptionCount: 1, [usageKey]: 1 } }, { new: true });
 };
 
-const unreservePromo = (promoId, userId) =>
-  PromoCode.updateOne({ _id: promoId }, { $inc: { redemptionCount: -1, [`usage.${userId}`]: -1 } });
+// Guarded: never takes a counter below 0. An unmatched update (already released) is fine.
+const unreservePromo = (promoId, userId) => {
+  const usageKey = `usage.${userId}`;
+  return PromoCode.updateOne(
+    { _id: promoId, redemptionCount: { $gt: 0 }, [usageKey]: { $gt: 0 } },
+    { $inc: { redemptionCount: -1, [usageKey]: -1 } }
+  );
+};
 
+// Pipeline update, one atomic write: drops the promo and folds any discount back into totalPrice
+// (a concurrent edit may already have priced the booking with the promo).
 const releaseClaim = (bookingId, promoId) =>
-  Booking.updateOne({ _id: bookingId, promo: promoId }, { $set: { promo: null } });
+  Booking.updateOne(
+    { _id: bookingId, promo: promoId },
+    [{ $set: { promo: null, totalPrice: { $round: [{ $add: ['$totalPrice', '$discount'] }, 2] }, discount: 0 } }]
+  );
+
+const undoSteps = {
+  deleteRedemption: (r) => PromoRedemption.deleteOne({ _id: r._id }),
+  unreserve: (r) => unreservePromo(r.promoId, r.userId),
+  releaseClaim: (c) => releaseClaim(c.bookingId, c.promoId)
+};
+
+// Undoes an apply in reverse order of acquisition. Single-shot per handle: each handle is cleared
+// the moment its own write succeeded, so no later call (e.g. the catch block after an inline undo)
+// can repeat a completed release. Every remaining step runs even if an earlier one throws; the
+// failures are returned (a failed step keeps its handle, so only it is retried by a later call).
+const undoApply = async (state, steps = undoSteps) => {
+  const errors = [];
+  const attempt = async (key, fn) => {
+    const handle = state[key];
+    if (!handle) return;
+    try {
+      await fn(handle);
+      state[key] = null;
+    } catch (err) {
+      errors.push(err);
+    }
+  };
+  await attempt('redemption', steps.deleteRedemption);
+  await attempt('reserved', steps.unreserve);
+  await attempt('claimed', steps.releaseClaim);
+  return errors;
+};
 
 // Chooses the exact rejection message after the atomic reservation matched nothing.
-const rejectionMessage = async (promoId, userId, now) => {
+const rejectionMessage = async (promoId, now) => {
   const p = await PromoCode.findById(promoId).lean();
   if (!p) return MSG.notFound;
   if (now < p.validFrom) return MSG.notYet;
@@ -102,17 +141,14 @@ const rejectionMessage = async (promoId, userId, now) => {
   return MSG.perUser;
 };
 
+const MAX_FINALISE_ATTEMPTS = 3;
+
 // POST /api/v1/bookings/:id/promo  { code }
 exports.applyPromo = async (req, res) => {
-  let claimed = null; // { bookingId, promoId }
-  let reserved = null; // { promoId, userId }
-  let redemption = null;
+  const state = { claimed: null, reserved: null, redemption: null };
   const undo = async () => {
-    // Reverse order of acquisition; each step is a conditional, idempotent write.
-    if (redemption) await PromoRedemption.deleteOne({ _id: redemption._id });
-    if (reserved) await unreservePromo(reserved.promoId, reserved.userId);
-    if (claimed) await releaseClaim(claimed.bookingId, claimed.promoId);
-    redemption = reserved = claimed = null;
+    const errors = await undoApply(state);
+    errors.forEach((e) => console.error('promo undo step failed: ' + e.message));
   };
   try {
     const code = normaliseCode((req.body || {}).code);
@@ -124,8 +160,14 @@ exports.applyPromo = async (req, res) => {
 
     const provider = await Provider.findById(booking.provider._id || booking.provider);
     if (!provider) return fail(res, 404, 'Provider not found');
-    const subtotal = computeSubtotal(provider.dailyRate, booking.date, booking.returnDate);
-    if (!(subtotal > 0)) return fail(res, 400, MSG.noPrice);
+    // The exact inputs the subtotal is computed from; step (f) is conditional on them.
+    let snap = {
+      date: booking.date,
+      returnDate: booking.returnDate,
+      provider: provider._id,
+      subtotal: computeSubtotal(provider.dailyRate, booking.date, booking.returnDate)
+    };
+    if (!(snap.subtotal > 0)) return fail(res, 400, MSG.noPrice);
 
     const promo = await PromoCode.findOne({ code }).lean();
     if (!promo) return fail(res, 400, MSG.notFound);
@@ -140,33 +182,54 @@ exports.applyPromo = async (req, res) => {
       { new: true }
     );
     if (!claim) return fail(res, 400, MSG.hasPromo);
-    claimed = { bookingId: booking._id, promoId: promo._id };
+    state.claimed = { bookingId: booking._id, promoId: promo._id };
 
     // (c) Reserve the promo with one conditional atomic update.
     const now = new Date();
     const reservedDoc = await reservePromo(promo, userId, now);
     if (!reservedDoc) {
-      const message = await rejectionMessage(promo._id, userId, now);
+      const message = await rejectionMessage(promo._id, now);
       await undo(); // (d) release the claim only
       return fail(res, 400, message);
     }
-    reserved = { promoId: promo._id, userId };
+    state.reserved = { promoId: promo._id, userId };
 
     // (e) Record the redemption.
-    redemption = await PromoRedemption.create({ promo: promo._id, user: booking.user, booking: booking._id });
+    state.redemption = await PromoRedemption.create({ promo: promo._id, user: booking.user, booking: booking._id });
 
-    // (f) Finalise the booking.
-    const discount = computeDiscount(promo, subtotal);
-    const updated = await Booking.findOneAndUpdate(
-      { _id: booking._id, promo: promo._id },
-      { $set: { discount, totalPrice: Math.max(0, round2(subtotal - discount)) } },
-      { new: true }
-    ).populate(PROVIDER_POPULATE);
+    // (f) Finalise, pinned to the dates/provider the subtotal came from; if the booking was edited
+    // meanwhile, re-read it and price the CURRENT dates instead (bounded retries).
+    let updated = null;
+    for (let attempt = 0; attempt < MAX_FINALISE_ATTEMPTS && !updated; attempt++) {
+      const discount = computeDiscount(promo, snap.subtotal);
+      updated = await Booking.findOneAndUpdate(
+        { _id: booking._id, promo: promo._id, date: snap.date, returnDate: snap.returnDate, provider: snap.provider },
+        { $set: { discount, totalPrice: Math.max(0, round2(snap.subtotal - discount)) } },
+        { new: true }
+      ).populate(PROVIDER_POPULATE);
+      if (updated) break;
+      const fresh = await Booking.findById(booking._id);
+      if (!fresh || !fresh.promo || fresh.promo.toString() !== promo._id.toString()) {
+        await undo();
+        return fail(res, 404, 'Booking not found');
+      }
+      const freshProvider = await Provider.findById(fresh.provider);
+      if (!freshProvider) {
+        await undo();
+        return fail(res, 404, 'Provider not found');
+      }
+      snap = {
+        date: fresh.date,
+        returnDate: fresh.returnDate,
+        provider: freshProvider._id,
+        subtotal: computeSubtotal(freshProvider.dailyRate, fresh.date, fresh.returnDate)
+      };
+    }
     if (!updated) {
       await undo();
-      return fail(res, 404, 'Booking not found');
+      return fail(res, 409, 'Booking was modified concurrently, please retry');
     }
-    claimed = reserved = redemption = null; // success: nothing to undo
+    state.claimed = state.reserved = state.redemption = null; // success: nothing to undo
     res.status(200).json({ success: true, data: updated });
   } catch (err) {
     try {
@@ -179,3 +242,5 @@ exports.applyPromo = async (req, res) => {
 };
 
 exports.computeDiscount = computeDiscount;
+exports.undoApply = undoApply;
+exports.undoSteps = undoSteps;
