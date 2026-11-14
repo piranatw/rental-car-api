@@ -74,10 +74,12 @@ exports.logout = async (req, res) => {
   try {
     const token = req.headers.authorization.split(' ')[1];
     const { exp } = jwt.decode(token);
-    await RevokedToken.create({
-      tokenHash: crypto.createHash('sha256').update(token).digest('hex'),
-      expiresAt: new Date(exp * 1000)
-    });
+    // Upsert so a concurrent logout of the same token still ends in 200.
+    await RevokedToken.updateOne(
+      { tokenHash: crypto.createHash('sha256').update(token).digest('hex') },
+      { $setOnInsert: { expiresAt: new Date(exp * 1000) } },
+      { upsert: true }
+    );
     res.clearCookie('token');
     res.status(200).json({ success: true, data: {} });
   } catch (err) {
