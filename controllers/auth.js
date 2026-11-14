@@ -3,6 +3,7 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const User = require('../models/User');
 const RevokedToken = require('../models/RevokedToken');
+const { getMaxAttempts, getLockMinutes } = require('../config/lockConfig');
 
 const sendTokenResponse = (user, statusCode, res) => {
   const token = user.getSignedJwtToken();
@@ -46,9 +47,6 @@ exports.register = async (req, res) => {
   }
 };
 
-const MAX_ATTEMPTS = () => Number(process.env.LOGIN_MAX_ATTEMPTS) || 5;
-const LOCK_MINUTES = () => Number(process.env.LOGIN_LOCK_MINUTES) || 15;
-
 // bcrypt hash (cost 10) of a random throwaway string. Compared against when the email is
 // unknown or the account is locked, so those paths cost the same as a real password check.
 const DUMMY_HASH = '$2b$10$mzRPTVctRjcvo2PiV9PqNeNNX56PBJj/.CV79Iaokx9hgjoW7lLRS';
@@ -64,49 +62,72 @@ exports.login = async (req, res) => {
     if (typeof email !== 'string' || typeof password !== 'string' || !email || !password) {
       return res.status(400).json({ success: false, message: 'Please provide an email and password' });
     }
-    const user = await User.findOne({ email: email.toLowerCase().trim() })
-      .select('+password +failedLoginAttempts +lockUntil');
-    if (!user) {
+    const max = getMaxAttempts();
+    const now = new Date();
+    const lockDate = new Date(now.getTime() + getLockMinutes() * 60 * 1000);
+
+    // Reserve this attempt with ONE atomic write BEFORE comparing the password. The update is
+    // an aggregation pipeline, so MongoDB evaluates it against the current document under the
+    // document lock; concurrent logins for the same account are serialised and each one sees
+    // the result of the previous. Per account state, in a single update:
+    //   lockUntil > now        -> nothing changes (locked)
+    //   lockUntil <= now       -> unlocked: counter restarts at 0, then +1, lockUntil removed
+    //   no lock                -> counter + 1
+    //   new counter >= max     -> lockUntil = now + LOGIN_LOCK_MINUTES, in this same update
+    // new:false returns the document as it was BEFORE the update, which tells us exactly
+    // whether the account was already locked and which attempt number we reserved. An unknown
+    // email matches nothing but costs the same single write round trip.
+    const isLocked = { $and: [{ $eq: [{ $type: '$lockUntil' }, 'date'] }, { $gt: ['$lockUntil', now] }] };
+    const pre = await User.findOneAndUpdate(
+      { email: email.toLowerCase().trim() },
+      [
+        {
+          $set: {
+            failedLoginAttempts: {
+              $cond: [
+                isLocked,
+                '$failedLoginAttempts',
+                {
+                  $add: [
+                    { $cond: [{ $eq: [{ $type: '$lockUntil' }, 'date'] }, 0, { $ifNull: ['$failedLoginAttempts', 0] }] },
+                    1
+                  ]
+                }
+              ]
+            }
+          }
+        },
+        {
+          $set: {
+            lockUntil: {
+              $cond: [isLocked, '$lockUntil', { $cond: [{ $gte: ['$failedLoginAttempts', max] }, lockDate, '$$REMOVE'] }]
+            }
+          }
+        }
+      ],
+      { new: false }
+    ).select('+password +failedLoginAttempts +lockUntil');
+
+    const wasLocked = !!(pre && pre.lockUntil && pre.lockUntil > now);
+    const reserved = pre ? (pre.lockUntil ? 0 : pre.failedLoginAttempts || 0) + 1 : 0;
+
+    // Unknown email, locked account, or no attempt budget left: dummy compare, same response.
+    if (!pre || wasLocked || reserved > max) {
       await bcrypt.compare(password, DUMMY_HASH);
       return invalidCredentials(res);
     }
-
-    // Locked: reject before comparing the password and leave the counter alone.
-    if (user.lockUntil && user.lockUntil > new Date()) {
-      await bcrypt.compare(password, DUMMY_HASH);
+    // At most `max` real comparisons can happen per lock window. A wrong password is
+    // already counted by the reservation above.
+    if (!(await pre.matchPassword(password))) {
       return invalidCredentials(res);
     }
-    // Expired lock: start counting from zero again (only the request that still sees this lock resets it).
-    if (user.lockUntil) {
-      await User.updateOne(
-        { _id: user._id, lockUntil: user.lockUntil },
-        { $set: { failedLoginAttempts: 0 }, $unset: { lockUntil: 1 } }
-      );
-      user.failedLoginAttempts = 0;
-    }
-
-    if (!(await user.matchPassword(password))) {
-      // Atomic increment; never read-modify-write in JS.
-      const updated = await User.findOneAndUpdate(
-        { _id: user._id },
-        { $inc: { failedLoginAttempts: 1 } },
-        { new: true }
-      ).select('+failedLoginAttempts');
-      if (updated && updated.failedLoginAttempts >= MAX_ATTEMPTS()) {
-        await User.updateOne(
-          { _id: user._id, lockUntil: { $exists: false } },
-          { $set: { lockUntil: new Date(Date.now() + LOCK_MINUTES() * 60 * 1000) } }
-        );
-      }
-      return invalidCredentials(res);
-    }
-
-    if (user.failedLoginAttempts > 0) {
-      await User.updateOne(
-        { _id: user._id },
-        { $set: { failedLoginAttempts: 0 }, $unset: { lockUntil: 1 } }
-      );
-    }
+    // Correct password: reset only if no other attempt was reserved since ours
+    // (never wipes a counter or lock another request just advanced).
+    await User.updateOne(
+      { _id: pre._id, failedLoginAttempts: reserved },
+      { $set: { failedLoginAttempts: 0 }, $unset: { lockUntil: 1 } }
+    );
+    const user = pre;
     sendTokenResponse(user, 200, res);
   } catch (err) {
     console.error(err.message);

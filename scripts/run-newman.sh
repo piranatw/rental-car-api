@@ -101,6 +101,12 @@ start_server /tmp/rental-api-test-server.log || exit 1
 run_folders newman-report.json 1 "${PASS_A_FOLDERS[@]}" || overall=1
 echo "=== Lock expiry check ==="
 node scripts/lock-expiry-check.js || overall=1
+echo "=== Lock race check ==="
+node scripts/lock-race-check.js || overall=1
+echo "=== Timing check ==="
+node scripts/timing-check.js || overall=1
+echo "=== Env validator check ==="
+node scripts/env-check.js || overall=1
 stop_server
 
 echo "=== Pass B: ${PASS_B_FOLDERS[*]} (RATE_LIMIT_FORCE=1, fresh server) ==="
