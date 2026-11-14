@@ -25,7 +25,7 @@ export NODE_ENV=test
 
 # Pass A: folders run with the IP login limiter skipped (NODE_ENV=test). To add a
 # folder to the suite, add its name here -- nothing else needs to change.
-PASS_A_FOLDERS=(Auth Bookings LoginProtection)
+PASS_A_FOLDERS=(Auth Bookings LoginProtection Promos)
 # Pass B: folders run on a second server with RATE_LIMIT_FORCE=1 (fresh limiter state).
 PASS_B_FOLDERS=(RateLimit429)
 
@@ -103,6 +103,8 @@ echo "=== Lock expiry check ==="
 node scripts/lock-expiry-check.js || overall=1
 echo "=== Lock race check ==="
 node scripts/lock-race-check.js || overall=1
+echo "=== Promo race check ==="
+node scripts/promo-race.js || overall=1
 echo "=== Timing check ==="
 node scripts/timing-check.js || overall=1
 echo "=== Env validator check ==="

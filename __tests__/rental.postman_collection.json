@@ -3136,6 +3136,2230 @@
       ]
     },
     {
+      "name": "Promos",
+      "item": [
+        {
+          "name": "register promo user U1",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const sfx = Date.now().toString(36).toUpperCase() + Math.floor(Math.random() * 1e6).toString(36).toUpperCase();",
+                  "const day = function (n) { return new Date(Date.now() + n * 86400000).toISOString(); };",
+                  "pm.collectionVariables.set('pr_sfx', sfx);",
+                  "pm.collectionVariables.set('pr_from', day(-1));",
+                  "pm.collectionVariables.set('pr_to', day(30));",
+                  "pm.collectionVariables.set('pr_oldFrom', day(-30));",
+                  "pm.collectionVariables.set('pr_oldTo', day(-1));",
+                  "pm.collectionVariables.set('pr_soonFrom', day(10));",
+                  "pm.collectionVariables.set('pr_soonTo', day(30));",
+                  "pm.collectionVariables.set('pr_d0', day(10));",
+                  "pm.collectionVariables.set('pr_d2', day(12));",
+                  "pm.collectionVariables.set('pr_d3', day(13));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('registered promo user U1', function () {",
+                  "  pm.response.to.have.status(201);",
+                  "  pm.collectionVariables.set('pr1T', pm.response.json().token);",
+                  "  pm.collectionVariables.set('pr1Id', pm.response.json().data.id);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/auth/register",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"name\":\"promoU1\",\"telephone\":\"0812345678\",\"email\":\"promou1{{pr_sfx}}@example.com\",\"password\":\"secret123\"}"
+            }
+          }
+        },
+        {
+          "name": "register promo user U2",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('registered promo user U2', function () {",
+                  "  pm.response.to.have.status(201);",
+                  "  pm.collectionVariables.set('pr2T', pm.response.json().token);",
+                  "  pm.collectionVariables.set('pr2Id', pm.response.json().data.id);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/auth/register",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"name\":\"promoU2\",\"telephone\":\"0812345678\",\"email\":\"promou2{{pr_sfx}}@example.com\",\"password\":\"secret123\"}"
+            }
+          }
+        },
+        {
+          "name": "register promo user U3",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('registered promo user U3', function () {",
+                  "  pm.response.to.have.status(201);",
+                  "  pm.collectionVariables.set('pr3T', pm.response.json().token);",
+                  "  pm.collectionVariables.set('pr3Id', pm.response.json().data.id);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/auth/register",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"name\":\"promoU3\",\"telephone\":\"0812345678\",\"email\":\"promou3{{pr_sfx}}@example.com\",\"password\":\"secret123\"}"
+            }
+          }
+        },
+        {
+          "name": "register promo user U4",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('registered promo user U4', function () {",
+                  "  pm.response.to.have.status(201);",
+                  "  pm.collectionVariables.set('pr4T', pm.response.json().token);",
+                  "  pm.collectionVariables.set('pr4Id', pm.response.json().data.id);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/auth/register",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"name\":\"promoU4\",\"telephone\":\"0812345678\",\"email\":\"promou4{{pr_sfx}}@example.com\",\"password\":\"secret123\"}"
+            }
+          }
+        },
+        {
+          "name": "register promo user U5",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('registered promo user U5', function () {",
+                  "  pm.response.to.have.status(201);",
+                  "  pm.collectionVariables.set('pr5T', pm.response.json().token);",
+                  "  pm.collectionVariables.set('pr5Id', pm.response.json().data.id);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/auth/register",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"name\":\"promoU5\",\"telephone\":\"0812345678\",\"email\":\"promou5{{pr_sfx}}@example.com\",\"password\":\"secret123\"}"
+            }
+          }
+        },
+        {
+          "name": "admin creates standard provider",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('provider created', function () {",
+                  "  pm.response.to.have.status(201);",
+                  "  pm.collectionVariables.set('pr_prov', pm.response.json().data._id);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/providers",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"name\":\"Promo Provider\",\"address\":\"4 Promo Road\",\"tel\":\"020000004\",\"dailyRate\":1000}"
+            }
+          }
+        },
+        {
+          "name": "admin creates zero-rate provider",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('zero-rate provider created', function () {",
+                  "  pm.response.to.have.status(201);",
+                  "  pm.collectionVariables.set('pr_zero', pm.response.json().data._id);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/providers",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"name\":\"Promo Free Provider\",\"address\":\"5 Promo Road\",\"tel\":\"020000005\",\"dailyRate\":0}"
+            }
+          }
+        },
+        {
+          "name": "U1 booking 1",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('U1 booking 1 created', function () {",
+                  "  pm.response.to.have.status(201);",
+                  "  pm.collectionVariables.set('pr_b1', pm.response.json().data._id);",
+                  "  pm.expect(pm.response.json().data.totalPrice).to.eql(2000);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{pr1T}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/providers/{{pr_prov}}/bookings",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"date\":\"{{pr_d0}}\",\"returnDate\":\"{{pr_d2}}\"}"
+            }
+          }
+        },
+        {
+          "name": "U1 booking 2",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('U1 booking 2 created', function () {",
+                  "  pm.response.to.have.status(201);",
+                  "  pm.collectionVariables.set('pr_b2', pm.response.json().data._id);",
+                  "  pm.expect(pm.response.json().data.totalPrice).to.eql(2000);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{pr1T}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/providers/{{pr_prov}}/bookings",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"date\":\"{{pr_d0}}\",\"returnDate\":\"{{pr_d2}}\"}"
+            }
+          }
+        },
+        {
+          "name": "U1 booking 3",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('U1 booking 3 created', function () {",
+                  "  pm.response.to.have.status(201);",
+                  "  pm.collectionVariables.set('pr_b3', pm.response.json().data._id);",
+                  "  pm.expect(pm.response.json().data.totalPrice).to.eql(2000);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{pr1T}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/providers/{{pr_prov}}/bookings",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"date\":\"{{pr_d0}}\",\"returnDate\":\"{{pr_d2}}\"}"
+            }
+          }
+        },
+        {
+          "name": "U2 edit booking",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('U2 edit booking created', function () {",
+                  "  pm.response.to.have.status(201);",
+                  "  pm.collectionVariables.set('pr_bE', pm.response.json().data._id);",
+                  "  pm.expect(pm.response.json().data.totalPrice).to.eql(2000);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{pr2T}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/providers/{{pr_prov}}/bookings",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"date\":\"{{pr_d0}}\",\"returnDate\":\"{{pr_d2}}\"}"
+            }
+          }
+        },
+        {
+          "name": "U2 admin-apply booking",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('U2 admin-apply booking created', function () {",
+                  "  pm.response.to.have.status(201);",
+                  "  pm.collectionVariables.set('pr_bAd', pm.response.json().data._id);",
+                  "  pm.expect(pm.response.json().data.totalPrice).to.eql(2000);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{pr2T}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/providers/{{pr_prov}}/bookings",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"date\":\"{{pr_d0}}\",\"returnDate\":\"{{pr_d2}}\"}"
+            }
+          }
+        },
+        {
+          "name": "U2 second booking",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('U2 second booking created', function () {",
+                  "  pm.response.to.have.status(201);",
+                  "  pm.collectionVariables.set('pr_bU2c', pm.response.json().data._id);",
+                  "  pm.expect(pm.response.json().data.totalPrice).to.eql(2000);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{pr2T}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/providers/{{pr_prov}}/bookings",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"date\":\"{{pr_d0}}\",\"returnDate\":\"{{pr_d2}}\"}"
+            }
+          }
+        },
+        {
+          "name": "U3 booking 1",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('U3 booking 1 created', function () {",
+                  "  pm.response.to.have.status(201);",
+                  "  pm.collectionVariables.set('pr_bP1', pm.response.json().data._id);",
+                  "  pm.expect(pm.response.json().data.totalPrice).to.eql(2000);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{pr3T}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/providers/{{pr_prov}}/bookings",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"date\":\"{{pr_d0}}\",\"returnDate\":\"{{pr_d2}}\"}"
+            }
+          }
+        },
+        {
+          "name": "U3 booking 2",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('U3 booking 2 created', function () {",
+                  "  pm.response.to.have.status(201);",
+                  "  pm.collectionVariables.set('pr_bP2', pm.response.json().data._id);",
+                  "  pm.expect(pm.response.json().data.totalPrice).to.eql(2000);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{pr3T}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/providers/{{pr_prov}}/bookings",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"date\":\"{{pr_d0}}\",\"returnDate\":\"{{pr_d2}}\"}"
+            }
+          }
+        },
+        {
+          "name": "U3 zero-price booking",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('U3 zero-price booking created', function () {",
+                  "  pm.response.to.have.status(201);",
+                  "  pm.collectionVariables.set('pr_bZ', pm.response.json().data._id);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{pr3T}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/providers/{{pr_zero}}/bookings",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"date\":\"{{pr_d0}}\",\"returnDate\":\"{{pr_d2}}\"}"
+            }
+          }
+        },
+        {
+          "name": "U4 booking",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('U4 booking created', function () {",
+                  "  pm.response.to.have.status(201);",
+                  "  pm.collectionVariables.set('pr_bM1', pm.response.json().data._id);",
+                  "  pm.expect(pm.response.json().data.totalPrice).to.eql(2000);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{pr4T}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/providers/{{pr_prov}}/bookings",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"date\":\"{{pr_d0}}\",\"returnDate\":\"{{pr_d2}}\"}"
+            }
+          }
+        },
+        {
+          "name": "U5 booking",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('U5 booking created', function () {",
+                  "  pm.response.to.have.status(201);",
+                  "  pm.collectionVariables.set('pr_bM2', pm.response.json().data._id);",
+                  "  pm.expect(pm.response.json().data.totalPrice).to.eql(2000);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{pr5T}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/providers/{{pr_prov}}/bookings",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"date\":\"{{pr_d0}}\",\"returnDate\":\"{{pr_d2}}\"}"
+            }
+          }
+        },
+        {
+          "name": "admin creates SAVE10",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('admin creates SAVE10', function () {",
+                  "  pm.response.to.have.status(201);",
+                  "  pm.collectionVariables.set('pr_pSave', pm.response.json().data._id);",
+                  "  const d = pm.response.json().data;",
+                  "  pm.expect(d.code).to.eql('SAVE10' + pm.collectionVariables.get('pr_sfx'));",
+                  "  pm.expect(d.type).to.eql('percentage');",
+                  "  pm.expect(d.redemptionCount).to.eql(0);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/promos",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"code\":\"SAVE10{{pr_sfx}}\",\"type\":\"percentage\",\"value\":10,\"validFrom\":\"{{pr_from}}\",\"validTo\":\"{{pr_to}}\",\"maxRedemptions\":1000}"
+            }
+          }
+        },
+        {
+          "name": "percentage 150 is rejected",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('percentage 150 is rejected', function () {",
+                  "  pm.response.to.have.status(400);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/promos",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"code\":\"BAD150{{pr_sfx}}\",\"type\":\"percentage\",\"value\":150,\"validFrom\":\"{{pr_from}}\",\"validTo\":\"{{pr_to}}\",\"maxRedemptions\":1000}"
+            }
+          }
+        },
+        {
+          "name": "validTo before validFrom is rejected",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('validTo before validFrom is rejected', function () {",
+                  "  pm.response.to.have.status(400);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/promos",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"code\":\"BADRANGE{{pr_sfx}}\",\"type\":\"percentage\",\"value\":10,\"validFrom\":\"{{pr_to}}\",\"validTo\":\"{{pr_from}}\",\"maxRedemptions\":1000}"
+            }
+          }
+        },
+        {
+          "name": "maxRedemptions 0 is rejected",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('maxRedemptions 0 is rejected', function () {",
+                  "  pm.response.to.have.status(400);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/promos",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"code\":\"BADMAX{{pr_sfx}}\",\"type\":\"percentage\",\"value\":10,\"validFrom\":\"{{pr_from}}\",\"validTo\":\"{{pr_to}}\",\"maxRedemptions\":0}"
+            }
+          }
+        },
+        {
+          "name": "non-admin cannot create a code",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('non-admin cannot create a code', function () {",
+                  "  pm.response.to.have.status(403);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{pr1T}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/promos",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"code\":\"NOADMIN{{pr_sfx}}\",\"type\":\"percentage\",\"value\":10,\"validFrom\":\"{{pr_from}}\",\"validTo\":\"{{pr_to}}\",\"maxRedemptions\":1000}"
+            }
+          }
+        },
+        {
+          "name": "non-admin cannot list codes",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('non-admin list is 403', function () {",
+                  "  pm.response.to.have.status(403);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{pr1T}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/promos"
+          }
+        },
+        {
+          "name": "unauthenticated cannot list codes",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('list without token is 401', function () {",
+                  "  pm.response.to.have.status(401);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/promos"
+          }
+        },
+        {
+          "name": "duplicate code is 409",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('duplicate code is 409', function () {",
+                  "  pm.response.to.have.status(409);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/promos",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"code\":\"SAVE10{{pr_sfx}}\",\"type\":\"percentage\",\"value\":10,\"validFrom\":\"{{pr_from}}\",\"validTo\":\"{{pr_to}}\",\"maxRedemptions\":1000}"
+            }
+          }
+        },
+        {
+          "name": "duplicate code differing in case is 409",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('duplicate code differing in case is 409', function () {",
+                  "  pm.response.to.have.status(409);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/promos",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"code\":\"save10{{pr_sfx}}\",\"type\":\"percentage\",\"value\":10,\"validFrom\":\"{{pr_from}}\",\"validTo\":\"{{pr_to}}\",\"maxRedemptions\":1000}"
+            }
+          }
+        },
+        {
+          "name": "unauthenticated apply is 401",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('unauthenticated apply is 401', function () {",
+                  "  pm.response.to.have.status(401);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/bookings/{{pr_b1}}/promo",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"code\":\"SAVE10{{pr_sfx}}\"}"
+            }
+          }
+        },
+        {
+          "name": "malformed booking id is 404",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('malformed id is 404', function () {",
+                  "  pm.response.to.have.status(404);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{pr1T}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/bookings/not-an-id/promo",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"code\":\"SAVE10{{pr_sfx}}\"}"
+            }
+          }
+        },
+        {
+          "name": "another user cannot apply to my booking",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('another user cannot apply to my booking', function () {",
+                  "  pm.response.to.have.status(403);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{pr2T}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/bookings/{{pr_b1}}/promo",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"code\":\"SAVE10{{pr_sfx}}\"}"
+            }
+          }
+        },
+        {
+          "name": "apply with lowercase code on a 2000 booking",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('apply with lowercase code on a 2000 booking', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  const d = pm.response.json().data;",
+                  "  pm.expect(d.discount).to.eql(200);",
+                  "  pm.expect(d.totalPrice).to.eql(1800);",
+                  "  pm.expect(d.promo).to.eql(pm.collectionVariables.get('pr_pSave'));",
+                  "  pm.expect(d.provider.name).to.eql('Promo Provider');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{pr1T}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/bookings/{{pr_b1}}/promo",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"code\":\"save10{{pr_sfx}}\"}"
+            }
+          }
+        },
+        {
+          "name": "admin creates OTHER code",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('admin creates OTHER code', function () {",
+                  "  pm.response.to.have.status(201);",
+                  "  pm.collectionVariables.set('pr_pOther', pm.response.json().data._id);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/promos",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"code\":\"OTHER{{pr_sfx}}\",\"type\":\"percentage\",\"value\":10,\"validFrom\":\"{{pr_from}}\",\"validTo\":\"{{pr_to}}\",\"maxRedemptions\":1000}"
+            }
+          }
+        },
+        {
+          "name": "before: promo list",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('list ok', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  const o = pm.response.json().data.find(function (p) { return p._id === pm.collectionVariables.get('pr_pOther'); });",
+                  "  pm.collectionVariables.set('pr_otherBefore', o.redemptionCount);",
+                  "  const s = pm.response.json().data.find(function (p) { return p._id === pm.collectionVariables.get('pr_pSave'); });",
+                  "  pm.collectionVariables.set('pr_saveBefore', s.redemptionCount);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/promos"
+          }
+        },
+        {
+          "name": "second code on a booking that has one is rejected",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('second code on a booking that has one is rejected', function () {",
+                  "  pm.response.to.have.status(400);",
+                  "  pm.expect(pm.response.json().success).to.eql(false);",
+                  "  pm.expect(pm.response.json().message).to.eql(\"Booking already has a promo code\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{pr1T}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/bookings/{{pr_b1}}/promo",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"code\":\"OTHER{{pr_sfx}}\"}"
+            }
+          }
+        },
+        {
+          "name": "after: promo counts unchanged",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('counts unchanged', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  const o = pm.response.json().data.find(function (p) { return p._id === pm.collectionVariables.get('pr_pOther'); });",
+                  "  const s = pm.response.json().data.find(function (p) { return p._id === pm.collectionVariables.get('pr_pSave'); });",
+                  "  pm.expect(o.redemptionCount).to.eql(pm.collectionVariables.get('pr_otherBefore'));",
+                  "  pm.expect(s.redemptionCount).to.eql(pm.collectionVariables.get('pr_saveBefore'));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/promos"
+          }
+        },
+        {
+          "name": "after: booking unchanged",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('booking keeps first promo', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  const d = pm.response.json().data;",
+                  "  pm.expect(d.promo).to.eql(pm.collectionVariables.get('pr_pSave'));",
+                  "  pm.expect(d.discount).to.eql(200);",
+                  "  pm.expect(d.totalPrice).to.eql(1800);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{pr1T}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/bookings/{{pr_b1}}"
+          }
+        },
+        {
+          "name": "admin creates FIX5000",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('admin creates FIX5000', function () {",
+                  "  pm.response.to.have.status(201);",
+                  "  pm.collectionVariables.set('pr_pFix', pm.response.json().data._id);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/promos",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"code\":\"FIX5000{{pr_sfx}}\",\"type\":\"fixed\",\"value\":5000,\"validFrom\":\"{{pr_from}}\",\"validTo\":\"{{pr_to}}\",\"maxRedemptions\":1000}"
+            }
+          }
+        },
+        {
+          "name": "fixed 5000 on a 2000 booking gives 0, never negative",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('fixed 5000 on a 2000 booking gives 0, never negative', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  const d = pm.response.json().data;",
+                  "  pm.expect(d.discount).to.eql(2000);",
+                  "  pm.expect(d.totalPrice).to.eql(0);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{pr1T}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/bookings/{{pr_b2}}/promo",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"code\":\"FIX5000{{pr_sfx}}\"}"
+            }
+          }
+        },
+        {
+          "name": "unknown code",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('unknown code', function () {",
+                  "  pm.response.to.have.status(400);",
+                  "  pm.expect(pm.response.json().success).to.eql(false);",
+                  "  pm.expect(pm.response.json().message).to.eql(\"Promo code not found\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{pr1T}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/bookings/{{pr_b3}}/promo",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"code\":\"NOSUCH{{pr_sfx}}\"}"
+            }
+          }
+        },
+        {
+          "name": "admin creates expired code",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('admin creates expired code', function () {",
+                  "  pm.response.to.have.status(201);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/promos",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"code\":\"EXPIRED{{pr_sfx}}\",\"type\":\"percentage\",\"value\":10,\"validFrom\":\"{{pr_oldFrom}}\",\"validTo\":\"{{pr_oldTo}}\",\"maxRedemptions\":1000}"
+            }
+          }
+        },
+        {
+          "name": "expired code",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('expired code', function () {",
+                  "  pm.response.to.have.status(400);",
+                  "  pm.expect(pm.response.json().success).to.eql(false);",
+                  "  pm.expect(pm.response.json().message).to.eql(\"Promo code has expired\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{pr1T}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/bookings/{{pr_b3}}/promo",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"code\":\"EXPIRED{{pr_sfx}}\"}"
+            }
+          }
+        },
+        {
+          "name": "admin creates not-yet-valid code",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('admin creates not-yet-valid code', function () {",
+                  "  pm.response.to.have.status(201);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/promos",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"code\":\"SOON{{pr_sfx}}\",\"type\":\"percentage\",\"value\":10,\"validFrom\":\"{{pr_soonFrom}}\",\"validTo\":\"{{pr_soonTo}}\",\"maxRedemptions\":1000}"
+            }
+          }
+        },
+        {
+          "name": "not-yet-valid code",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('not-yet-valid code', function () {",
+                  "  pm.response.to.have.status(400);",
+                  "  pm.expect(pm.response.json().success).to.eql(false);",
+                  "  pm.expect(pm.response.json().message).to.eql(\"Promo code is not yet valid\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{pr1T}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/bookings/{{pr_b3}}/promo",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"code\":\"SOON{{pr_sfx}}\"}"
+            }
+          }
+        },
+        {
+          "name": "failed applies left the booking untouched",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('booking 3 unchanged', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  const d = pm.response.json().data;",
+                  "  pm.expect(d.promo).to.eql(null);",
+                  "  pm.expect(d.discount).to.eql(0);",
+                  "  pm.expect(d.totalPrice).to.eql(2000);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{pr1T}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/bookings/{{pr_b3}}"
+          }
+        },
+        {
+          "name": "admin creates per-user-limited code",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('admin creates per-user-limited code', function () {",
+                  "  pm.response.to.have.status(201);",
+                  "  pm.collectionVariables.set('pr_pPul', pm.response.json().data._id);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/promos",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"code\":\"PUL{{pr_sfx}}\",\"type\":\"percentage\",\"value\":10,\"validFrom\":\"{{pr_from}}\",\"validTo\":\"{{pr_to}}\",\"maxRedemptions\":1000,\"perUserLimit\":1}"
+            }
+          }
+        },
+        {
+          "name": "per-user code: first use",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('per-user code: first use', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.json().data.totalPrice).to.eql(1800);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{pr3T}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/bookings/{{pr_bP1}}/promo",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"code\":\"PUL{{pr_sfx}}\"}"
+            }
+          }
+        },
+        {
+          "name": "per-user code: second booking of the same user",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('per-user code: second booking of the same user', function () {",
+                  "  pm.response.to.have.status(400);",
+                  "  pm.expect(pm.response.json().success).to.eql(false);",
+                  "  pm.expect(pm.response.json().message).to.eql(\"You have reached the per-user limit for this promo code\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{pr3T}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/bookings/{{pr_bP2}}/promo",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"code\":\"PUL{{pr_sfx}}\"}"
+            }
+          }
+        },
+        {
+          "name": "per-user failure left booking and count unchanged",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('booking P2 unchanged', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  const d = pm.response.json().data;",
+                  "  pm.expect(d.promo).to.eql(null);",
+                  "  pm.expect(d.discount).to.eql(0);",
+                  "  pm.expect(d.totalPrice).to.eql(2000);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{pr3T}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/bookings/{{pr_bP2}}"
+          }
+        },
+        {
+          "name": "per-user failure left redemptionCount at 1",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('count is 1', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  const p = pm.response.json().data.find(function (x) { return x._id === pm.collectionVariables.get('pr_pPul'); });",
+                  "  pm.expect(p.redemptionCount).to.eql(1);",
+                  "  pm.expect(p.usage[pm.collectionVariables.get('pr3Id')]).to.eql(1);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/promos"
+          }
+        },
+        {
+          "name": "admin creates max-1 code",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('admin creates max-1 code', function () {",
+                  "  pm.response.to.have.status(201);",
+                  "  pm.collectionVariables.set('pr_pMax', pm.response.json().data._id);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/promos",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"code\":\"MAX1{{pr_sfx}}\",\"type\":\"percentage\",\"value\":10,\"validFrom\":\"{{pr_from}}\",\"validTo\":\"{{pr_to}}\",\"maxRedemptions\":1}"
+            }
+          }
+        },
+        {
+          "name": "max-1 code: first use",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('max-1 code: first use', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{pr4T}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/bookings/{{pr_bM1}}/promo",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"code\":\"MAX1{{pr_sfx}}\"}"
+            }
+          }
+        },
+        {
+          "name": "max-1 code: second user is refused",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('max-1 code: second user is refused', function () {",
+                  "  pm.response.to.have.status(400);",
+                  "  pm.expect(pm.response.json().success).to.eql(false);",
+                  "  pm.expect(pm.response.json().message).to.eql(\"Promo code has reached its maximum redemptions\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{pr5T}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/bookings/{{pr_bM2}}/promo",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"code\":\"MAX1{{pr_sfx}}\"}"
+            }
+          }
+        },
+        {
+          "name": "exhausted failure left booking and count unchanged",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('booking M2 unchanged', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  const d = pm.response.json().data;",
+                  "  pm.expect(d.promo).to.eql(null);",
+                  "  pm.expect(d.discount).to.eql(0);",
+                  "  pm.expect(d.totalPrice).to.eql(2000);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{pr5T}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/bookings/{{pr_bM2}}"
+          }
+        },
+        {
+          "name": "exhausted failure left redemptionCount at 1",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('count is 1', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  const p = pm.response.json().data.find(function (x) { return x._id === pm.collectionVariables.get('pr_pMax'); });",
+                  "  pm.expect(p.redemptionCount).to.eql(1);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/promos"
+          }
+        },
+        {
+          "name": "admin creates admin-apply code",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('admin creates admin-apply code', function () {",
+                  "  pm.response.to.have.status(201);",
+                  "  pm.collectionVariables.set('pr_pPad', pm.response.json().data._id);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/promos",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"code\":\"PAD{{pr_sfx}}\",\"type\":\"percentage\",\"value\":10,\"validFrom\":\"{{pr_from}}\",\"validTo\":\"{{pr_to}}\",\"maxRedemptions\":1000,\"perUserLimit\":1}"
+            }
+          }
+        },
+        {
+          "name": "admin applies a code to a user booking",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('admin applies a code to a user booking', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.json().data.discount).to.eql(200);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/bookings/{{pr_bAd}}/promo",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"code\":\"PAD{{pr_sfx}}\"}"
+            }
+          }
+        },
+        {
+          "name": "redemption counted against the booking owner",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('usage is keyed by the owner', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  const p = pm.response.json().data.find(function (x) { return x._id === pm.collectionVariables.get('pr_pPad'); });",
+                  "  pm.expect(p.redemptionCount).to.eql(1);",
+                  "  pm.expect(p.usage[pm.collectionVariables.get('pr2Id')]).to.eql(1);",
+                  "  pm.expect(Object.keys(p.usage).length).to.eql(1);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/promos"
+          }
+        },
+        {
+          "name": "owner hits the per-user limit after the admin applied for them",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('owner hits the per-user limit after the admin applied for them', function () {",
+                  "  pm.response.to.have.status(400);",
+                  "  pm.expect(pm.response.json().success).to.eql(false);",
+                  "  pm.expect(pm.response.json().message).to.eql(\"You have reached the per-user limit for this promo code\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{pr2T}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/bookings/{{pr_bU2c}}/promo",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"code\":\"PAD{{pr_sfx}}\"}"
+            }
+          }
+        },
+        {
+          "name": "zero-price booking cannot take a code",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('zero-price booking cannot take a code', function () {",
+                  "  pm.response.to.have.status(400);",
+                  "  pm.expect(pm.response.json().success).to.eql(false);",
+                  "  pm.expect(pm.response.json().message).to.eql(\"Booking has no price to discount\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{pr3T}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/bookings/{{pr_bZ}}/promo",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"code\":\"SAVE10{{pr_sfx}}\"}"
+            }
+          }
+        },
+        {
+          "name": "delete the zero-price booking",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('deleted', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{pr3T}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/bookings/{{pr_bZ}}"
+          }
+        },
+        {
+          "name": "delete the zero-rate provider (no bookings left)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('provider deleted', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/providers/{{pr_zero}}"
+          }
+        },
+        {
+          "name": "edit booking: apply 10% to a 2-day booking",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('edit booking: apply 10% to a 2-day booking', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.json().data.discount).to.eql(200);",
+                  "  pm.expect(pm.response.json().data.totalPrice).to.eql(1800);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{pr2T}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/bookings/{{pr_bE}}/promo",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"code\":\"SAVE10{{pr_sfx}}\"}"
+            }
+          }
+        },
+        {
+          "name": "edit booking: extend to 3 days re-derives the discount",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('re-derived', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  const d = pm.response.json().data;",
+                  "  pm.expect(d.discount).to.eql(300);",
+                  "  pm.expect(d.totalPrice).to.eql(2700);",
+                  "  pm.expect(d.promo).to.eql(pm.collectionVariables.get('pr_pSave'));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{pr2T}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/bookings/{{pr_bE}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"returnDate\":\"{{pr_d3}}\"}"
+            }
+          }
+        },
+        {
+          "name": "edit booking: stored values persisted",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('persisted', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.json().data.discount).to.eql(300);",
+                  "  pm.expect(pm.response.json().data.totalPrice).to.eql(2700);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{pr2T}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/bookings/{{pr_bE}}"
+          }
+        },
+        {
+          "name": "delete a booking carrying a promo",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('deleted', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{pr1T}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/bookings/{{pr_b2}}"
+          }
+        },
+        {
+          "name": "deleting did not release the redemption",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('count stays 1', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  const p = pm.response.json().data.find(function (x) { return x._id === pm.collectionVariables.get('pr_pFix'); });",
+                  "  pm.expect(p.redemptionCount).to.eql(1);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/promos"
+          }
+        }
+      ]
+    },
+    {
       "name": "RateLimit429",
       "item": [
         {

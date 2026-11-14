@@ -1,6 +1,10 @@
 const mongoose = require('mongoose');
 const Booking = require('../models/Booking');
 const Provider = require('../models/Provider');
+const PromoCode = require('../models/PromoCode');
+
+// promos.js requires this module, so computeDiscount is resolved at call time.
+const computeDiscount = (...args) => require('./promos').computeDiscount(...args);
 
 const MAX_BOOKINGS_PER_USER = 3;
 const DAY_MS = 86400000;
@@ -145,7 +149,17 @@ exports.updateBooking = async (req, res) => {
 
     if (touched) {
       if (!provider) return fail(res, 404, 'Provider not found');
-      booking.totalPrice = computeSubtotal(provider.dailyRate, booking.date, booking.returnDate);
+      const subtotal = computeSubtotal(provider.dailyRate, booking.date, booking.returnDate);
+      booking.totalPrice = subtotal;
+      booking.discount = 0;
+      if (booking.promo) {
+        // A promo stays attached: re-derive the discount from the new subtotal.
+        const promo = await PromoCode.findById(booking.promo).lean();
+        if (promo) {
+          booking.discount = computeDiscount(promo, subtotal);
+          booking.totalPrice = Math.max(0, subtotal - booking.discount);
+        }
+      }
     }
 
     await booking.save();
@@ -169,3 +183,4 @@ exports.deleteBooking = async (req, res) => {
 };
 
 exports.loadOwnedBooking = loadOwnedBooking;
+exports.computeSubtotal = computeSubtotal;
