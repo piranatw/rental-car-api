@@ -72,13 +72,15 @@ exports.updateProvider = async (req, res) => {
   }
 };
 
-// DELETE /api/v1/providers/:id (admin); its bookings go with it.
+// DELETE /api/v1/providers/:id (admin); refused with 409 while the provider has any bookings.
 exports.deleteProvider = async (req, res) => {
   try {
     if (!mongoose.isValidObjectId(req.params.id)) return notFound(res);
     const provider = await Provider.findById(req.params.id);
     if (!provider) return notFound(res);
-    await Booking.deleteMany({ provider: provider._id });
+    if (await Booking.exists({ provider: provider._id })) {
+      return res.status(409).json({ success: false, message: 'Provider has bookings and cannot be deleted' });
+    }
     await provider.deleteOne();
     res.status(200).json({ success: true, data: {} });
   } catch (err) {
