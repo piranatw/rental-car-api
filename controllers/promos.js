@@ -2,7 +2,8 @@ const PromoCode = require('../models/PromoCode');
 const PromoRedemption = require('../models/PromoRedemption');
 const Booking = require('../models/Booking');
 const Provider = require('../models/Provider');
-const { loadOwnedBooking, computeSubtotal } = require('./bookings');
+const { loadOwnedBooking } = require('./bookings');
+const { computeSubtotal, computeDiscount, priceOf } = require('../utils/pricing');
 
 const MSG = {
   notFound: 'Promo code not found',
@@ -16,14 +17,6 @@ const MSG = {
 const PROVIDER_POPULATE = { path: 'provider', select: 'name address tel' };
 
 const fail = (res, status, message) => res.status(status).json({ success: false, message });
-
-const round2 = (n) => Math.round(n * 100) / 100;
-
-// Pure: percentage -> subtotal * value / 100, fixed -> value; clamped to [0, subtotal], 2 decimals.
-const computeDiscount = (promo, subtotal) => {
-  const raw = promo.type === 'percentage' ? (subtotal * promo.value) / 100 : promo.value;
-  return round2(Math.min(Math.max(raw, 0), subtotal));
-};
 
 const handleError = (err, res) => {
   if (err.name === 'ValidationError' || err.name === 'CastError') {
@@ -131,14 +124,15 @@ const undoApply = async (state, steps = undoSteps) => {
   return errors;
 };
 
-// Chooses the exact rejection message after the atomic reservation matched nothing.
-const rejectionMessage = async (promoId, now) => {
-  const p = await PromoCode.findById(promoId).lean();
+// Pure: the exact rejection message for a promo document as read after a failed reservation, or
+// null when nothing in the document explains the failure (e.g. a concurrent undo freed a slot).
+const rejectionMessage = (p, userId, now) => {
   if (!p) return MSG.notFound;
   if (now < p.validFrom) return MSG.notYet;
   if (now > p.validTo) return MSG.expired;
   if (p.redemptionCount >= p.maxRedemptions) return MSG.exhausted;
-  return MSG.perUser;
+  if (p.perUserLimit && ((p.usage || {})[userId] || 0) >= p.perUserLimit) return MSG.perUser;
+  return null;
 };
 
 const MAX_FINALISE_ATTEMPTS = 3;
@@ -186,11 +180,18 @@ exports.applyPromo = async (req, res) => {
 
     // (c) Reserve the promo with one conditional atomic update.
     const now = new Date();
-    const reservedDoc = await reservePromo(promo, userId, now);
+    let reservedDoc = await reservePromo(promo, userId, now);
     if (!reservedDoc) {
-      const message = await rejectionMessage(promo._id, now);
-      await undo(); // (d) release the claim only
-      return fail(res, 400, message);
+      let message = rejectionMessage(await PromoCode.findById(promo._id).lean(), userId, now);
+      if (!message) {
+        // Nothing explains the failure: a concurrent undo freed a slot. Retry once, then give up.
+        reservedDoc = await reservePromo(promo, userId, now);
+        if (!reservedDoc) message = MSG.exhausted;
+      }
+      if (!reservedDoc) {
+        await undo(); // (d) release the claim only
+        return fail(res, 400, message);
+      }
     }
     state.reserved = { promoId: promo._id, userId };
 
@@ -201,10 +202,10 @@ exports.applyPromo = async (req, res) => {
     // meanwhile, re-read it and price the CURRENT dates instead (bounded retries).
     let updated = null;
     for (let attempt = 0; attempt < MAX_FINALISE_ATTEMPTS && !updated; attempt++) {
-      const discount = computeDiscount(promo, snap.subtotal);
+      const { discount, totalPrice } = priceOf(promo, snap.subtotal);
       updated = await Booking.findOneAndUpdate(
         { _id: booking._id, promo: promo._id, date: snap.date, returnDate: snap.returnDate, provider: snap.provider },
-        { $set: { discount, totalPrice: Math.max(0, round2(snap.subtotal - discount)) } },
+        { $set: { discount, totalPrice } },
         { new: true }
       ).populate(PROVIDER_POPULATE);
       if (updated) break;
@@ -243,4 +244,5 @@ exports.applyPromo = async (req, res) => {
 
 exports.computeDiscount = computeDiscount;
 exports.undoApply = undoApply;
+exports.rejectionMessage = rejectionMessage;
 exports.undoSteps = undoSteps;

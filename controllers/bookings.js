@@ -2,12 +2,9 @@ const mongoose = require('mongoose');
 const Booking = require('../models/Booking');
 const Provider = require('../models/Provider');
 const PromoCode = require('../models/PromoCode');
-
-// promos.js requires this module, so computeDiscount is resolved at call time.
-const computeDiscount = (...args) => require('./promos').computeDiscount(...args);
+const { computeSubtotal, priceOf } = require('../utils/pricing');
 
 const MAX_BOOKINGS_PER_USER = 3;
-const DAY_MS = 86400000;
 const PROVIDER_POPULATE = { path: 'provider', select: 'name address tel' };
 
 const fail = (res, status, message) =>
@@ -30,10 +27,6 @@ const parseDate = (value) => {
   const d = new Date(value);
   return Number.isNaN(d.getTime()) ? null : d;
 };
-
-// dailyRate x whole days, at least one day (returnDate may equal date).
-const computeSubtotal = (dailyRate, date, returnDate) =>
-  dailyRate * Math.max(1, Math.ceil((returnDate - date) / DAY_MS));
 
 // Returns the booking, or sends 404 / 403 itself and returns null.
 const loadOwnedBooking = async (req, res) => {
@@ -108,8 +101,7 @@ exports.addBooking = async (req, res) => {
       provider: provider._id,
       date,
       returnDate,
-      totalPrice: computeSubtotal(provider.dailyRate, date, returnDate),
-      discount: 0
+      ...priceOf(null, computeSubtotal(provider.dailyRate, date, returnDate))
     });
     res.status(201).json({ success: true, data: booking });
   } catch (err) {
@@ -159,12 +151,9 @@ exports.updateBooking = async (req, res) => {
       if (!provider) return fail(res, 404, 'Provider not found');
 
       const subtotal = computeSubtotal(provider.dailyRate, date, returnDate);
-      let discount = 0;
-      if (current.promo) {
-        // A promo stays attached: re-derive the discount from the new subtotal.
-        const promo = await PromoCode.findById(current.promo).lean();
-        if (promo) discount = computeDiscount(promo, subtotal);
-      }
+      // A promo stays attached: re-derive the discount from the new subtotal.
+      const promo = current.promo ? await PromoCode.findById(current.promo).lean() : null;
+      const { discount, totalPrice } = priceOf(promo, subtotal);
 
       const updated = await Booking.findOneAndUpdate(
         {
@@ -174,7 +163,7 @@ exports.updateBooking = async (req, res) => {
           returnDate: current.returnDate,
           provider: currentProviderId
         },
-        { $set: { date, returnDate, provider: provider._id, discount, totalPrice: Math.max(0, subtotal - discount) } },
+        { $set: { date, returnDate, provider: provider._id, discount, totalPrice } },
         { new: true }
       ).populate(PROVIDER_POPULATE);
       if (updated) return res.status(200).json({ success: true, data: updated });
