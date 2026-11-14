@@ -4,7 +4,7 @@ const mongoose = require('mongoose');
 const PromoCode = require('../models/PromoCode');
 const PromoRedemption = require('../models/PromoRedemption');
 const Booking = require('../models/Booking');
-const { undoApply, undoSteps } = require('../controllers/promos');
+const { undoApply, undoSteps, rejectionMessage } = require('../controllers/promos');
 
 const noq = (process.env.MONGO_URI || '').split('?')[0];
 if (!noq.endsWith('_test')) {
@@ -79,6 +79,16 @@ const run = async (state, steps) => {
     await run({ claimed: null, redemption: null, reserved: { promoId: f.promo._id, userId: f.uid.toString() } }, undoSteps);
     s = await read(f);
     check(s.p.redemptionCount === 0 && s.p.usage[f.uid] === 0, `unreserve on zero counters stays at zero (${s.p.redemptionCount}, ${s.p.usage[f.uid]})`);
+
+    // 5. rejectionMessage never blames a per-user limit that does not exist.
+    const now = new Date();
+    const window = { validFrom: new Date(now - 1000), validTo: new Date(now.getTime() + 86400000) };
+    const uidStr = new mongoose.Types.ObjectId().toString();
+    const noLimit = { ...window, maxRedemptions: 5, redemptionCount: 4, usage: { [uidStr]: 9 } };
+    check(rejectionMessage(noLimit, uidStr, now) === null, 'no perUserLimit, count below max: no per-user message (unexplained -> null)');
+    check(rejectionMessage({ ...noLimit, perUserLimit: 2 }, uidStr, now) === 'You have reached the per-user limit for this promo code', 'perUserLimit 2 with usage 9: per-user message');
+    check(rejectionMessage({ ...noLimit, perUserLimit: 2, usage: {} }, uidStr, now) === null, 'perUserLimit 2 with no usage: unexplained -> null');
+    check(rejectionMessage({ ...noLimit, redemptionCount: 5 }, uidStr, now) === 'Promo code has reached its maximum redemptions', 'count at max: exhausted message');
   } finally {
     await PromoRedemption.deleteMany({ promo: { $in: ids.promos } });
     await Booking.deleteMany({ _id: { $in: ids.bookings } });

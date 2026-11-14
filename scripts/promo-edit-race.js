@@ -69,6 +69,8 @@ const check = (ok, label) => {
 
     let bad = 0;
     let badStatus = 0;
+    let badCounters = 0;
+    const counterSamples = [];
     const samples = [];
     for (let i = 0; i < ROUNDS; i++) {
       const token = users[i];
@@ -96,6 +98,14 @@ const check = (ok, label) => {
       const subtotal = RATE * days;
       const expDiscount = a.status === 200 ? subtotal * 0.1 : 0;
       const ok = d.promo === (a.status === 200 ? promoId : null) && d.discount === expDiscount && d.totalPrice === subtotal - expDiscount;
+      // Counters must agree once the race settles: redemptionCount == redemption rows == sum of usage.
+      const pd = await PromoCode.findById(promoId).lean();
+      const rows = await PromoRedemption.countDocuments({ promo: promoId });
+      const usageSum = Object.values(pd.usage || {}).reduce((x, y) => x + y, 0);
+      if (!(pd.redemptionCount === rows && rows === usageSum)) {
+        badCounters += 1;
+        if (counterSamples.length < 3) counterSamples.push(`round ${i}: count=${pd.redemptionCount} rows=${rows} usageSum=${usageSum}`);
+      }
       if (!ok) {
         bad += 1;
         if (samples.length < 3) samples.push(`apply=${a.status} put=${p.status} days=${days} discount=${d.discount} total=${d.totalPrice}`);
@@ -103,6 +113,8 @@ const check = (ok, label) => {
     }
     check(badStatus === 0, `${ROUNDS} rounds: apply and edit each answer 200 or a clean 4xx (${badStatus} unclean)`);
     check(bad === 0, `${ROUNDS} rounds: promo, discount and totalPrice always match the FINAL dates (${bad} inconsistent)`);
+    check(badCounters === 0, `${ROUNDS} rounds: redemptionCount == redemption rows == sum of usage after every round (${badCounters} mismatches)`);
+    counterSamples.forEach((c) => console.log('  counters: ' + c));
     samples.forEach((s) => console.log('  inconsistent: ' + s));
   } catch (e) {
     console.error('promo-edit-race error: ' + e.message);

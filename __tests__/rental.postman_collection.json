@@ -5356,6 +5356,407 @@
             ],
             "url": "{{baseUrl}}/api/v1/promos"
           }
+        },
+        {
+          "name": "rounding: register user",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set('pr_d7', new Date(new Date(pm.collectionVariables.get('pr_d0')).getTime() + 7 * 86400000).toISOString());"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('registered rounding user', function () {",
+                  "  pm.response.to.have.status(201);",
+                  "  pm.collectionVariables.set('prRT', pm.response.json().token);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/auth/register",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"name\":\"promoR\",\"telephone\":\"0812345678\",\"email\":\"promor{{pr_sfx}}@example.com\",\"password\":\"secret123\"}"
+            }
+          }
+        },
+        {
+          "name": "rounding: admin creates 33.33 provider",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('cents provider created', function () {",
+                  "  pm.response.to.have.status(201);",
+                  "  pm.collectionVariables.set('pr_cents', pm.response.json().data._id);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/providers",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"name\":\"Promo Cents Provider\",\"address\":\"7 Promo Road\",\"tel\":\"020000007\",\"dailyRate\":33.33}"
+            }
+          }
+        },
+        {
+          "name": "rounding: admin creates 7 percent code",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('7 percent code created', function () {",
+                  "  pm.response.to.have.status(201);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/promos",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"code\":\"SEVEN{{pr_sfx}}\",\"type\":\"percentage\",\"value\":7,\"validFrom\":\"{{pr_from}}\",\"validTo\":\"{{pr_to}}\",\"maxRedemptions\":1000}"
+            }
+          }
+        },
+        {
+          "name": "rounding: create 2-day booking",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('2-day booking created', function () {",
+                  "  pm.response.to.have.status(201);",
+                  "  pm.collectionVariables.set('pr_rb2', pm.response.json().data._id);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{prRT}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/providers/{{pr_cents}}/bookings",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"date\":\"{{pr_d0}}\",\"returnDate\":\"{{pr_d2}}\"}"
+            }
+          }
+        },
+        {
+          "name": "rounding: apply 7 percent to the 2-day booking",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('2-day apply is exact', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  const d = pm.response.json().data;",
+                  "  pm.expect(d.totalPrice).to.eql(61.99);",
+                  "  pm.expect(d.discount).to.eql(4.67);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{prRT}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/bookings/{{pr_rb2}}/promo",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"code\":\"SEVEN{{pr_sfx}}\"}"
+            }
+          }
+        },
+        {
+          "name": "rounding: PUT identical dates on the 2-day booking",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('2-day PUT keeps the exact values', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  const d = pm.response.json().data;",
+                  "  pm.expect(d.totalPrice).to.eql(61.99);",
+                  "  pm.expect(d.discount).to.eql(4.67);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{prRT}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/bookings/{{pr_rb2}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"date\":\"{{pr_d0}}\",\"returnDate\":\"{{pr_d2}}\"}"
+            }
+          }
+        },
+        {
+          "name": "rounding: GET the 2-day booking",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('2-day stored values are exact', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  const d = pm.response.json().data;",
+                  "  pm.expect(d.totalPrice).to.eql(61.99);",
+                  "  pm.expect(d.discount).to.eql(4.67);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{prRT}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/bookings/{{pr_rb2}}",
+            "body": {
+              "mode": "raw",
+              "raw": "null"
+            }
+          }
+        },
+        {
+          "name": "rounding: create 7-day booking",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('7-day booking created', function () {",
+                  "  pm.response.to.have.status(201);",
+                  "  pm.collectionVariables.set('pr_rb7', pm.response.json().data._id);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{prRT}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/providers/{{pr_cents}}/bookings",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"date\":\"{{pr_d0}}\",\"returnDate\":\"{{pr_d7}}\"}"
+            }
+          }
+        },
+        {
+          "name": "rounding: apply 7 percent to the 7-day booking",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('7-day apply is exact', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  const d = pm.response.json().data;",
+                  "  pm.expect(d.totalPrice).to.eql(216.98);",
+                  "  pm.expect(d.discount).to.eql(16.33);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{prRT}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/bookings/{{pr_rb7}}/promo",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"code\":\"SEVEN{{pr_sfx}}\"}"
+            }
+          }
+        },
+        {
+          "name": "rounding: PUT identical dates on the 7-day booking",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('7-day PUT keeps the exact values', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  const d = pm.response.json().data;",
+                  "  pm.expect(d.totalPrice).to.eql(216.98);",
+                  "  pm.expect(d.discount).to.eql(16.33);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{prRT}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/bookings/{{pr_rb7}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"date\":\"{{pr_d0}}\",\"returnDate\":\"{{pr_d7}}\"}"
+            }
+          }
+        },
+        {
+          "name": "rounding: GET the 7-day booking",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('7-day stored values are exact', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  const d = pm.response.json().data;",
+                  "  pm.expect(d.totalPrice).to.eql(216.98);",
+                  "  pm.expect(d.discount).to.eql(16.33);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{prRT}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/bookings/{{pr_rb7}}",
+            "body": {
+              "mode": "raw",
+              "raw": "null"
+            }
+          }
         }
       ]
     },
