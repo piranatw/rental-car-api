@@ -891,7 +891,7 @@
           }
         },
         {
-          "name": "provider delete as admin",
+          "name": "provider delete as admin (no bookings)",
           "event": [
             {
               "listen": "test",
@@ -913,6 +913,30 @@
               {
                 "key": "Authorization",
                 "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/providers/{{tempProviderId}}"
+          }
+        },
+        {
+          "name": "deleted provider is gone",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 404', function () { pm.response.to.have.status(404);  });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
               }
             ],
             "url": "{{baseUrl}}/api/v1/providers/{{tempProviderId}}"
@@ -2070,6 +2094,94 @@
               "mode": "raw",
               "raw": "{\"date\":\"2030-01-01\",\"returnDate\":\"2030-01-03\"}"
             }
+          }
+        },
+        {
+          "name": "provider with bookings cannot be deleted",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('delete refused with 409', function () {",
+                  "  pm.response.to.have.status(409);",
+                  "  pm.expect(pm.response.json().message).to.eql('Provider has bookings and cannot be deleted');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/providers/{{alphaId}}"
+          }
+        },
+        {
+          "name": "provider still listed after refused delete",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Alpha Rentals still listed', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  const names = pm.response.json().data.map(function (p) { return p.name; });",
+                  "  pm.expect(names).to.include('Alpha Rentals');",
+                  "  pm.expect(names).to.include('Beta Cars');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/providers"
+          }
+        },
+        {
+          "name": "booking still retrievable after refused delete",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', function () { pm.response.to.have.status(200);  });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/bookings/{{bkA3}}"
           }
         }
       ]
