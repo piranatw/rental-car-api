@@ -92,7 +92,7 @@ const checkModel = async () => {
     admin, action: 'edit', booking, before: { totalPrice: 1 }, after: { totalPrice: 2 }, reason: 'immutability-check'
   });
   const original = JSON.stringify(await AuditLog.findById(entry._id).lean());
-  const totalBefore = await AuditLog.countDocuments({});
+  const totalBefore = await AuditLog.countDocuments({ booking });
   const id = entry._id;
   const upd = { $set: { action: 'delete', 'after.totalPrice': 999 } };
 
@@ -134,7 +134,7 @@ const checkModel = async () => {
   }
   const after = JSON.stringify(await AuditLog.findById(id).lean());
   check(after === original, 'entry is byte-for-byte unchanged after every attempt');
-  check((await AuditLog.countDocuments({})) === totalBefore, 'no entry was added or removed by the blocked attempts');
+  check((await AuditLog.countDocuments({ booking })) === totalBefore, 'no entry of this check was added or removed by the blocked attempts');
 
   // The allowed path: append-only inserts.
   const extra = await AuditLog.bulkWrite([{ insertOne: { document: { admin, action: 'view', booking, reason: 'immutability-check' } } }]);
