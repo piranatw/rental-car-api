@@ -22,6 +22,7 @@ app.use('/api/v1/auth', require('./routes/auth'));
 app.use('/api/v1/providers', require('./routes/providers'));
 app.use('/api/v1/bookings', require('./routes/bookings'));
 app.use('/api/v1/promos', require('./routes/promos'));
+app.use('/api/v1/audit', require('./routes/audit'));
 
 const seedAdmin = async () => {
   const email = process.env.SEED_ADMIN_EMAIL;
@@ -56,9 +57,12 @@ const start = async () => {
   });
 };
 
-start().catch((err) => {
-  console.error(`Startup failed: ${err.message}`);
-  process.exit(1);
-});
+// Importing the app (scripts/audit-immutability-check.js) must not open a listener or a connection.
+if (require.main === module) {
+  start().catch((err) => {
+    console.error(`Startup failed: ${err.message}`);
+    process.exit(1);
+  });
+}
 
 module.exports = app;

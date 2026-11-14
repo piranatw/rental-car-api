@@ -25,7 +25,7 @@ export NODE_ENV=test
 
 # Pass A: folders run with the IP login limiter skipped (NODE_ENV=test). To add a
 # folder to the suite, add its name here -- nothing else needs to change.
-PASS_A_FOLDERS=(Auth Bookings LoginProtection Promos)
+PASS_A_FOLDERS=(Auth Bookings LoginProtection Promos Audit)
 # Pass B: folders run on a second server with RATE_LIMIT_FORCE=1 (fresh limiter state).
 PASS_B_FOLDERS=(RateLimit429)
 
@@ -98,6 +98,8 @@ overall=0
 
 echo "=== Pass A: ${PASS_A_FOLDERS[*]} (limiter skipped) ==="
 start_server /tmp/rental-api-test-server.log || exit 1
+echo "=== Seed audit log (5000 entries) ==="
+node scripts/seed-audit.js || exit 1
 run_folders newman-report.json 1 "${PASS_A_FOLDERS[@]}" || overall=1
 echo "=== Lock expiry check ==="
 node scripts/lock-expiry-check.js || overall=1
@@ -111,6 +113,12 @@ echo "=== Promo edit race check ==="
 node scripts/promo-edit-race.js || overall=1
 echo "=== Timing check ==="
 node scripts/timing-check.js || overall=1
+echo "=== Audit index check ==="
+node scripts/audit-index-check.js || overall=1
+echo "=== Audit failure/order check ==="
+node scripts/audit-failure-check.js || overall=1
+echo "=== Audit immutability check ==="
+node scripts/audit-immutability-check.js || overall=1
 echo "=== Env validator check ==="
 node scripts/env-check.js || overall=1
 stop_server
