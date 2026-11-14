@@ -373,6 +373,29 @@
           }
         },
         {
+          "name": "me with a garbage token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('garbage token returns 401', function () {",
+                  "  pm.response.to.have.status(401);",
+                  "});",
+                  "pm.environment.set('invalidStatus', pm.response.code);",
+                  "pm.environment.set('invalidBody', pm.response.text());"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer not-a-real-token" }],
+            "url": "{{baseUrl}}/api/v1/auth/me"
+          }
+        },
+        {
           "name": "me with the same token after logout",
           "event": [
             {
@@ -383,7 +406,10 @@
                   "pm.test('revoked token returns 401', function () {",
                   "  pm.response.to.have.status(401);",
                   "});",
-                  "pm.environment.set('revokedBody', pm.response.text());"
+                  "pm.test('revoked response is identical to the garbage-token response', function () {",
+                  "  pm.expect(pm.response.code).to.eql(Number(pm.environment.get('invalidStatus')));",
+                  "  pm.expect(pm.response.json()).to.deep.eql(JSON.parse(pm.environment.get('invalidBody')));",
+                  "});"
                 ]
               }
             }
@@ -477,8 +503,9 @@
                   "pm.test('first (revoked) token still returns 401', function () {",
                   "  pm.response.to.have.status(401);",
                   "});",
-                  "pm.test('revoked response body is unchanged', function () {",
-                  "  pm.expect(pm.response.text()).to.eql(pm.environment.get('revokedBody'));",
+                  "pm.test('revoked response is identical to the garbage-token response', function () {",
+                  "  pm.expect(pm.response.code).to.eql(Number(pm.environment.get('invalidStatus')));",
+                  "  pm.expect(pm.response.json()).to.deep.eql(JSON.parse(pm.environment.get('invalidBody')));",
                   "});"
                 ]
               }
