@@ -23,6 +23,12 @@ esac
 export PORT="${PORT:-5050}"
 export NODE_ENV=test
 
+# Pass A: folders run with the IP login limiter skipped (NODE_ENV=test). To add a
+# folder to the suite, add its name here -- nothing else needs to change.
+PASS_A_FOLDERS=(Auth Bookings LoginProtection)
+# Pass B: folders run on a second server with RATE_LIMIT_FORCE=1 (fresh limiter state).
+PASS_B_FOLDERS=(RateLimit429)
+
 # Seed credentials come from the same values the Postman environment uses.
 if [ -n "${adminEmail:-}" ] && [ -n "${adminPassword:-}" ]; then
   export SEED_ADMIN_EMAIL="$adminEmail"
@@ -41,32 +47,65 @@ mongoose.connect(process.env.MONGO_URI, { serverSelectionTimeoutMS: 3000 })
   .catch((e) => { console.error('Could not drop test database: ' + e.message); process.exit(1); });
 " || exit 1
 
-node server.js > /tmp/rental-api-test-server.log 2>&1 &
-SERVER_PID=$!
-trap 'kill "$SERVER_PID" 2>/dev/null' EXIT
-
-ready=0
-for _ in $(seq 1 50); do
-  if ! kill -0 "$SERVER_PID" 2>/dev/null; then
-    echo "Server exited early; see /tmp/rental-api-test-server.log" >&2
-    exit 1
+SERVER_PID=""
+stop_server() {
+  if [ -n "$SERVER_PID" ]; then
+    kill "$SERVER_PID" 2>/dev/null
+    wait "$SERVER_PID" 2>/dev/null
+    SERVER_PID=""
   fi
-  if (exec 3<>"/dev/tcp/127.0.0.1/$PORT") 2>/dev/null; then ready=1; break; fi
-  sleep 0.2
-done
-if [ "$ready" -ne 1 ]; then
-  echo "Server did not open port $PORT in time" >&2
-  exit 1
-fi
+}
+trap stop_server EXIT
 
-npx newman run __tests__/rental.postman_collection.json \
-  -e __tests__/rental.postman_environment.json \
-  --env-var "baseUrl=http://localhost:$PORT" \
-  --env-var "adminEmail=$adminEmail" \
-  --env-var "adminPassword=$adminPassword" \
-  --reporters cli,json --reporter-json-export newman-report.json
-rc=$?
+# start_server <log-file> [VAR=value ...]  -- starts node server.js, waits for the port.
+start_server() {
+  local log="$1"; shift
+  env "$@" node server.js > "$log" 2>&1 &
+  SERVER_PID=$!
+  local ready=0
+  for _ in $(seq 1 50); do
+    if ! kill -0 "$SERVER_PID" 2>/dev/null; then
+      echo "Server exited early; see $log" >&2
+      SERVER_PID=""
+      return 1
+    fi
+    if (exec 3<>"/dev/tcp/127.0.0.1/$PORT") 2>/dev/null; then ready=1; break; fi
+    sleep 0.2
+  done
+  if [ "$ready" -ne 1 ]; then
+    echo "Server did not open port $PORT in time" >&2
+    stop_server
+    return 1
+  fi
+}
 
-kill "$SERVER_PID" 2>/dev/null
-wait "$SERVER_PID" 2>/dev/null
-exit "$rc"
+# run_folders <report-file> <with-admin:0|1> <folder>...
+run_folders() {
+  local report="$1" admin="$2"; shift 2
+  local args=() f
+  for f in "$@"; do args+=(--folder "$f"); done
+  local creds=()
+  # Pass B skips the admin pre-login: it would consume one of the limiter's 10 slots.
+  if [ "$admin" = "1" ]; then creds=(--env-var "adminEmail=$adminEmail" --env-var "adminPassword=$adminPassword"); fi
+  npx newman run __tests__/rental.postman_collection.json \
+    -e __tests__/rental.postman_environment.json \
+    --env-var "baseUrl=http://localhost:$PORT" \
+    ${creds[@]+"${creds[@]}"} "${args[@]}" \
+    --reporters cli,json --reporter-json-export "$report"
+}
+
+overall=0
+
+echo "=== Pass A: ${PASS_A_FOLDERS[*]} (limiter skipped) ==="
+start_server /tmp/rental-api-test-server.log || exit 1
+run_folders newman-report.json 1 "${PASS_A_FOLDERS[@]}" || overall=1
+echo "=== Lock expiry check ==="
+node scripts/lock-expiry-check.js || overall=1
+stop_server
+
+echo "=== Pass B: ${PASS_B_FOLDERS[*]} (RATE_LIMIT_FORCE=1, fresh server) ==="
+start_server /tmp/rental-api-test-server-b.log RATE_LIMIT_FORCE=1 || exit 1
+run_folders newman-report-b.json 0 "${PASS_B_FOLDERS[@]}" || overall=1
+stop_server
+
+exit "$overall"
