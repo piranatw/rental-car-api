@@ -2185,6 +2185,1397 @@
           }
         }
       ]
+    },
+    {
+      "name": "LoginProtection",
+      "item": [
+        {
+          "name": "a: register throwaway user",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.environment.set('lp_a_email', 'lpa' + Date.now() + '@example.com');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('throwaway user registered', function () { pm.response.to.have.status(201); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/auth/register",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"name\":\"LP User\",\"telephone\":\"0811111111\",\"email\":\"{{lp_a_email}}\",\"password\":\"secret123\"}"
+            }
+          }
+        },
+        {
+          "name": "a: wrong password",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('wrong password: 401', function () { pm.response.to.have.status(401); });",
+                  "pm.environment.set('lp_a_wrongBody', pm.response.text());"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\":\"{{lp_a_email}}\",\"password\":\"wrongpass1\"}"
+            }
+          }
+        },
+        {
+          "name": "a: unknown email",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('unknown email: 401 with body deep-equal to wrong-password body', function () {",
+                  "  pm.response.to.have.status(401);",
+                  "  pm.expect(pm.response.json()).to.eql(JSON.parse(pm.environment.get('lp_a_wrongBody')));",
+                  "  pm.expect(pm.response.json()).to.eql({ success: false, message: 'Invalid credentials' });",
+                  "  pm.expect(pm.response.text()).to.eql(pm.environment.get('lp_a_wrongBody'));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\":\"lp-nobody-never-registered@example.com\",\"password\":\"wrongpass1\"}"
+            }
+          }
+        },
+        {
+          "name": "b: register throwaway user",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.environment.set('lp_b_email', 'lpb' + Date.now() + '@example.com');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('throwaway user registered', function () { pm.response.to.have.status(201); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/auth/register",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"name\":\"LP User\",\"telephone\":\"0811111111\",\"email\":\"{{lp_b_email}}\",\"password\":\"secret123\"}"
+            }
+          }
+        },
+        {
+          "name": "b: wrong password 1",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('b wrong 1: 401 generic', function () {",
+                  "  pm.response.to.have.status(401);",
+                  "  pm.expect(pm.response.text()).to.eql('{\"success\":false,\"message\":\"Invalid credentials\"}');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\":\"{{lp_b_email}}\",\"password\":\"wrongpass1\"}"
+            }
+          }
+        },
+        {
+          "name": "b: wrong password 2",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('b wrong 2: 401 generic', function () {",
+                  "  pm.response.to.have.status(401);",
+                  "  pm.expect(pm.response.text()).to.eql('{\"success\":false,\"message\":\"Invalid credentials\"}');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\":\"{{lp_b_email}}\",\"password\":\"wrongpass1\"}"
+            }
+          }
+        },
+        {
+          "name": "b: wrong password 3",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('b wrong 3: 401 generic', function () {",
+                  "  pm.response.to.have.status(401);",
+                  "  pm.expect(pm.response.text()).to.eql('{\"success\":false,\"message\":\"Invalid credentials\"}');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\":\"{{lp_b_email}}\",\"password\":\"wrongpass1\"}"
+            }
+          }
+        },
+        {
+          "name": "b: wrong password 4",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('b wrong 4: 401 generic', function () {",
+                  "  pm.response.to.have.status(401);",
+                  "  pm.expect(pm.response.text()).to.eql('{\"success\":false,\"message\":\"Invalid credentials\"}');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\":\"{{lp_b_email}}\",\"password\":\"wrongpass1\"}"
+            }
+          }
+        },
+        {
+          "name": "b: wrong password 5",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('b wrong 5: 401 generic', function () {",
+                  "  pm.response.to.have.status(401);",
+                  "  pm.expect(pm.response.text()).to.eql('{\"success\":false,\"message\":\"Invalid credentials\"}');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\":\"{{lp_b_email}}\",\"password\":\"wrongpass1\"}"
+            }
+          }
+        },
+        {
+          "name": "b: CORRECT password during lock",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('locked account, correct password rejected: 401 generic', function () {",
+                  "  pm.response.to.have.status(401);",
+                  "  pm.expect(pm.response.text()).to.eql('{\"success\":false,\"message\":\"Invalid credentials\"}');",
+                  "});",
+                  "pm.test('no retryAfter, no Retry-After header, no lock wording', function () {",
+                  "  const t = pm.response.text();",
+                  "  pm.expect(t).to.not.include('retryAfter');",
+                  "  pm.expect(t.toLowerCase()).to.not.include('lock');",
+                  "  pm.expect(pm.response.headers.has('Retry-After')).to.eql(false);",
+                  "});",
+                  "pm.environment.set('lp_d_lockedCorrect', pm.response.text());",
+                  "pm.environment.set('lp_d_lockedCorrectStatus', String(pm.response.code));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\":\"{{lp_b_email}}\",\"password\":\"secret123\"}"
+            }
+          }
+        },
+        {
+          "name": "b: wrong password during lock",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('locked account, wrong password: 401 generic', function () {",
+                  "  pm.response.to.have.status(401);",
+                  "  pm.expect(pm.response.text()).to.eql('{\"success\":false,\"message\":\"Invalid credentials\"}');",
+                  "});",
+                  "pm.environment.set('lp_d_lockedWrong', pm.response.text());",
+                  "pm.environment.set('lp_d_lockedWrongStatus', String(pm.response.code));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\":\"{{lp_b_email}}\",\"password\":\"wrongpass1\"}"
+            }
+          }
+        },
+        {
+          "name": "c: register throwaway user",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.environment.set('lp_c_email', 'lpc' + Date.now() + '@example.com');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('throwaway user registered', function () { pm.response.to.have.status(201); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/auth/register",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"name\":\"LP User\",\"telephone\":\"0811111111\",\"email\":\"{{lp_c_email}}\",\"password\":\"secret123\"}"
+            }
+          }
+        },
+        {
+          "name": "c: wrong password 1",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('c wrong 1: 401 generic', function () {",
+                  "  pm.response.to.have.status(401);",
+                  "  pm.expect(pm.response.text()).to.eql('{\"success\":false,\"message\":\"Invalid credentials\"}');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\":\"{{lp_c_email}}\",\"password\":\"wrongpass1\"}"
+            }
+          }
+        },
+        {
+          "name": "c: wrong password 2",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('c wrong 2: 401 generic', function () {",
+                  "  pm.response.to.have.status(401);",
+                  "  pm.expect(pm.response.text()).to.eql('{\"success\":false,\"message\":\"Invalid credentials\"}');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\":\"{{lp_c_email}}\",\"password\":\"wrongpass1\"}"
+            }
+          }
+        },
+        {
+          "name": "c: wrong password 3",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('c wrong 3: 401 generic', function () {",
+                  "  pm.response.to.have.status(401);",
+                  "  pm.expect(pm.response.text()).to.eql('{\"success\":false,\"message\":\"Invalid credentials\"}');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\":\"{{lp_c_email}}\",\"password\":\"wrongpass1\"}"
+            }
+          }
+        },
+        {
+          "name": "c: success resets counter",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('c success: 200 with token', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.json().token).to.be.a('string');",
+                  "});",
+                  "pm.test('no internal lock fields in response', function () {",
+                  "  const t = pm.response.text();",
+                  "  pm.expect(t).to.not.include('failedLoginAttempts');",
+                  "  pm.expect(t).to.not.include('lockUntil');",
+                  "});",
+                  "pm.environment.set('lp_c_token', pm.response.json().token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\":\"{{lp_c_email}}\",\"password\":\"secret123\"}"
+            }
+          }
+        },
+        {
+          "name": "c: wrong password after reset 1",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('c post-reset wrong 1: 401 generic', function () {",
+                  "  pm.response.to.have.status(401);",
+                  "  pm.expect(pm.response.text()).to.eql('{\"success\":false,\"message\":\"Invalid credentials\"}');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\":\"{{lp_c_email}}\",\"password\":\"wrongpass1\"}"
+            }
+          }
+        },
+        {
+          "name": "c: wrong password after reset 2",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('c post-reset wrong 2: 401 generic', function () {",
+                  "  pm.response.to.have.status(401);",
+                  "  pm.expect(pm.response.text()).to.eql('{\"success\":false,\"message\":\"Invalid credentials\"}');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\":\"{{lp_c_email}}\",\"password\":\"wrongpass1\"}"
+            }
+          }
+        },
+        {
+          "name": "c: wrong password after reset 3",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('c post-reset wrong 3: 401 generic', function () {",
+                  "  pm.response.to.have.status(401);",
+                  "  pm.expect(pm.response.text()).to.eql('{\"success\":false,\"message\":\"Invalid credentials\"}');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\":\"{{lp_c_email}}\",\"password\":\"wrongpass1\"}"
+            }
+          }
+        },
+        {
+          "name": "c: wrong password after reset 4",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('c post-reset wrong 4: 401 generic', function () {",
+                  "  pm.response.to.have.status(401);",
+                  "  pm.expect(pm.response.text()).to.eql('{\"success\":false,\"message\":\"Invalid credentials\"}');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\":\"{{lp_c_email}}\",\"password\":\"wrongpass1\"}"
+            }
+          }
+        },
+        {
+          "name": "c: correct password still works (never 5 in a row)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('c final success: 200 with token', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.json().token).to.be.a('string');",
+                  "});",
+                  "pm.test('no internal lock fields in response', function () {",
+                  "  const t = pm.response.text();",
+                  "  pm.expect(t).to.not.include('failedLoginAttempts');",
+                  "  pm.expect(t).to.not.include('lockUntil');",
+                  "});",
+                  "pm.environment.set('lp_c_token', pm.response.json().token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\":\"{{lp_c_email}}\",\"password\":\"secret123\"}"
+            }
+          }
+        },
+        {
+          "name": "c: /auth/me exposes no lock fields",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('me: 200 and no internal lock fields', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.json().data.email).to.eql(pm.environment.get('lp_c_email'));",
+                  "});",
+                  "pm.test('no internal lock fields in response', function () {",
+                  "  const t = pm.response.text();",
+                  "  pm.expect(t).to.not.include('failedLoginAttempts');",
+                  "  pm.expect(t).to.not.include('lockUntil');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{lp_c_token}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/auth/me"
+          }
+        },
+        {
+          "name": "d: never-registered email wrong password 1",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('d ghost wrong 1: 401 generic', function () {",
+                  "  pm.response.to.have.status(401);",
+                  "  pm.expect(pm.response.text()).to.eql('{\"success\":false,\"message\":\"Invalid credentials\"}');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\":\"lp-ghost-never-registered@example.com\",\"password\":\"wrongpass1\"}"
+            }
+          }
+        },
+        {
+          "name": "d: never-registered email wrong password 2",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('d ghost wrong 2: 401 generic', function () {",
+                  "  pm.response.to.have.status(401);",
+                  "  pm.expect(pm.response.text()).to.eql('{\"success\":false,\"message\":\"Invalid credentials\"}');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\":\"lp-ghost-never-registered@example.com\",\"password\":\"wrongpass1\"}"
+            }
+          }
+        },
+        {
+          "name": "d: never-registered email wrong password 3",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('d ghost wrong 3: 401 generic', function () {",
+                  "  pm.response.to.have.status(401);",
+                  "  pm.expect(pm.response.text()).to.eql('{\"success\":false,\"message\":\"Invalid credentials\"}');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\":\"lp-ghost-never-registered@example.com\",\"password\":\"wrongpass1\"}"
+            }
+          }
+        },
+        {
+          "name": "d: never-registered email wrong password 4",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('d ghost wrong 4: 401 generic', function () {",
+                  "  pm.response.to.have.status(401);",
+                  "  pm.expect(pm.response.text()).to.eql('{\"success\":false,\"message\":\"Invalid credentials\"}');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\":\"lp-ghost-never-registered@example.com\",\"password\":\"wrongpass1\"}"
+            }
+          }
+        },
+        {
+          "name": "d: never-registered email wrong password 5",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('d ghost wrong 5: 401 generic', function () {",
+                  "  pm.response.to.have.status(401);",
+                  "  pm.expect(pm.response.text()).to.eql('{\"success\":false,\"message\":\"Invalid credentials\"}');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\":\"lp-ghost-never-registered@example.com\",\"password\":\"wrongpass1\"}"
+            }
+          }
+        },
+        {
+          "name": "d: never-registered email, \"correct\" password",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('ghost correct-pw response byte-identical to locked registered account (status and body)', function () {",
+                  "  pm.expect(String(pm.response.code)).to.eql(pm.environment.get('lp_d_lockedCorrectStatus'));",
+                  "  pm.expect(pm.response.text()).to.eql(pm.environment.get('lp_d_lockedCorrect'));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\":\"lp-ghost-never-registered@example.com\",\"password\":\"secret123\"}"
+            }
+          }
+        },
+        {
+          "name": "d: never-registered email, wrong password",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('ghost wrong-pw response byte-identical to locked registered account (status and body)', function () {",
+                  "  pm.expect(String(pm.response.code)).to.eql(pm.environment.get('lp_d_lockedWrongStatus'));",
+                  "  pm.expect(pm.response.text()).to.eql(pm.environment.get('lp_d_lockedWrong'));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\":\"lp-ghost-never-registered@example.com\",\"password\":\"wrongpass1\"}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "RateLimit429",
+      "item": [
+        {
+          "name": "rl: register throwaway user",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.environment.set('lp_rl_email', 'lprl' + Date.now() + '@example.com');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('throwaway user registered', function () { pm.response.to.have.status(201); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/auth/register",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"name\":\"RL User\",\"telephone\":\"0811111111\",\"email\":\"{{lp_rl_email}}\",\"password\":\"secret123\"}"
+            }
+          }
+        },
+        {
+          "name": "rl: login 1 allowed",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('login 1: 200 with token', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.json().token).to.be.a('string');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\":\"{{lp_rl_email}}\",\"password\":\"secret123\"}"
+            }
+          }
+        },
+        {
+          "name": "rl: login 2 allowed",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('login 2: 200 with token', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.json().token).to.be.a('string');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\":\"{{lp_rl_email}}\",\"password\":\"secret123\"}"
+            }
+          }
+        },
+        {
+          "name": "rl: login 3 allowed",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('login 3: 200 with token', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.json().token).to.be.a('string');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\":\"{{lp_rl_email}}\",\"password\":\"secret123\"}"
+            }
+          }
+        },
+        {
+          "name": "rl: login 4 allowed",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('login 4: 200 with token', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.json().token).to.be.a('string');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\":\"{{lp_rl_email}}\",\"password\":\"secret123\"}"
+            }
+          }
+        },
+        {
+          "name": "rl: login 5 allowed",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('login 5: 200 with token', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.json().token).to.be.a('string');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\":\"{{lp_rl_email}}\",\"password\":\"secret123\"}"
+            }
+          }
+        },
+        {
+          "name": "rl: login 6 allowed (spoofed X-Forwarded-For)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('login 6: 200 with token', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.json().token).to.be.a('string');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Forwarded-For",
+                "value": "203.0.113.6"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\":\"{{lp_rl_email}}\",\"password\":\"secret123\"}"
+            }
+          }
+        },
+        {
+          "name": "rl: login 7 allowed (spoofed X-Forwarded-For)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('login 7: 200 with token', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.json().token).to.be.a('string');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Forwarded-For",
+                "value": "203.0.113.7"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\":\"{{lp_rl_email}}\",\"password\":\"secret123\"}"
+            }
+          }
+        },
+        {
+          "name": "rl: login 8 allowed (spoofed X-Forwarded-For)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('login 8: 200 with token', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.json().token).to.be.a('string');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Forwarded-For",
+                "value": "203.0.113.8"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\":\"{{lp_rl_email}}\",\"password\":\"secret123\"}"
+            }
+          }
+        },
+        {
+          "name": "rl: login 9 allowed (spoofed X-Forwarded-For)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('login 9: 200 with token', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.json().token).to.be.a('string');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Forwarded-For",
+                "value": "203.0.113.9"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\":\"{{lp_rl_email}}\",\"password\":\"secret123\"}"
+            }
+          }
+        },
+        {
+          "name": "rl: login 10 allowed (spoofed X-Forwarded-For)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('login 10: 200 with token', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.json().token).to.be.a('string');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Forwarded-For",
+                "value": "203.0.113.10"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\":\"{{lp_rl_email}}\",\"password\":\"secret123\"}"
+            }
+          }
+        },
+        {
+          "name": "rl: login 11 is rate limited (new spoofed X-Forwarded-For)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('11th login: 429 with Retry-After and matching retryAfter', function () {",
+                  "  pm.response.to.have.status(429);",
+                  "  const h = Number(pm.response.headers.get('Retry-After'));",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(Number.isInteger(h)).to.eql(true);",
+                  "  pm.expect(h).to.be.at.least(1);",
+                  "  pm.expect(h).to.be.at.most(60);",
+                  "  pm.expect(body.success).to.eql(false);",
+                  "  pm.expect(body.message).to.be.a('string');",
+                  "  pm.expect(body.retryAfter).to.eql(h);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Forwarded-For",
+                "value": "203.0.113.11"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\":\"{{lp_rl_email}}\",\"password\":\"secret123\"}"
+            }
+          }
+        },
+        {
+          "name": "rl: login 12 still limited (no header)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('12th login: still 429', function () { pm.response.to.have.status(429); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\":\"{{lp_rl_email}}\",\"password\":\"wrongpass1\"}"
+            }
+          }
+        }
+      ]
     }
   ]
 }
