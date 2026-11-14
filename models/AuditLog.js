@@ -22,9 +22,10 @@ const AuditLogSchema = new mongoose.Schema(
   { strict: 'throw', timestamps: false, versionKey: false, minimize: false }
 );
 
-AuditLogSchema.index({ admin: 1, timestamp: -1 });
-AuditLogSchema.index({ booking: 1, timestamp: -1 });
-AuditLogSchema.index({ timestamp: -1 });
+// Each index ends in _id: the fixed sort (timestamp desc, _id desc) is then served in index order.
+AuditLogSchema.index({ admin: 1, timestamp: -1, _id: -1 });
+AuditLogSchema.index({ booking: 1, timestamp: -1, _id: -1 });
+AuditLogSchema.index({ timestamp: -1, _id: -1 });
 
 const refuse = (what) => new Error(`Audit entries are append-only: ${what} is not allowed`);
 
