@@ -1,5 +1,7 @@
+const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const RevokedToken = require('../models/RevokedToken');
 
 exports.protect = async (req, res, next) => {
   const header = req.headers.authorization;
@@ -12,6 +14,10 @@ exports.protect = async (req, res, next) => {
   }
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+    if (await RevokedToken.exists({ tokenHash })) {
+      return res.status(401).json({ success: false, message: 'Not authorized to access this route' });
+    }
     const user = await User.findById(decoded.id);
     if (!user) {
       return res.status(401).json({ success: false, message: 'Not authorized to access this route' });

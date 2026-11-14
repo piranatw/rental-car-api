@@ -1,4 +1,7 @@
+const crypto = require('crypto');
+const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const RevokedToken = require('../models/RevokedToken');
 
 const sendTokenResponse = (user, statusCode, res) => {
   const token = user.getSignedJwtToken();
@@ -63,4 +66,22 @@ exports.login = async (req, res) => {
 // GET /api/v1/auth/me
 exports.getMe = async (req, res) => {
   res.status(200).json({ success: true, data: req.user });
+};
+
+// POST /api/v1/auth/logout
+// protect has already verified the bearer token and confirmed it is not revoked.
+exports.logout = async (req, res) => {
+  try {
+    const token = req.headers.authorization.split(' ')[1];
+    const { exp } = jwt.decode(token);
+    await RevokedToken.create({
+      tokenHash: crypto.createHash('sha256').update(token).digest('hex'),
+      expiresAt: new Date(exp * 1000)
+    });
+    res.clearCookie('token');
+    res.status(200).json({ success: true, data: {} });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
 };
