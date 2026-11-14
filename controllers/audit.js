@@ -6,6 +6,8 @@ const OBJECT_ID = /^[0-9a-fA-F]{24}$/;
 const DATE_ONLY = /^(\d{4})-(\d{2})-(\d{2})$/;
 const DATE_TIME = /^(\d{4})-(\d{2})-(\d{2})T\d{2}:\d{2}(:\d{2}(\.\d{1,9})?)?(Z|[+-]\d{2}:\d{2})$/;
 const EDIT_KEYS = ['date', 'returnDate', 'provider', 'discount', 'totalPrice'];
+// Admin promo apply: the changed keys are drawn from these.
+const PROMO_KEYS = ['promo', 'discount', 'totalPrice'];
 
 const fail = (res, status, message) => res.status(status).json({ success: false, message });
 
@@ -141,3 +143,5 @@ exports.recordFailure = recordFailure;
 exports.diffFields = diffFields;
 exports.parseAuditQuery = parseAuditQuery;
 exports.EDIT_KEYS = EDIT_KEYS;
+exports.PROMO_KEYS = PROMO_KEYS;
+exports.SORT = SORT;
