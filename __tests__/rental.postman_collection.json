@@ -6201,6 +6201,3500 @@
           }
         }
       ]
+    },
+    {
+      "name": "Audit",
+      "item": [
+        {
+          "name": "register audit user U1",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const sfx = Date.now().toString(36) + Math.floor(Math.random() * 1e6).toString(36);",
+                  "const base = Date.now() + 10 * 86400000;",
+                  "const iso = function (ms) { return new Date(ms).toISOString(); };",
+                  "pm.collectionVariables.set('au_sfx', sfx);",
+                  "pm.collectionVariables.set('au_t0', iso(Date.now() - 5000));",
+                  "pm.collectionVariables.set('au_future1', iso(Date.now() + 2 * 86400000));",
+                  "pm.collectionVariables.set('au_future2', iso(Date.now() + 3 * 86400000));",
+                  "pm.collectionVariables.set('au_today', new Date().toISOString().slice(0, 10));",
+                  "pm.collectionVariables.set('au_d0', iso(base));",
+                  "pm.collectionVariables.set('au_d2', iso(base + 2 * 86400000));",
+                  "pm.collectionVariables.set('au_d4', iso(base + 4 * 86400000));",
+                  "pm.collectionVariables.set('au_promoFrom', iso(Date.now() - 86400000));",
+                  "pm.collectionVariables.set('au_promoTo', iso(Date.now() + 30 * 86400000));",
+                  "pm.collectionVariables.set('au_seedFrom', iso(Date.now() - 40 * 86400000));",
+                  "pm.collectionVariables.set('au_seedTo', iso(Date.now()));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('registered audit user U1', function () {",
+                  "  pm.response.to.have.status(201);",
+                  "  pm.collectionVariables.set('au1T', pm.response.json().token);",
+                  "  pm.collectionVariables.set('au_u1', pm.response.json().data.id);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/auth/register",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"name\":\"auditU1\",\"telephone\":\"0812345678\",\"email\":\"auditu1{{au_sfx}}@example.com\",\"password\":\"secret123\"}"
+            }
+          }
+        },
+        {
+          "name": "register audit user U2",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('registered audit user U2', function () {",
+                  "  pm.response.to.have.status(201);",
+                  "  pm.collectionVariables.set('au2T', pm.response.json().token);",
+                  "  pm.collectionVariables.set('au_u2', pm.response.json().data.id);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/auth/register",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"name\":\"auditU2\",\"telephone\":\"0812345678\",\"email\":\"auditu2{{au_sfx}}@example.com\",\"password\":\"secret123\"}"
+            }
+          }
+        },
+        {
+          "name": "admin reads own id",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('admin id known', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.json().data.role).to.eql('admin');",
+                  "  pm.collectionVariables.set('au_adm', pm.response.json().data._id);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/auth/me"
+          }
+        },
+        {
+          "name": "admin creates audit provider P1",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('provider P1 created', function () {",
+                  "  pm.response.to.have.status(201);",
+                  "  pm.collectionVariables.set('au_p1', pm.response.json().data._id);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/providers",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"name\":\"AuditProv1\",\"address\":\"9 Test Road\",\"tel\":\"090000001\",\"lateFeePerHour\":10,\"dailyRate\":1000}"
+            }
+          }
+        },
+        {
+          "name": "admin creates audit provider P2",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('provider P2 created', function () {",
+                  "  pm.response.to.have.status(201);",
+                  "  pm.collectionVariables.set('au_p2', pm.response.json().data._id);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/providers",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"name\":\"AuditProv2\",\"address\":\"9 Test Road\",\"tel\":\"090000002\",\"lateFeePerHour\":10,\"dailyRate\":2000}"
+            }
+          }
+        },
+        {
+          "name": "admin creates list probe 1",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('admin creates list probe 1', function () {",
+                  "  pm.response.to.have.status(201);",
+                  "  pm.expect(pm.response.json().data.totalPrice).to.eql(2000);",
+                  "  pm.collectionVariables.set('au_pa', pm.response.json().data._id);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/providers/{{au_p1}}/bookings",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"date\":\"{{au_d0}}\",\"returnDate\":\"{{au_d2}}\"}"
+            }
+          }
+        },
+        {
+          "name": "admin creates list probe 2",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('admin creates list probe 2', function () {",
+                  "  pm.response.to.have.status(201);",
+                  "  pm.expect(pm.response.json().data.totalPrice).to.eql(2000);",
+                  "  pm.collectionVariables.set('au_pb', pm.response.json().data._id);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/providers/{{au_p1}}/bookings",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"date\":\"{{au_d0}}\",\"returnDate\":\"{{au_d2}}\"}"
+            }
+          }
+        },
+        {
+          "name": "admin entry total before list",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('count admin entries', function () { pm.collectionVariables.set('au_nAdm', pm.response.json().total); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/audit?admin={{au_adm}}&limit=1"
+          }
+        },
+        {
+          "name": "admin lists bookings page 1 limit 2",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('paginated admin list', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  const j = pm.response.json();",
+                  "  pm.expect(j.success).to.eql(true);",
+                  "  pm.expect(j.count).to.eql(2);",
+                  "  pm.expect(j.data.length).to.eql(2);",
+                  "  pm.expect(j.page).to.eql(1);",
+                  "  pm.expect(j.total).to.be.at.least(6);",
+                  "  pm.expect(j.pages).to.eql(Math.ceil(j.total / 2));",
+                  "  pm.collectionVariables.set('au_l1', j.data[0]._id);",
+                  "  pm.collectionVariables.set('au_l2', j.data[1]._id);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/bookings?page=1&limit=2"
+          }
+        },
+        {
+          "name": "one view entry per listed booking",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('exactly two new view entries, one per returned booking', function () {",
+                  "  const j = pm.response.json();",
+                  "  pm.expect(j.total).to.eql(pm.collectionVariables.get('au_nAdm') + 2);",
+                  "  pm.expect(j.data.map(function (e) { return e.action; })).to.eql(['view', 'view']);",
+                  "  pm.expect(j.data.map(function (e) { return e.booking; }).sort()).to.eql([pm.collectionVariables.get('au_l1'), pm.collectionVariables.get('au_l2')].sort());",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/audit?admin={{au_adm}}&limit=2"
+          }
+        },
+        {
+          "name": "admin list page=0 is 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('admin list page=0 is 400', function () {",
+                  "  pm.response.to.have.status(400);",
+                  "  const j = pm.response.json();",
+                  "  pm.expect(j.success).to.eql(false);",
+                  "  pm.expect(j.message).to.be.a('string').and.not.empty;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/bookings?page=0"
+          }
+        },
+        {
+          "name": "admin list limit=101 is 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('admin list limit=101 is 400', function () {",
+                  "  pm.response.to.have.status(400);",
+                  "  const j = pm.response.json();",
+                  "  pm.expect(j.success).to.eql(false);",
+                  "  pm.expect(j.message).to.be.a('string').and.not.empty;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/bookings?limit=101"
+          }
+        },
+        {
+          "name": "admin list limit=abc is 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('admin list limit=abc is 400', function () {",
+                  "  pm.response.to.have.status(400);",
+                  "  const j = pm.response.json();",
+                  "  pm.expect(j.success).to.eql(false);",
+                  "  pm.expect(j.message).to.be.a('string').and.not.empty;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/bookings?limit=abc"
+          }
+        },
+        {
+          "name": "admin list page=1.5 is 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('admin list page=1.5 is 400', function () {",
+                  "  pm.response.to.have.status(400);",
+                  "  const j = pm.response.json();",
+                  "  pm.expect(j.success).to.eql(false);",
+                  "  pm.expect(j.message).to.be.a('string').and.not.empty;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/bookings?page=1.5"
+          }
+        },
+        {
+          "name": "admin list limit=0 is 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('admin list limit=0 is 400', function () {",
+                  "  pm.response.to.have.status(400);",
+                  "  const j = pm.response.json();",
+                  "  pm.expect(j.success).to.eql(false);",
+                  "  pm.expect(j.message).to.be.a('string').and.not.empty;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/bookings?limit=0"
+          }
+        },
+        {
+          "name": "invalid lists wrote no entries",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('only the valid list changed the count', function () {",
+                  "  pm.expect(pm.response.json().total).to.eql(pm.collectionVariables.get('au_nAdm') + 2);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/audit?admin={{au_adm}}&limit=1"
+          }
+        },
+        {
+          "name": "U1 creates b1",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('U1 creates b1', function () {",
+                  "  pm.response.to.have.status(201);",
+                  "  pm.expect(pm.response.json().data.totalPrice).to.eql(2000);",
+                  "  pm.collectionVariables.set('au_b1', pm.response.json().data._id);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{au1T}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/providers/{{au_p1}}/bookings",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"date\":\"{{au_d0}}\",\"returnDate\":\"{{au_d2}}\"}"
+            }
+          }
+        },
+        {
+          "name": "U1 creates b2",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('U1 creates b2', function () {",
+                  "  pm.response.to.have.status(201);",
+                  "  pm.expect(pm.response.json().data.totalPrice).to.eql(2000);",
+                  "  pm.collectionVariables.set('au_b2', pm.response.json().data._id);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{au1T}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/providers/{{au_p1}}/bookings",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"date\":\"{{au_d0}}\",\"returnDate\":\"{{au_d2}}\"}"
+            }
+          }
+        },
+        {
+          "name": "U1 creates b3",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('U1 creates b3', function () {",
+                  "  pm.response.to.have.status(201);",
+                  "  pm.expect(pm.response.json().data.totalPrice).to.eql(2000);",
+                  "  pm.collectionVariables.set('au_b3', pm.response.json().data._id);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{au1T}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/providers/{{au_p1}}/bookings",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"date\":\"{{au_d0}}\",\"returnDate\":\"{{au_d2}}\"}"
+            }
+          }
+        },
+        {
+          "name": "U2 creates b4",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('U2 creates b4', function () {",
+                  "  pm.response.to.have.status(201);",
+                  "  pm.expect(pm.response.json().data.totalPrice).to.eql(2000);",
+                  "  pm.collectionVariables.set('au_b4', pm.response.json().data._id);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{au2T}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/providers/{{au_p1}}/bookings",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"date\":\"{{au_d0}}\",\"returnDate\":\"{{au_d2}}\"}"
+            }
+          }
+        },
+        {
+          "name": "U2 creates b5",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('U2 creates b5', function () {",
+                  "  pm.response.to.have.status(201);",
+                  "  pm.expect(pm.response.json().data.totalPrice).to.eql(2000);",
+                  "  pm.collectionVariables.set('au_b5', pm.response.json().data._id);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{au2T}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/providers/{{au_p1}}/bookings",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"date\":\"{{au_d0}}\",\"returnDate\":\"{{au_d2}}\"}"
+            }
+          }
+        },
+        {
+          "name": "U2 creates b6",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('U2 creates b6', function () {",
+                  "  pm.response.to.have.status(201);",
+                  "  pm.expect(pm.response.json().data.totalPrice).to.eql(2000);",
+                  "  pm.collectionVariables.set('au_b6', pm.response.json().data._id);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{au2T}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/providers/{{au_p1}}/bookings",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"date\":\"{{au_d0}}\",\"returnDate\":\"{{au_d2}}\"}"
+            }
+          }
+        },
+        {
+          "name": "admin creates audit promo",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('promo created', function () { pm.response.to.have.status(201); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/promos",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"code\":\"AUD{{au_sfx}}\",\"type\":\"percentage\",\"value\":10,\"validFrom\":\"{{au_promoFrom}}\",\"validTo\":\"{{au_promoTo}}\",\"maxRedemptions\":1000}"
+            }
+          }
+        },
+        {
+          "name": "U2 applies the promo to b4",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('promo applied by the owner', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.json().data.discount).to.eql(200);",
+                  "  pm.expect(pm.response.json().data.totalPrice).to.eql(1800);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{au2T}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/bookings/{{au_b4}}/promo",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"code\":\"AUD{{au_sfx}}\"}"
+            }
+          }
+        },
+        {
+          "name": "b1 has no entries yet (user create/apply never log)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('no entries for b1', function () { pm.response.to.have.status(200); pm.expect(pm.response.json().total).to.eql(0); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/audit?booking={{au_b1}}"
+          }
+        },
+        {
+          "name": "b4 has no entries yet (owner apply is not logged)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('no entries for b4', function () { pm.expect(pm.response.json().total).to.eql(0); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/audit?booking={{au_b4}}"
+          }
+        },
+        {
+          "name": "admin views b1",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('admin views b1', function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/bookings/{{au_b1}}"
+          }
+        },
+        {
+          "name": "one view entry for b1",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('exactly one view entry with admin, booking and timestamp', function () {",
+                  "  const j = pm.response.json();",
+                  "  pm.expect(j.success).to.eql(true);",
+                  "  pm.expect(j.total).to.eql(1);",
+                  "  const e = j.data[0];",
+                  "  pm.expect(e.action).to.eql('view');",
+                  "  pm.expect(e.admin).to.eql(pm.collectionVariables.get('au_adm'));",
+                  "  pm.expect(e.booking).to.eql(pm.collectionVariables.get('au_b1'));",
+                  "  pm.expect(e.status).to.eql('recorded');",
+                  "  pm.expect(e.before).to.eql(null);",
+                  "  pm.expect(e.after).to.eql(null);",
+                  "  pm.expect(Number.isNaN(Date.parse(e.timestamp))).to.eql(false);",
+                  "  pm.expect(Math.abs(Date.now() - Date.parse(e.timestamp))).to.be.below(60000);",
+                  "  pm.collectionVariables.set('au_viewId', e._id);",
+                  "  pm.collectionVariables.set('au_viewTs', e.timestamp);",
+                  "  pm.collectionVariables.set('au_viewSnap', JSON.stringify(e));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/audit?booking={{au_b1}}"
+          }
+        },
+        {
+          "name": "admin edits b1 returnDate (junk foo ignored)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('edited', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.json().data.totalPrice).to.eql(4000);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/bookings/{{au_b1}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"returnDate\":\"{{au_d4}}\",\"foo\":\"bar\"}"
+            }
+          }
+        },
+        {
+          "name": "one edit entry with only changed keys",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('edit entry before/after hold exactly returnDate and totalPrice', function () {",
+                  "  const j = pm.response.json();",
+                  "  pm.expect(j.total).to.eql(2);",
+                  "  const e = j.data[0];",
+                  "  pm.expect(e.action).to.eql('edit');",
+                  "  pm.expect(e.admin).to.eql(pm.collectionVariables.get('au_adm'));",
+                  "  pm.expect(e.booking).to.eql(pm.collectionVariables.get('au_b1'));",
+                  "  pm.expect(e.status).to.eql('recorded');",
+                  "  pm.expect(Object.keys(e.before).sort()).to.eql(['returnDate', 'totalPrice']);",
+                  "  pm.expect(Object.keys(e.after).sort()).to.eql(['returnDate', 'totalPrice']);",
+                  "  pm.expect(e.before.returnDate).to.eql(pm.collectionVariables.get('au_d2'));",
+                  "  pm.expect(e.after.returnDate).to.eql(pm.collectionVariables.get('au_d4'));",
+                  "  pm.expect(e.before.totalPrice).to.eql(2000);",
+                  "  pm.expect(e.after.totalPrice).to.eql(4000);",
+                  "  pm.expect(JSON.stringify(e)).to.not.include('foo');",
+                  "  pm.expect(j.data[1].action).to.eql('view');",
+                  "  pm.collectionVariables.set('au_editId', e._id);",
+                  "  pm.collectionVariables.set('au_editTs', e.timestamp);",
+                  "  pm.collectionVariables.set('au_editSnap', JSON.stringify(e));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/audit?booking={{au_b1}}&limit=100"
+          }
+        },
+        {
+          "name": "admin PUT with identical values",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200', function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/bookings/{{au_b1}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"returnDate\":\"{{au_d4}}\",\"foo\":\"x\"}"
+            }
+          }
+        },
+        {
+          "name": "admin PUT with only junk",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200', function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/bookings/{{au_b1}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"foo\":\"x\"}"
+            }
+          }
+        },
+        {
+          "name": "admin PUT with an empty body",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200', function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/bookings/{{au_b1}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            }
+          }
+        },
+        {
+          "name": "no-change PUTs wrote no entry",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('still the view and the one edit, no failed marker', function () {",
+                  "  const j = pm.response.json();",
+                  "  pm.expect(j.total).to.eql(2);",
+                  "  pm.expect(j.data.filter(function (e) { return e.status === 'failed'; }).length).to.eql(0);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/audit?booking={{au_b1}}&limit=100"
+          }
+        },
+        {
+          "name": "admin edits b2 provider",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('provider changed', function () { pm.response.to.have.status(200); pm.expect(pm.response.json().data.totalPrice).to.eql(4000); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/bookings/{{au_b2}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"provider\":\"{{au_p2}}\"}"
+            }
+          }
+        },
+        {
+          "name": "provider edit entry",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('provider and derived totalPrice are changed fields', function () {",
+                  "  const j = pm.response.json();",
+                  "  pm.expect(j.total).to.eql(1);",
+                  "  const e = j.data[0];",
+                  "  pm.expect(e.action).to.eql('edit');",
+                  "  pm.expect(Object.keys(e.before).sort()).to.eql(['provider', 'totalPrice']);",
+                  "  pm.expect(e.before.provider).to.eql(pm.collectionVariables.get('au_p1'));",
+                  "  pm.expect(e.after.provider).to.eql(pm.collectionVariables.get('au_p2'));",
+                  "  pm.expect(e.before.totalPrice).to.eql(2000);",
+                  "  pm.expect(e.after.totalPrice).to.eql(4000);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/audit?booking={{au_b2}}"
+          }
+        },
+        {
+          "name": "admin edits b4 returnDate (promo applied)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('re-priced with promo', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.json().data.discount).to.eql(400);",
+                  "  pm.expect(pm.response.json().data.totalPrice).to.eql(3600);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/bookings/{{au_b4}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"returnDate\":\"{{au_d4}}\"}"
+            }
+          }
+        },
+        {
+          "name": "promo edit entry includes discount",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('returnDate, discount and totalPrice are the changed fields', function () {",
+                  "  const j = pm.response.json();",
+                  "  pm.expect(j.total).to.eql(1);",
+                  "  const e = j.data[0];",
+                  "  pm.expect(Object.keys(e.before).sort()).to.eql(['discount', 'returnDate', 'totalPrice']);",
+                  "  pm.expect(Object.keys(e.after).sort()).to.eql(['discount', 'returnDate', 'totalPrice']);",
+                  "  pm.expect(e.before.discount).to.eql(200);",
+                  "  pm.expect(e.after.discount).to.eql(400);",
+                  "  pm.expect(e.before.totalPrice).to.eql(1800);",
+                  "  pm.expect(e.after.totalPrice).to.eql(3600);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/audit?booking={{au_b4}}"
+          }
+        },
+        {
+          "name": "admin deletes b3",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('deleted', function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/bookings/{{au_b3}}"
+          }
+        },
+        {
+          "name": "one delete entry for b3",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('delete entry: before is the removed booking, after null, booking id kept', function () {",
+                  "  const j = pm.response.json();",
+                  "  pm.expect(j.total).to.eql(1);",
+                  "  const e = j.data[0];",
+                  "  pm.expect(e.action).to.eql('delete');",
+                  "  pm.expect(e.admin).to.eql(pm.collectionVariables.get('au_adm'));",
+                  "  pm.expect(e.booking).to.eql(pm.collectionVariables.get('au_b3'));",
+                  "  pm.expect(e.after).to.eql(null);",
+                  "  pm.expect(e.status).to.eql('recorded');",
+                  "  pm.expect(e.before.user).to.eql(pm.collectionVariables.get('au_u1'));",
+                  "  pm.expect(e.before.provider).to.eql(pm.collectionVariables.get('au_p1'));",
+                  "  pm.expect(e.before.date).to.eql(pm.collectionVariables.get('au_d0'));",
+                  "  pm.expect(e.before.returnDate).to.eql(pm.collectionVariables.get('au_d2'));",
+                  "  pm.expect(e.before.totalPrice).to.eql(2000);",
+                  "  pm.expect(e.before.discount).to.eql(0);",
+                  "  pm.expect(e.before.promo).to.eql(null);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/audit?booking={{au_b3}}"
+          }
+        },
+        {
+          "name": "deleted b3 is gone",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('404', function () { pm.response.to.have.status(404); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/bookings/{{au_b3}}"
+          }
+        },
+        {
+          "name": "a 404 view wrote no entry",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('still one entry', function () { pm.expect(pm.response.json().total).to.eql(1); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/audit?booking={{au_b3}}"
+          }
+        },
+        {
+          "name": "U2 views own b5",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200', function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{au2T}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/bookings/{{au_b5}}"
+          }
+        },
+        {
+          "name": "U2 edits own b5",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200', function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{au2T}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/bookings/{{au_b5}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"returnDate\":\"{{au_d4}}\"}"
+            }
+          }
+        },
+        {
+          "name": "U2 deletes own b5",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200', function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{au2T}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/bookings/{{au_b5}}"
+          }
+        },
+        {
+          "name": "regular user actions wrote no entries",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('no entries for b5', function () { pm.expect(pm.response.json().total).to.eql(0); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/audit?booking={{au_b5}}"
+          }
+        },
+        {
+          "name": "admin creates own booking",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('created', function () { pm.response.to.have.status(201); pm.collectionVariables.set('au_bAdm', pm.response.json().data._id); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/providers/{{au_p1}}/bookings",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"date\":\"{{au_d0}}\",\"returnDate\":\"{{au_d2}}\"}"
+            }
+          }
+        },
+        {
+          "name": "admin views own booking",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200', function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/bookings/{{au_bAdm}}"
+          }
+        },
+        {
+          "name": "admin viewing own booking is logged",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('one view entry', function () {",
+                  "  const j = pm.response.json();",
+                  "  pm.expect(j.total).to.eql(1);",
+                  "  pm.expect(j.data[0].action).to.eql('view');",
+                  "  pm.expect(j.data[0].admin).to.eql(pm.collectionVariables.get('au_adm'));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/audit?booking={{au_bAdm}}"
+          }
+        },
+        {
+          "name": "10 concurrent admin edits of b6",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const base = Date.parse(pm.collectionVariables.get('au_d0'));",
+                  "const statuses = [];",
+                  "let pending = 10;",
+                  "for (let k = 0; k < 10; k++) {",
+                  "  pm.sendRequest({",
+                  "    url: pm.environment.get('baseUrl') + '/api/v1/bookings/' + pm.collectionVariables.get('au_b6'),",
+                  "    method: 'PUT',",
+                  "    header: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + pm.environment.get('adminToken') },",
+                  "    body: { mode: 'raw', raw: JSON.stringify({ returnDate: new Date(base + (3 + k) * 86400000).toISOString() }) }",
+                  "  }, function (err, res) {",
+                  "    statuses.push(err ? 0 : res.code);",
+                  "    pending--;",
+                  "    if (pending === 0) { pm.collectionVariables.set('au_raceStatuses', JSON.stringify(statuses)); }",
+                  "  });",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('every attempt is logged first; every failed attempt has a failed marker', function () {",
+                  "  const statuses = JSON.parse(pm.collectionVariables.get('au_raceStatuses'));",
+                  "  const j = pm.response.json();",
+                  "  pm.expect(statuses.length).to.eql(10);",
+                  "  statuses.forEach(function (s) { pm.expect([200, 409]).to.include(s); });",
+                  "  const ok = statuses.filter(function (s) { return s === 200; }).length;",
+                  "  const recorded = j.data.filter(function (e) { return e.status === 'recorded'; });",
+                  "  const failed = j.data.filter(function (e) { return e.status === 'failed'; });",
+                  "  pm.expect(j.total).to.eql(recorded.length + failed.length);",
+                  "  pm.expect(recorded.length - failed.length).to.eql(ok);",
+                  "  failed.forEach(function (e) { pm.expect(e.reason).to.be.a('string').and.not.empty; });",
+                  "  j.data.forEach(function (e) {",
+                  "    pm.expect(e.action).to.eql('edit');",
+                  "    pm.expect(Object.keys(e.before).sort()).to.eql(['returnDate', 'totalPrice']);",
+                  "  });",
+                  "  console.log('race: ' + ok + ' ok, ' + (10 - ok) + ' 409, ' + failed.length + ' failed markers');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/audit?booking={{au_b6}}&limit=100"
+          }
+        },
+        {
+          "name": "filter by admin",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('only this admin\\'s entries', function () {",
+                  "  const j = pm.response.json();",
+                  "  pm.expect(j.success).to.eql(true);",
+                  "  pm.expect(j.total).to.be.at.least(6);",
+                  "  j.data.forEach(function (e) { pm.expect(e.admin).to.eql(pm.collectionVariables.get('au_adm')); });",
+                  "  pm.expect(Object.keys(j).sort()).to.eql(['count', 'data', 'page', 'pages', 'success', 'total']);",
+                  "  pm.expect(j.count).to.eql(j.data.length);",
+                  "  pm.expect(j.page).to.eql(1);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/audit?admin={{au_adm}}&limit=100"
+          }
+        },
+        {
+          "name": "filter by a different admin",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('no entries for a non-admin id', function () { pm.expect(pm.response.json().total).to.eql(0); pm.expect(pm.response.json().pages).to.eql(0); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/audit?admin={{au_u1}}"
+          }
+        },
+        {
+          "name": "filter by booking, newest first",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('b1 entries, newest first', function () {",
+                  "  const j = pm.response.json();",
+                  "  pm.expect(j.total).to.eql(2);",
+                  "  j.data.forEach(function (e) { pm.expect(e.booking).to.eql(pm.collectionVariables.get('au_b1')); });",
+                  "  pm.expect(j.data[0].action).to.eql('edit');",
+                  "  pm.expect(j.data[1].action).to.eql('view');",
+                  "  pm.expect(Date.parse(j.data[0].timestamp)).to.be.at.least(Date.parse(j.data[1].timestamp));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/audit?booking={{au_b1}}"
+          }
+        },
+        {
+          "name": "filter by from/to window",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('window containing both entries', function () { pm.expect(pm.response.json().total).to.eql(2); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/audit?booking={{au_b1}}&from={{au_t0}}&to={{au_future1}}"
+          }
+        },
+        {
+          "name": "filter by from/to window in the future",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('window after now holds nothing', function () { pm.expect(pm.response.json().total).to.eql(0); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/audit?booking={{au_b1}}&from={{au_future1}}&to={{au_future2}}"
+          }
+        },
+        {
+          "name": "filter window is inclusive at both ends",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('from == to == edit timestamp returns the edit entry', function () {",
+                  "  const j = pm.response.json();",
+                  "  pm.expect(j.total).to.eql(1);",
+                  "  pm.expect(j.data[0]._id).to.eql(pm.collectionVariables.get('au_editId'));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/audit?booking={{au_b1}}&from={{au_editTs}}&to={{au_editTs}}"
+          }
+        },
+        {
+          "name": "window before the view entry",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('to == view timestamp: only the view entry', function () {",
+                  "  const j = pm.response.json();",
+                  "  pm.expect(j.total).to.eql(1);",
+                  "  pm.expect(j.data[0].action).to.eql('view');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/audit?booking={{au_b1}}&to={{au_viewTs}}"
+          }
+        },
+        {
+          "name": "date-only to covers the whole day",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('date-only range is inclusive of the full day', function () { pm.expect(pm.response.json().total).to.eql(2); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/audit?booking={{au_b1}}&from={{au_today}}&to={{au_today}}"
+          }
+        },
+        {
+          "name": "combined admin + booking + range",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('combined filters', function () { pm.expect(pm.response.json().total).to.eql(2); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/audit?admin={{au_adm}}&booking={{au_b1}}&from={{au_t0}}&to={{au_future1}}"
+          }
+        },
+        {
+          "name": "page 1 limit 1",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('first page', function () {",
+                  "  const j = pm.response.json();",
+                  "  pm.expect(j.count).to.eql(1); pm.expect(j.total).to.eql(2); pm.expect(j.page).to.eql(1); pm.expect(j.pages).to.eql(2);",
+                  "  pm.expect(j.data[0].action).to.eql('edit');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/audit?booking={{au_b1}}&page=1&limit=1"
+          }
+        },
+        {
+          "name": "page 2 limit 1",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('second page is the next entry', function () {",
+                  "  const j = pm.response.json();",
+                  "  pm.expect(j.count).to.eql(1); pm.expect(j.total).to.eql(2); pm.expect(j.page).to.eql(2); pm.expect(j.pages).to.eql(2);",
+                  "  pm.expect(j.data[0].action).to.eql('view');",
+                  "  pm.expect(j.data[0]._id).to.eql(pm.collectionVariables.get('au_viewId'));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/audit?booking={{au_b1}}&page=2&limit=1"
+          }
+        },
+        {
+          "name": "page past the end",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('empty data, correct total', function () {",
+                  "  const j = pm.response.json();",
+                  "  pm.expect(j.success).to.eql(true);",
+                  "  pm.expect(j.data).to.eql([]); pm.expect(j.count).to.eql(0); pm.expect(j.total).to.eql(2); pm.expect(j.pages).to.eql(2);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/audit?booking={{au_b1}}&page=3&limit=1"
+          }
+        },
+        {
+          "name": "limit 100 is accepted",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200', function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/audit?booking={{au_b1}}&limit=100"
+          }
+        },
+        {
+          "name": "reversed range is 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('reversed range is 400', function () {",
+                  "  pm.response.to.have.status(400);",
+                  "  const j = pm.response.json();",
+                  "  pm.expect(j.success).to.eql(false);",
+                  "  pm.expect(j.message).to.be.a('string').and.not.empty;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/audit?from={{au_future2}}&to={{au_future1}}"
+          }
+        },
+        {
+          "name": "malformed admin id is 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('malformed admin id is 400', function () {",
+                  "  pm.response.to.have.status(400);",
+                  "  const j = pm.response.json();",
+                  "  pm.expect(j.success).to.eql(false);",
+                  "  pm.expect(j.message).to.be.a('string').and.not.empty;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/audit?admin=not-an-id"
+          }
+        },
+        {
+          "name": "12-char string admin id is 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('12-char string admin id is 400', function () {",
+                  "  pm.response.to.have.status(400);",
+                  "  const j = pm.response.json();",
+                  "  pm.expect(j.success).to.eql(false);",
+                  "  pm.expect(j.message).to.be.a('string').and.not.empty;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/audit?admin=aaaaaaaaaaaa"
+          }
+        },
+        {
+          "name": "malformed booking id is 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('malformed booking id is 400', function () {",
+                  "  pm.response.to.have.status(400);",
+                  "  const j = pm.response.json();",
+                  "  pm.expect(j.success).to.eql(false);",
+                  "  pm.expect(j.message).to.be.a('string').and.not.empty;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/audit?booking=123"
+          }
+        },
+        {
+          "name": "invalid from is 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('invalid from is 400', function () {",
+                  "  pm.response.to.have.status(400);",
+                  "  const j = pm.response.json();",
+                  "  pm.expect(j.success).to.eql(false);",
+                  "  pm.expect(j.message).to.be.a('string').and.not.empty;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/audit?from=yesterday"
+          }
+        },
+        {
+          "name": "invalid to is 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('invalid to is 400', function () {",
+                  "  pm.response.to.have.status(400);",
+                  "  const j = pm.response.json();",
+                  "  pm.expect(j.success).to.eql(false);",
+                  "  pm.expect(j.message).to.be.a('string').and.not.empty;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/audit?to=2026-13-45"
+          }
+        },
+        {
+          "name": "impossible calendar date is 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('impossible calendar date is 400', function () {",
+                  "  pm.response.to.have.status(400);",
+                  "  const j = pm.response.json();",
+                  "  pm.expect(j.success).to.eql(false);",
+                  "  pm.expect(j.message).to.be.a('string').and.not.empty;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/audit?from=2026-02-31"
+          }
+        },
+        {
+          "name": "limit 101 is 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('limit 101 is 400', function () {",
+                  "  pm.response.to.have.status(400);",
+                  "  const j = pm.response.json();",
+                  "  pm.expect(j.success).to.eql(false);",
+                  "  pm.expect(j.message).to.be.a('string').and.not.empty;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/audit?limit=101"
+          }
+        },
+        {
+          "name": "limit 0 is 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('limit 0 is 400', function () {",
+                  "  pm.response.to.have.status(400);",
+                  "  const j = pm.response.json();",
+                  "  pm.expect(j.success).to.eql(false);",
+                  "  pm.expect(j.message).to.be.a('string').and.not.empty;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/audit?limit=0"
+          }
+        },
+        {
+          "name": "limit abc is 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('limit abc is 400', function () {",
+                  "  pm.response.to.have.status(400);",
+                  "  const j = pm.response.json();",
+                  "  pm.expect(j.success).to.eql(false);",
+                  "  pm.expect(j.message).to.be.a('string').and.not.empty;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/audit?limit=abc"
+          }
+        },
+        {
+          "name": "page 0 is 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('page 0 is 400', function () {",
+                  "  pm.response.to.have.status(400);",
+                  "  const j = pm.response.json();",
+                  "  pm.expect(j.success).to.eql(false);",
+                  "  pm.expect(j.message).to.be.a('string').and.not.empty;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/audit?page=0"
+          }
+        },
+        {
+          "name": "page -1 is 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('page -1 is 400', function () {",
+                  "  pm.response.to.have.status(400);",
+                  "  const j = pm.response.json();",
+                  "  pm.expect(j.success).to.eql(false);",
+                  "  pm.expect(j.message).to.be.a('string').and.not.empty;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/audit?page=-1"
+          }
+        },
+        {
+          "name": "page 1.5 is 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('page 1.5 is 400', function () {",
+                  "  pm.response.to.have.status(400);",
+                  "  const j = pm.response.json();",
+                  "  pm.expect(j.success).to.eql(false);",
+                  "  pm.expect(j.message).to.be.a('string').and.not.empty;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/audit?page=1.5"
+          }
+        },
+        {
+          "name": "repeated page param is 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('repeated page param is 400', function () {",
+                  "  pm.response.to.have.status(400);",
+                  "  const j = pm.response.json();",
+                  "  pm.expect(j.success).to.eql(false);",
+                  "  pm.expect(j.message).to.be.a('string').and.not.empty;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/audit?page=1&page=2"
+          }
+        },
+        {
+          "name": "non-admin GET /audit is 403",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('403', function () { pm.response.to.have.status(403); pm.expect(pm.response.json().success).to.eql(false); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{au1T}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/audit"
+          }
+        },
+        {
+          "name": "no token GET /audit is 401",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('401', function () { pm.response.to.have.status(401); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/audit"
+          }
+        },
+        {
+          "name": "bad token GET /audit is 401",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('401', function () { pm.response.to.have.status(401); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{au_nonsense}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/audit"
+          }
+        },
+        {
+          "name": "admin POST /api/v1/audit is 404",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('no such route', function () { pm.response.to.have.status(404); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/audit",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"action\":\"view\",\"before\":{\"x\":1}}"
+            }
+          }
+        },
+        {
+          "name": "admin POST /api/v1/audit/:id is 404",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('no such route', function () { pm.response.to.have.status(404); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/audit/{{au_editId}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"action\":\"view\",\"before\":{\"x\":1}}"
+            }
+          }
+        },
+        {
+          "name": "admin PUT /api/v1/audit is 404",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('no such route', function () { pm.response.to.have.status(404); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/audit",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"action\":\"view\",\"before\":{\"x\":1}}"
+            }
+          }
+        },
+        {
+          "name": "admin PUT /api/v1/audit/:id is 404",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('no such route', function () { pm.response.to.have.status(404); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/audit/{{au_editId}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"action\":\"view\",\"before\":{\"x\":1}}"
+            }
+          }
+        },
+        {
+          "name": "admin PATCH /api/v1/audit is 404",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('no such route', function () { pm.response.to.have.status(404); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/audit",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"action\":\"view\",\"before\":{\"x\":1}}"
+            }
+          }
+        },
+        {
+          "name": "admin PATCH /api/v1/audit/:id is 404",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('no such route', function () { pm.response.to.have.status(404); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/audit/{{au_editId}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"action\":\"view\",\"before\":{\"x\":1}}"
+            }
+          }
+        },
+        {
+          "name": "admin DELETE /api/v1/audit is 404",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('no such route', function () { pm.response.to.have.status(404); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/audit"
+          }
+        },
+        {
+          "name": "admin DELETE /api/v1/audit/:id is 404",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('no such route', function () { pm.response.to.have.status(404); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/audit/{{au_editId}}"
+          }
+        },
+        {
+          "name": "user POST /api/v1/audit is 404",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('no such route', function () { pm.response.to.have.status(404); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{au1T}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/audit",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"action\":\"view\",\"before\":{\"x\":1}}"
+            }
+          }
+        },
+        {
+          "name": "user POST /api/v1/audit/:id is 404",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('no such route', function () { pm.response.to.have.status(404); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{au1T}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/audit/{{au_editId}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"action\":\"view\",\"before\":{\"x\":1}}"
+            }
+          }
+        },
+        {
+          "name": "user PUT /api/v1/audit is 404",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('no such route', function () { pm.response.to.have.status(404); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{au1T}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/audit",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"action\":\"view\",\"before\":{\"x\":1}}"
+            }
+          }
+        },
+        {
+          "name": "user PUT /api/v1/audit/:id is 404",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('no such route', function () { pm.response.to.have.status(404); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{au1T}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/audit/{{au_editId}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"action\":\"view\",\"before\":{\"x\":1}}"
+            }
+          }
+        },
+        {
+          "name": "user PATCH /api/v1/audit is 404",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('no such route', function () { pm.response.to.have.status(404); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{au1T}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/audit",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"action\":\"view\",\"before\":{\"x\":1}}"
+            }
+          }
+        },
+        {
+          "name": "user PATCH /api/v1/audit/:id is 404",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('no such route', function () { pm.response.to.have.status(404); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{au1T}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/audit/{{au_editId}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"action\":\"view\",\"before\":{\"x\":1}}"
+            }
+          }
+        },
+        {
+          "name": "user DELETE /api/v1/audit is 404",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('no such route', function () { pm.response.to.have.status(404); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{au1T}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/audit"
+          }
+        },
+        {
+          "name": "user DELETE /api/v1/audit/:id is 404",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('no such route', function () { pm.response.to.have.status(404); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{au1T}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/audit/{{au_editId}}"
+          }
+        },
+        {
+          "name": "anonymous POST /api/v1/audit is 404",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('no such route', function () { pm.response.to.have.status(404); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/audit",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"action\":\"view\",\"before\":{\"x\":1}}"
+            }
+          }
+        },
+        {
+          "name": "anonymous POST /api/v1/audit/:id is 404",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('no such route', function () { pm.response.to.have.status(404); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/audit/{{au_editId}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"action\":\"view\",\"before\":{\"x\":1}}"
+            }
+          }
+        },
+        {
+          "name": "anonymous PUT /api/v1/audit is 404",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('no such route', function () { pm.response.to.have.status(404); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/audit",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"action\":\"view\",\"before\":{\"x\":1}}"
+            }
+          }
+        },
+        {
+          "name": "anonymous PUT /api/v1/audit/:id is 404",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('no such route', function () { pm.response.to.have.status(404); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/audit/{{au_editId}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"action\":\"view\",\"before\":{\"x\":1}}"
+            }
+          }
+        },
+        {
+          "name": "anonymous PATCH /api/v1/audit is 404",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('no such route', function () { pm.response.to.have.status(404); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/audit",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"action\":\"view\",\"before\":{\"x\":1}}"
+            }
+          }
+        },
+        {
+          "name": "anonymous PATCH /api/v1/audit/:id is 404",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('no such route', function () { pm.response.to.have.status(404); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/audit/{{au_editId}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"action\":\"view\",\"before\":{\"x\":1}}"
+            }
+          }
+        },
+        {
+          "name": "anonymous DELETE /api/v1/audit is 404",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('no such route', function () { pm.response.to.have.status(404); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/audit"
+          }
+        },
+        {
+          "name": "anonymous DELETE /api/v1/audit/:id is 404",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('no such route', function () { pm.response.to.have.status(404); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/audit/{{au_editId}}"
+          }
+        },
+        {
+          "name": "admin GET /audit/:id is 404 (no such route)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('404', function () { pm.response.to.have.status(404); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/audit/{{au_editId}}"
+          }
+        },
+        {
+          "name": "entries are unchanged after the write attempts (edit)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('edit entry identical to the earlier snapshot', function () {",
+                  "  const e = pm.response.json().data.filter(function (x) { return x._id === pm.collectionVariables.get('au_editId'); })[0];",
+                  "  pm.expect(JSON.stringify(e)).to.eql(pm.collectionVariables.get('au_editSnap'));",
+                  "});",
+                  "pm.test('view entry identical to the earlier snapshot', function () {",
+                  "  const e = pm.response.json().data.filter(function (x) { return x._id === pm.collectionVariables.get('au_viewId'); })[0];",
+                  "  pm.expect(JSON.stringify(e)).to.eql(pm.collectionVariables.get('au_viewSnap'));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/audit?booking={{au_b1}}&limit=100"
+          }
+        },
+        {
+          "name": "admin entry total after all the queries",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('record total', function () { pm.collectionVariables.set('au_nAdm2', pm.response.json().total); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/audit?admin={{au_adm}}&limit=1"
+          }
+        },
+        {
+          "name": "query again",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200', function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/audit?admin={{au_adm}}&booking={{au_b1}}&limit=100"
+          }
+        },
+        {
+          "name": "querying the audit log wrote no entries",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('admin entry total unchanged by audit queries', function () { pm.expect(pm.response.json().total).to.eql(pm.collectionVariables.get('au_nAdm2')); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/audit?admin={{au_adm}}&limit=1"
+          }
+        },
+        {
+          "name": "perf: unfiltered page 1",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('perf: unfiltered page 1 responds in under 3000 ms', function () {",
+                  "  const ms = pm.response.responseTime;",
+                  "  console.log('audit perf: perf: unfiltered page 1 = ' + ms + ' ms');",
+                  "  pm.expect(ms).to.be.below(3000);",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.json().total).to.be.at.least(5000);",
+                  "  pm.expect(pm.response.json().data.length).to.eql(20);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/audit?page=1&limit=20"
+          }
+        },
+        {
+          "name": "perf: filtered by seeded admin",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('perf: filtered by seeded admin responds in under 3000 ms', function () {",
+                  "  const ms = pm.response.responseTime;",
+                  "  console.log('audit perf: perf: filtered by seeded admin = ' + ms + ' ms');",
+                  "  pm.expect(ms).to.be.below(3000);",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.json().total).to.eql(1000);",
+                  "  pm.expect(pm.response.json().data.length).to.eql(25);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/audit?admin=aaaaaaaaaaaaaaaaaaaa0001&page=3&limit=25"
+          }
+        },
+        {
+          "name": "perf: date range page",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('perf: date range page responds in under 3000 ms', function () {",
+                  "  const ms = pm.response.responseTime;",
+                  "  console.log('audit perf: perf: date range page = ' + ms + ' ms');",
+                  "  pm.expect(ms).to.be.below(3000);",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.json().total).to.be.above(100);",
+                  "  pm.expect(pm.response.json().data.length).to.eql(50);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/audit?from={{au_seedFrom}}&to={{au_seedTo}}&page=2&limit=50"
+          }
+        },
+        {
+          "name": "perf: filtered by seeded booking",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('perf: filtered by seeded booking responds in under 3000 ms', function () {",
+                  "  const ms = pm.response.responseTime;",
+                  "  console.log('audit perf: perf: filtered by seeded booking = ' + ms + ' ms');",
+                  "  pm.expect(ms).to.be.below(3000);",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.json().total).to.be.above(50);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/audit?booking=bbbbbbbbbbbbbbbbbbbb0001&limit=100"
+          }
+        },
+        {
+          "name": "perf: deep page 200 limit 25",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('perf: deep page 200 limit 25 responds in under 3000 ms', function () {",
+                  "  const ms = pm.response.responseTime;",
+                  "  console.log('audit perf: perf: deep page 200 limit 25 = ' + ms + ' ms');",
+                  "  pm.expect(ms).to.be.below(3000);",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.json().data.length).to.eql(25);",
+                  "  pm.expect(pm.response.json().pages).to.be.at.least(200);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/audit?page=200&limit=25"
+          }
+        },
+        {
+          "name": "admin list default paging",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('defaults page 1 limit 20', function () {",
+                  "  const j = pm.response.json();",
+                  "  pm.expect(j.page).to.eql(1);",
+                  "  pm.expect(j.count).to.eql(Math.min(20, j.total));",
+                  "  pm.collectionVariables.set('au_defaultCount', j.count);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/bookings"
+          }
+        },
+        {
+          "name": "admin list past the last page",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('empty page, correct total', function () {",
+                  "  const j = pm.response.json();",
+                  "  pm.expect(j.success).to.eql(true);",
+                  "  pm.expect(j.count).to.eql(0);",
+                  "  pm.expect(j.data).to.eql([]);",
+                  "  pm.expect(j.total).to.be.at.least(6);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/bookings?page=9999&limit=100"
+          }
+        },
+        {
+          "name": "regular user list keeps today's shape",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('user sees only own bookings, no pagination fields', function () {",
+                  "  const j = pm.response.json();",
+                  "  pm.expect(Object.keys(j).sort()).to.eql(['count', 'data', 'success']);",
+                  "  pm.expect(j.count).to.eql(2);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{au1T}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/bookings"
+          }
+        }
+      ]
     }
   ]
 }
