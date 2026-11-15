@@ -174,6 +174,16 @@ All paths are under `/api/v1`. "Own" means the owner of the booking/ticket; admi
 - The in-process comment timestamp ordering guarantee holds per server process only.
 - There are no database transactions: a process crash in the middle of applying a promo can leave a claimed booking or a redemption count behind.
 
+## Documents
+
+The course documents describe the whole API (it was built as a fresh project):
+
+- [docs/requirements.md](docs/requirements.md): the requirements, the endpoint that satisfies each and how it is verified, the interpretations and what is not implemented.
+- [docs/use-cases.md](docs/use-cases.md): actors, a use-case diagram and a use-case catalogue with the exact error flows.
+- [docs/sequence-diagrams.md](docs/sequence-diagrams.md): one sequence diagram per added capability.
+- [docs/uml-profile-for-api.md](docs/uml-profile-for-api.md): the UML profile for the API (every endpoint with access, request, responses) and a class diagram of the resources.
+- [docs/work-division.md](docs/work-division.md): a template the team fills in with who wrote which code and documents.
+
 ## Repository layout
 
 ```
@@ -186,6 +196,7 @@ middleware/          auth (protect, authorize) and the login limiter
 utils/               pricing and paging helpers
 scripts/             run-newman.sh (npm test), demo-race.sh, seeds, race and index checks, collection-check.js
 __tests__/           rental.postman_collection.json (+ environment) = test suite; demo.postman_collection.json (+ environment) = presentation demo
+docs/                requirements.md, use-cases.md, sequence-diagrams.md, uml-profile-for-api.md, work-division.md
 docs/plans/          implementation plan
 spec.md              requirements
 ```
