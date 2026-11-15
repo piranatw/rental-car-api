@@ -44,4 +44,7 @@ const BookingSchema = new mongoose.Schema({
   }
 });
 
+// Statistics report: range scan on the pickup date, with the provider read from the index.
+BookingSchema.index({ date: 1, provider: 1 });
+
 module.exports = mongoose.model('Booking', BookingSchema);
