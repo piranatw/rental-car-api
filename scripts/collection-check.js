@@ -50,6 +50,12 @@ for (const f of phases) {
 }
 const topDisputes = (col.item || []).filter((i) => i.name === 'Disputes').length;
 if (topDisputes !== 1) problems.push(`top-level folder "Disputes" must exist exactly once (found ${topDisputes})`);
+// A folder that exists but is not named in any run list never runs: every top-level folder must be
+// accounted for (PASS_A_FOLDERS, PASS_B_FOLDERS, or the Disputes group that run_disputes drives).
+const accounted = new Set([...arrayOf('PASS_A_FOLDERS'), ...arrayOf('PASS_B_FOLDERS'), 'Disputes']);
+for (const name of topLevel) {
+  if (!accounted.has(name)) problems.push(`top-level folder "${name}" exists in the collection but is not named in PASS_A_FOLDERS or PASS_B_FOLDERS in scripts/run-newman.sh, so it would never run`);
+}
 
 if (problems.length) {
   for (const p of problems) console.error('collection-check: ' + p);
