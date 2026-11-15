@@ -125,4 +125,98 @@ const getInspection = async (req, res) => {
   }
 };
 
-module.exports = { calcLateFee, scheduledReturnInstant, createInspection, getInspection };
+// ---- Disputes -------------------------------------------------------------------------------------
+
+const WINDOW_MS = 7 * 24 * HOUR_MS;
+const MAX_TEXT = 2000;
+
+// Pure: a dispute is allowed while (now - createdAt) <= 7 days, inclusive, in integer milliseconds.
+// Mirrors the atomic filter { createdAt: { $gte: now - WINDOW_MS } } used by submitDispute.
+const isWithinWindow = (createdAt, now) => now - createdAt.getTime() <= WINDOW_MS;
+
+// Returns { value } or { error }. A non-empty comment: string, trimmed, 1..2000 characters.
+const parseComment = (body) => {
+  const c = body && typeof body === 'object' ? body.comment : undefined;
+  if (typeof c !== 'string') return { error: 'comment must be a string' };
+  const v = c.trim();
+  if (v.length < 1 || v.length > MAX_TEXT) return { error: `comment must be between 1 and ${MAX_TEXT} characters` };
+  return { value: v };
+};
+
+// Optional resolutionNote: a string if present, trimmed, at most 2000 characters ('' allowed).
+const parseNote = (body) => {
+  const n = body && typeof body === 'object' ? body.resolutionNote : undefined;
+  if (n === undefined) return { value: '' };
+  if (typeof n !== 'string') return { error: 'resolutionNote must be a string' };
+  const v = n.trim();
+  if (v.length > MAX_TEXT) return { error: `resolutionNote must be at most ${MAX_TEXT} characters` };
+  return { value: v };
+};
+
+// POST /api/v1/bookings/:id/inspection/dispute  (the booking's OWNER only; an admin cannot dispute for a user)
+// One atomic findOneAndUpdate decides the single winner and the window; a follow-up read only explains a miss.
+const submitDispute = async (req, res) => {
+  try {
+    if (!mongoose.isValidObjectId(req.params.id)) return fail(res, 404, 'Booking not found');
+    const booking = await Booking.findById(req.params.id).select('user').lean();
+    if (!booking) return fail(res, 404, 'Booking not found');
+    const exists = await Inspection.exists({ booking: booking._id });
+    if (!exists) return fail(res, 404, 'Inspection not found for this booking');
+    if (booking.user.toString() !== req.user.id) return fail(res, 403, 'Not authorized to dispute this inspection');
+    const parsed = parseComment(req.body);
+    if (parsed.error) return fail(res, 400, parsed.error);
+
+    const now = Date.now();
+    const updated = await Inspection.findOneAndUpdate(
+      { booking: booking._id, dispute: null, createdAt: { $gte: new Date(now - WINDOW_MS) } },
+      { $set: { dispute: { comment: parsed.value, createdAt: new Date(now), status: 'open', resolutionNote: '', resolvedAt: null, resolvedBy: null } } },
+      { new: true }
+    );
+    if (updated) return res.status(200).json({ success: true, data: updated });
+
+    // Nothing matched: one read decides why. Already disputed wins over window passed.
+    const current = await Inspection.findOne({ booking: booking._id }).select('dispute createdAt').lean();
+    if (current && current.dispute) return fail(res, 400, 'A dispute has already been submitted');
+    if (current && !isWithinWindow(current.createdAt, now)) return fail(res, 400, 'Dispute window of 7 days has passed');
+    return fail(res, 409, 'Inspection changed concurrently, please retry');
+  } catch (err) {
+    console.error(err.message);
+    return fail(res, 500, 'Server error');
+  }
+};
+
+// PUT /api/v1/bookings/:id/inspection/dispute  (admin only, enforced by the route)
+// The filter 'dispute.status': 'open' makes closing a dispute a single-winner compare-and-set.
+const resolveDispute = async (req, res) => {
+  try {
+    if (!mongoose.isValidObjectId(req.params.id)) return fail(res, 404, 'Booking not found');
+    const booking = await Booking.findById(req.params.id).select('_id').lean();
+    if (!booking) return fail(res, 404, 'Booking not found');
+    const exists = await Inspection.exists({ booking: booking._id });
+    if (!exists) return fail(res, 404, 'Inspection not found for this booking');
+    const status = req.body && typeof req.body === 'object' ? req.body.status : undefined;
+    if (status !== 'resolved' && status !== 'dismissed') return fail(res, 400, 'status must be resolved or dismissed');
+    const note = parseNote(req.body);
+    if (note.error) return fail(res, 400, note.error);
+
+    const updated = await Inspection.findOneAndUpdate(
+      { booking: booking._id, 'dispute.status': 'open' },
+      { $set: { 'dispute.status': status, 'dispute.resolutionNote': note.value, 'dispute.resolvedAt': new Date(), 'dispute.resolvedBy': req.user._id } },
+      { new: true }
+    );
+    if (updated) return res.status(200).json({ success: true, data: updated });
+
+    const current = await Inspection.findOne({ booking: booking._id }).select('dispute').lean();
+    if (current && !current.dispute) return fail(res, 404, 'Dispute not found for this inspection');
+    if (current && current.dispute && current.dispute.status !== 'open') return fail(res, 400, 'Dispute has already been closed');
+    return fail(res, 409, 'Inspection changed concurrently, please retry');
+  } catch (err) {
+    console.error(err.message);
+    return fail(res, 500, 'Server error');
+  }
+};
+
+module.exports = {
+  calcLateFee, scheduledReturnInstant, createInspection, getInspection,
+  WINDOW_MS, isWithinWindow, submitDispute, resolveDispute
+};
