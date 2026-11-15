@@ -13,14 +13,14 @@ Base requirement: register, log in and out, list providers, book up to 3 cars, v
 
 ## Stack
 
-Node.js (22 or newer), Express 4, Mongoose 8, MongoDB, jsonwebtoken, bcryptjs, express-rate-limit, Postman collections run with Newman.
+Node.js, Express 4, Mongoose 8, MongoDB, jsonwebtoken, bcryptjs, express-rate-limit, Postman collections run with Newman.
 
 ## Prerequisites
 
-- Node.js 22 or newer and npm.
+- Node.js and npm. The project was developed and tested on Node 24; the dependencies themselves declare support from Node 16.20, but nothing older than Node 24 has been run here.
 - A MongoDB that is **dedicated to this project**. Either:
   - a fresh MongoDB Atlas cluster (new project, new free M0 cluster, a new database user, your current IP in Network Access, then Connect > Drivers to copy the connection string), or
-  - a separate local `mongod` (for example `mongodb://127.0.0.1:27017/rental_car_api`).
+  - a separate local `mongod` on a port nothing else uses, with its own data directory (for example `mongod --dbpath ~/rental-car-mongo/data --port 27555` and `mongodb://127.0.0.1:27555/rental_car_api`). Do not reuse a `mongod` that already serves another project.
 - Two database names on that server: `rental_car_api` for development and **`rental_car_api_test`** for the tests (the connection string for tests is the same string with `/rental_car_api_test?` as the path).
 
 Never commit a connection string, password or secret. `config/config.env` and `config/test-env.sh` are git-ignored.
@@ -102,7 +102,11 @@ newman run __tests__/demo.postman_collection.json -e __tests__/demo.postman_envi
   --env-var baseUrl=http://localhost:5050 --env-var adminEmail=$adminEmail --env-var adminPassword=$adminPassword --reporters cli
 ```
 
-Notes: the run takes about 10 seconds. Wait 60 seconds between two demo runs, because the previous run's logins still count towards the limiter. If the server was started with `NODE_ENV=test` the limiter is off and the single 429 assertion is reported as skipped, not failed.
+Notes: the run takes about 10 seconds. If the server was started with `NODE_ENV=test` the limiter is off and the single 429 assertion is reported as skipped, not failed.
+
+**Do not run the demo twice within a minute.** The demo spends the whole minute's 10 login requests on purpose (its last section demonstrates the 429 limiter). A second run inside the same minute is stopped on its first login with one clear failure, "RATE LIMIT ALREADY SPENT ... Wait N seconds and run the demo again", and runs nothing else. Rehearse, wait about a minute, then present. Restarting the server also clears the limiter.
+
+**Use the development database for the demo, never the test database.** `source config/test-env.sh` points `MONGO_URI` at the `_test` database (the one `npm test` drops). Do not `source` it in the terminal where you run `npm start` for the demo. To get the admin credentials into the shell that runs `npm run demo` without touching `MONGO_URI`, export them yourself (the same values as `SEED_ADMIN_EMAIL` and `SEED_ADMIN_PASSWORD` in `config/config.env`), as in the example above, in a SECOND terminal.
 
 ### Concurrency proofs from the terminal
 
@@ -165,7 +169,7 @@ All paths are under `/api/v1`. "Own" means the owner of the booking/ticket; admi
 
 ## Known limits (measured in this build)
 
-- The statistics report is linear in the number of bookings in the requested range: about 2.25 microseconds per booking, measured at 2.26 s for 1,000,000 bookings in one range. That is under the 3 s bound up to roughly 1.3 million bookings in one range.
+- The statistics report is linear in the number of bookings in the requested range. Measured by the team on this build against an Atlas M0 free-tier cluster with synthetic data (40 providers, bookings spread over three years): 1 day 44 ms, 1 month 115 ms, 1 year 892 ms, 2 years 1.6 s, and 2.26 s for 1,000,000 bookings in one range, about 2.25 microseconds per booking. Extrapolating, the 3 s bound would be crossed at roughly 1.3 million bookings in a single range. The test suite (`scripts/stats-index-check.js`) checks 100,000 bookings over three years (about 0.9 s). A paid cluster or a local `mongod` will differ.
 - List endpoints compute `total` with `countDocuments`, which is linear on unselective filters.
 - The in-process comment timestamp ordering guarantee holds per server process only.
 - There are no database transactions: a process crash in the middle of applying a promo can leave a claimed booking or a redemption count behind.
