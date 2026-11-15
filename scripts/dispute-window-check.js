@@ -1,7 +1,7 @@
 // Pure unit check (no server, no database) of the 7-day dispute window arithmetic.
 // isWithinWindow(createdAt, now): allowed when (now - createdAt) <= 7 days, inclusive, integer ms.
 // Usage: node scripts/dispute-window-check.js        Exits non-zero on any failure.
-const { WINDOW_MS, isWithinWindow } = require('../controllers/inspections');
+const { WINDOW_MS, windowStart, isWithinWindow } = require('../controllers/inspections');
 
 const failures = [];
 const check = (ok, label) => {
@@ -12,6 +12,7 @@ const NOW = Date.UTC(2026, 10, 15, 12, 0, 0, 0);
 const at = (ageMs) => new Date(NOW - ageMs);
 
 check(WINDOW_MS === 604800000, 'WINDOW_MS is 604800000');
+check(windowStart(NOW).getTime() === NOW - WINDOW_MS, 'windowStart(now) = now - 7 days');
 check(isWithinWindow(at(WINDOW_MS), NOW) === true, 'exactly 7 days -> allowed (inclusive)');
 check(isWithinWindow(at(WINDOW_MS + 1), NOW) === false, '7 days + 1 ms -> closed');
 check(isWithinWindow(at(WINDOW_MS - 1), NOW) === true, '7 days - 1 ms -> allowed');
@@ -23,6 +24,8 @@ check(isWithinWindow(at(30 * 86400000), NOW) === false, '30 days -> closed');
 for (let d = -2000; d <= 2000; d++) {
   const age = WINDOW_MS + d;
   check(isWithinWindow(at(age), NOW) === (d <= 0), `sweep age = 7 days ${d >= 0 ? '+' : '-'} ${Math.abs(d)} ms`);
+  // The atomic submit filter ({ createdAt: { $gte: windowStart(now) } }) must agree with isWithinWindow.
+  check(at(age).getTime() >= windowStart(NOW).getTime() === isWithinWindow(at(age), NOW), `filter agreement at age = 7 days ${d >= 0 ? '+' : '-'} ${Math.abs(d)} ms`);
 }
 
 // Never throws, never mutates its arguments.

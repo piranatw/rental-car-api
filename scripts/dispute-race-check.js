@@ -128,6 +128,8 @@ const feeOf = (doc) => JSON.stringify(FEE_FIELDS.map((k) => (doc[k] instanceof D
       const w = won[0] && won[0].body.data.dispute;
       check(won.length === 1 && d.status === w.status && d.resolutionNote === w.resolutionNote && String(d.resolvedBy) === adminId && d.resolvedAt instanceof Date,
         `round ${round} (ii): stored status/note equal the single winner's; resolvedBy and resolvedAt set once`);
+      check(won.length === 1 && d.resolvedAt instanceof Date && d.resolvedAt.toISOString() === new Date(w.resolvedAt).toISOString(),
+        `round ${round} (ii): stored resolvedAt equals the winner's response resolvedAt`);
       check(d.comment === stored.comment && String(d.createdAt) === String(stored.createdAt), `round ${round} (ii): submitted comment/createdAt untouched by the resolve race`);
       check(feeOf(after) === before, `round ${round} (iv): fee fields identical before and after the resolve race`);
     }
