@@ -14287,6 +14287,238 @@
               "raw": "{\"booking\":\"{{tk_b1b}}\",\"category\":\"other\",\"subject\":\"s\",\"description\":\"d\"}"
             }
           }
+        },
+        {
+          "name": "U1 creates T5 for list summaries",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"U1 creates T5 for list summaries\", function () {",
+                  "  pm.response.to.have.status(201);",
+                  "  pm.collectionVariables.set('tk_t5', pm.response.json().data._id);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tk1T}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/tickets",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"booking\":\"{{tk_b1}}\",\"category\":\"other\",\"subject\":\"Summary {{tk_sfx}}\",\"description\":\"Summary probe\"}"
+            }
+          }
+        },
+        {
+          "name": "list summary: no comments property, commentCount 0, lastCommentAt null",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"list summary: no comments property, commentCount 0, lastCommentAt null\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  const j = pm.response.json();",
+                  "  const row = pm.response.json().data.find(function (t) { return t._id === pm.collectionVariables.get('tk_t5'); });",
+                  "  pm.expect(row).to.be.an(\"object\");",
+                  "  pm.expect(j.data.every(function (t) { return !Object.prototype.hasOwnProperty.call(t, \"comments\"); })).to.eql(true);",
+                  "  pm.expect(j.data.every(function (t) { return typeof t.commentCount === \"number\" && \"lastCommentAt\" in t; })).to.eql(true);",
+                  "  pm.expect(row.commentCount).to.eql(0);",
+                  "  pm.expect(row.lastCommentAt).to.eql(null);",
+                  "  pm.expect(row.subject).to.include('Summary');",
+                  "  pm.expect(row.status).to.eql('open');",
+                  "  pm.expect(row.user).to.eql(pm.collectionVariables.get('tk_u1'));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tk1T}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/tickets?limit=100"
+          }
+        },
+        {
+          "name": "U1 adds first comment to T5",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"U1 adds first comment to T5\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tk1T}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/tickets/{{tk_t5}}/comments",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"text\":\"first\"}"
+            }
+          }
+        },
+        {
+          "name": "admin adds second comment to T5",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"admin adds second comment to T5\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  const c = pm.response.json().data.comments;",
+                  "  pm.expect(c.length).to.eql(2);",
+                  "  pm.collectionVariables.set('tk_t5last', c[1].createdAt);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/tickets/{{tk_t5}}/comments",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"text\":\"second\"}"
+            }
+          }
+        },
+        {
+          "name": "list summary: commentCount 2, lastCommentAt = second comment createdAt (user list)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"list summary: commentCount 2, lastCommentAt = second comment createdAt (user list)\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  const row = pm.response.json().data.find(function (t) { return t._id === pm.collectionVariables.get('tk_t5'); });",
+                  "  pm.expect(row.commentCount).to.eql(2);",
+                  "  pm.expect(row.lastCommentAt).to.eql(pm.collectionVariables.get('tk_t5last'));",
+                  "  pm.expect(row).to.not.have.property(\"comments\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tk1T}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/tickets?limit=100"
+          }
+        },
+        {
+          "name": "list summary: admin list has no comments arrays",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"list summary: admin list has no comments arrays\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  const row = pm.response.json().data.find(function (t) { return t._id === pm.collectionVariables.get('tk_t5'); });",
+                  "  pm.expect(row.commentCount).to.eql(2);",
+                  "  pm.expect(row.lastCommentAt).to.eql(pm.collectionVariables.get('tk_t5last'));",
+                  "  pm.expect(pm.response.json().data.every(function (t) { return !Object.prototype.hasOwnProperty.call(t, \"comments\"); })).to.eql(true);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/tickets?limit=100"
+          }
+        },
+        {
+          "name": "single GET still returns the full comments",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"single GET still returns the full comments\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  const c = pm.response.json().data.comments;",
+                  "  pm.expect(c.length).to.eql(2);",
+                  "  pm.expect(c[0].text).to.eql('first');",
+                  "  pm.expect(c[1].text).to.eql('second');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tk1T}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/tickets/{{tk_t5}}"
+          }
         }
       ]
     }

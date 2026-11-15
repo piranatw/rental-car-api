@@ -99,13 +99,30 @@ const parseListQuery = (query, user) => {
   return { filter, page: paging.page, limit: paging.limit };
 };
 
+// List summaries: every ticket field except the comments, plus commentCount and lastCommentAt,
+// both computed in the database. The projection runs after skip/limit, so only the page is touched
+// and the match/sort/skip/limit prefix stays index-served.
+const buildListPipeline = (filter, page, limit) => [
+  { $match: filter },
+  { $sort: SORT },
+  { $skip: (page - 1) * limit },
+  { $limit: limit },
+  {
+    $addFields: {
+      commentCount: { $size: '$comments' },
+      lastCommentAt: { $max: '$comments.createdAt' }
+    }
+  },
+  { $project: { comments: 0 } }
+];
+
 exports.getTickets = async (req, res) => {
   try {
     const parsed = parseListQuery(req.query, req.user);
     if (parsed.error) return fail(res, 400, parsed.error);
     const { filter, page, limit } = parsed;
     const [data, total] = await Promise.all([
-      Ticket.find(filter).sort(SORT).skip((page - 1) * limit).limit(limit),
+      Ticket.aggregate(buildListPipeline(filter, page, limit)),
       Ticket.countDocuments(filter)
     ]);
     res.status(200).json({
@@ -217,4 +234,5 @@ exports.setStatus = async (req, res) => {
 
 exports.parseListQuery = parseListQuery;
 exports.SORT = SORT;
+exports.buildListPipeline = buildListPipeline;
 exports.MAX_COMMENTS = MAX_COMMENTS;
