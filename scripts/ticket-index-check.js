@@ -6,10 +6,13 @@
 //   1. fails on any blocking SORT stage, COLLSCAN or missing IXSCAN in the winning plan of the
 //      controller's exact query shape (unfiltered, user, status, category, status+category,
 //      user+status) with a deep skip, and
-//   2. calls the real getTickets handler for deep pages; each must answer 200 in < 3000 ms.
+//   2. calls the real getTickets handler for deep pages; each must answer 200 in < 3000 ms, and
+//   3. makes 20 tickets carry 200 comments of 2000 characters and asserts that a page of 100 that
+//      includes them serialises to < 200 KB (the list returns summaries, never the comments).
+// The plan check explains the controller's own pipeline (buildListPipeline), not a copy of it.
 const mongoose = require('mongoose');
 const Ticket = require('../models/Ticket');
-const { parseListQuery, getTickets, SORT } = require('../controllers/tickets');
+const { parseListQuery, getTickets, buildListPipeline } = require('../controllers/tickets');
 
 const uri = process.env.MONGO_URI || '';
 const [noq, qs] = uri.split('?');
@@ -88,14 +91,36 @@ const fakeRes = () => ({
     for (const [name, { who, query }] of Object.entries(shapes)) {
       const parsed = parseListQuery({ ...query, limit: '100' }, who);
       if (parsed.error) throw new Error(`${name}: ${parsed.error}`);
-      const explain = await Ticket.find(parsed.filter)
-        .sort(SORT)
-        .skip(2000)
-        .limit(100)
-        .explain('queryPlanner');
-      const found = stages(explain.queryPlanner.winningPlan);
+      // Raw explain command: the aggregate().explain() helper refuses the URI's write concern.
+      const explain = await mongoose.connection.db.command({
+        explain: { aggregate: Ticket.collection.name, pipeline: buildListPipeline(parsed.filter, 21, 100), cursor: {} },
+        verbosity: 'queryPlanner'
+      });
+      // Depending on the server version the plan sits at the top or in the first $cursor stage.
+      const planner = explain.queryPlanner || explain.stages[0].$cursor.queryPlanner;
+      const found = stages(planner.winningPlan);
       const bad = found.includes('SORT') || found.includes('COLLSCAN') || !found.includes('IXSCAN');
       check(!bad, `${name}: winning plan ${found.join(' > ')} (needs IXSCAN, no SORT, no COLLSCAN)`);
+    }
+
+    // Size: 20 of the newest tickets carry 200 x 2000-char comments (about 400 KB each).
+    {
+      const heavy = (await Ticket.find({}).sort({ createdAt: -1, _id: -1 }).limit(20).select('_id').lean()).map((t) => t._id);
+      const text = 'x'.repeat(2000);
+      const comments = Array.from({ length: 200 }, (_, i) => ({
+        _id: new mongoose.Types.ObjectId(), author: USERS[0], role: 'user', text, createdAt: new Date(now - i * 1000)
+      }));
+      await Ticket.collection.updateMany({ _id: { $in: heavy } }, { $set: { comments } });
+      const res = fakeRes();
+      const t = Date.now();
+      await getTickets({ query: { page: '1', limit: '100' }, user: admin }, res);
+      const ms = Date.now() - t;
+      const bytes = res.body ? Buffer.byteLength(JSON.stringify(res.body)) : -1;
+      const row = res.body && res.body.data && res.body.data[0];
+      check(res.code === 200 && ms < 3000 && bytes >= 0 && bytes < 200 * 1024,
+        `page of 100 with 20 tickets of 200 x 2000-char comments: status ${res.code}, ${bytes} bytes (< 204800), ${ms} ms (< 3000)`);
+      check(!!row && row.comments === undefined && row.commentCount === 200 && row.lastCommentAt instanceof Date,
+        'heavy ticket summary has commentCount 200, lastCommentAt and no comments array');
     }
 
     const pages = [
