@@ -14521,6 +14521,2466 @@
           }
         }
       ]
+    },
+    {
+      "name": "Inspections",
+      "item": [
+        {
+          "name": "register inspection user U1",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set('in_sfx', Date.now().toString(36) + Math.floor(Math.random() * 1e6).toString(36));",
+                  "pm.collectionVariables.set('in_future', new Date(Date.now() + 25 * 3600000).toISOString());",
+                  "// All dates are relative to today: actualReturnTime may not be more than 24 h in the future.",
+                  "const dayStr = function (n) { const t = new Date(); return new Date(Date.UTC(t.getUTCFullYear(), t.getUTCMonth(), t.getUTCDate() - 10 + n)).toISOString().slice(0, 10); };",
+                  "pm.collectionVariables.set('in_d0', dayStr(0));",
+                  "pm.collectionVariables.set('in_d1', dayStr(1));",
+                  "pm.collectionVariables.set('in_dm2', dayStr(-2));",
+                  "pm.collectionVariables.set('in_dm3', dayStr(-3));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"register inspection user U1\", function () {",
+                  "  pm.response.to.have.status(201);",
+                  "  pm.collectionVariables.set('in1T', pm.response.json().token);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/auth/register",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"name\":\"inU1\",\"telephone\":\"0812345678\",\"email\":\"inu1{{in_sfx}}@example.com\",\"password\":\"secret123\"}"
+            }
+          }
+        },
+        {
+          "name": "register inspection user U2",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"register inspection user U2\", function () {",
+                  "  pm.response.to.have.status(201);",
+                  "  pm.collectionVariables.set('in2T', pm.response.json().token);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/auth/register",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"name\":\"inU2\",\"telephone\":\"0812345678\",\"email\":\"inu2{{in_sfx}}@example.com\",\"password\":\"secret123\"}"
+            }
+          }
+        },
+        {
+          "name": "admin creates provider InspAlpha",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"admin creates provider InspAlpha\", function () {",
+                  "  pm.response.to.have.status(201);",
+                  "  pm.collectionVariables.set('in_p200', pm.response.json().data._id);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/providers",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"name\":\"InspAlpha {{in_sfx}}\",\"address\":\"9 Inspect Road\",\"tel\":\"020000009\",\"lateFeePerHour\":200,\"dailyRate\":1000}"
+            }
+          }
+        },
+        {
+          "name": "admin creates provider InspZero",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"admin creates provider InspZero\", function () {",
+                  "  pm.response.to.have.status(201);",
+                  "  pm.collectionVariables.set('in_p0', pm.response.json().data._id);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/providers",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"name\":\"InspZero {{in_sfx}}\",\"address\":\"9 Inspect Road\",\"tel\":\"020000009\",\"lateFeePerHour\":0,\"dailyRate\":100}"
+            }
+          }
+        },
+        {
+          "name": "admin creates provider InspDecimal",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"admin creates provider InspDecimal\", function () {",
+                  "  pm.response.to.have.status(201);",
+                  "  pm.collectionVariables.set('in_p33', pm.response.json().data._id);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/providers",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"name\":\"InspDecimal {{in_sfx}}\",\"address\":\"9 Inspect Road\",\"tel\":\"020000009\",\"lateFeePerHour\":33.33,\"dailyRate\":100}"
+            }
+          }
+        },
+        {
+          "name": "create booking for matrix 0",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"create booking for matrix 0\", function () {",
+                  "  pm.response.to.have.status(201);",
+                  "  pm.collectionVariables.set('in_m0', pm.response.json().data._id);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/providers/{{in_p200}}/bookings",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"date\":\"{{in_dm2}}T00:00:00.000Z\",\"returnDate\":\"{{in_d0}}T00:00:00.000Z\"}"
+            }
+          }
+        },
+        {
+          "name": "matrix: on the return date 14:00Z -> 0 h, 0",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"matrix: on the return date 14:00Z -> 0 h, 0\", function () {",
+                  "  pm.response.to.have.status(201);",
+                  "  const d = pm.response.json().data;",
+                  "  pm.expect(pm.response.json().success).to.equal(true);",
+                  "  pm.expect(d.lateHours).to.equal(0);",
+                  "  pm.expect(d.lateFee).to.equal(0);",
+                  "  pm.expect(typeof d.lateFee).to.equal('number');",
+                  "  pm.expect(d.feePerHourUsed).to.equal(200);",
+                  "  pm.expect(d.scheduledReturnAt).to.equal(pm.collectionVariables.get('in_d0') + 'T23:59:59.999Z');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/bookings/{{in_m0}}/inspection",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"actualReturnTime\":\"{{in_d0}}T14:00:00Z\",\"odometer\":1000,\"fuelLevel\":50}"
+            }
+          }
+        },
+        {
+          "name": "create booking for matrix 1",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"create booking for matrix 1\", function () {",
+                  "  pm.response.to.have.status(201);",
+                  "  pm.collectionVariables.set('in_m1', pm.response.json().data._id);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/providers/{{in_p200}}/bookings",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"date\":\"{{in_dm2}}T00:00:00.000Z\",\"returnDate\":\"{{in_d0}}T00:00:00.000Z\"}"
+            }
+          }
+        },
+        {
+          "name": "matrix: exactly 23:59:59.999Z (the anchor) -> 0 h, 0",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"matrix: exactly 23:59:59.999Z (the anchor) -> 0 h, 0\", function () {",
+                  "  pm.response.to.have.status(201);",
+                  "  const d = pm.response.json().data;",
+                  "  pm.expect(pm.response.json().success).to.equal(true);",
+                  "  pm.expect(d.lateHours).to.equal(0);",
+                  "  pm.expect(d.lateFee).to.equal(0);",
+                  "  pm.expect(typeof d.lateFee).to.equal('number');",
+                  "  pm.expect(d.feePerHourUsed).to.equal(200);",
+                  "  pm.expect(d.scheduledReturnAt).to.equal(pm.collectionVariables.get('in_d0') + 'T23:59:59.999Z');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/bookings/{{in_m1}}/inspection",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"actualReturnTime\":\"{{in_d0}}T23:59:59.999Z\",\"odometer\":1000,\"fuelLevel\":50}"
+            }
+          }
+        },
+        {
+          "name": "create booking for matrix 2",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"create booking for matrix 2\", function () {",
+                  "  pm.response.to.have.status(201);",
+                  "  pm.collectionVariables.set('in_m2', pm.response.json().data._id);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/providers/{{in_p200}}/bookings",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"date\":\"{{in_dm2}}T00:00:00.000Z\",\"returnDate\":\"{{in_d0}}T00:00:00.000Z\"}"
+            }
+          }
+        },
+        {
+          "name": "matrix: 1 ms after the anchor -> 1 h, 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"matrix: 1 ms after the anchor -> 1 h, 200\", function () {",
+                  "  pm.response.to.have.status(201);",
+                  "  const d = pm.response.json().data;",
+                  "  pm.expect(pm.response.json().success).to.equal(true);",
+                  "  pm.expect(d.lateHours).to.equal(1);",
+                  "  pm.expect(d.lateFee).to.equal(200);",
+                  "  pm.expect(typeof d.lateFee).to.equal('number');",
+                  "  pm.expect(d.feePerHourUsed).to.equal(200);",
+                  "  pm.expect(d.scheduledReturnAt).to.equal(pm.collectionVariables.get('in_d0') + 'T23:59:59.999Z');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/bookings/{{in_m2}}/inspection",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"actualReturnTime\":\"{{in_d1}}T00:00:00.000Z\",\"odometer\":1000,\"fuelLevel\":50}"
+            }
+          }
+        },
+        {
+          "name": "create booking for matrix 3",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"create booking for matrix 3\", function () {",
+                  "  pm.response.to.have.status(201);",
+                  "  pm.collectionVariables.set('in_m3', pm.response.json().data._id);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/providers/{{in_p200}}/bookings",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"date\":\"{{in_dm2}}T00:00:00.000Z\",\"returnDate\":\"{{in_d0}}T00:00:00.000Z\"}"
+            }
+          }
+        },
+        {
+          "name": "matrix: exactly 1 h after the anchor -> 1 h, 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"matrix: exactly 1 h after the anchor -> 1 h, 200\", function () {",
+                  "  pm.response.to.have.status(201);",
+                  "  const d = pm.response.json().data;",
+                  "  pm.expect(pm.response.json().success).to.equal(true);",
+                  "  pm.expect(d.lateHours).to.equal(1);",
+                  "  pm.expect(d.lateFee).to.equal(200);",
+                  "  pm.expect(typeof d.lateFee).to.equal('number');",
+                  "  pm.expect(d.feePerHourUsed).to.equal(200);",
+                  "  pm.expect(d.scheduledReturnAt).to.equal(pm.collectionVariables.get('in_d0') + 'T23:59:59.999Z');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/bookings/{{in_m3}}/inspection",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"actualReturnTime\":\"{{in_d1}}T00:59:59.999Z\",\"odometer\":1000,\"fuelLevel\":50}"
+            }
+          }
+        },
+        {
+          "name": "create booking for matrix 4",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"create booking for matrix 4\", function () {",
+                  "  pm.response.to.have.status(201);",
+                  "  pm.collectionVariables.set('in_m4', pm.response.json().data._id);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/providers/{{in_p200}}/bookings",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"date\":\"{{in_dm2}}T00:00:00.000Z\",\"returnDate\":\"{{in_d0}}T00:00:00.000Z\"}"
+            }
+          }
+        },
+        {
+          "name": "matrix: 1 h + 1 ms after the anchor -> 2 h, 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"matrix: 1 h + 1 ms after the anchor -> 2 h, 400\", function () {",
+                  "  pm.response.to.have.status(201);",
+                  "  const d = pm.response.json().data;",
+                  "  pm.expect(pm.response.json().success).to.equal(true);",
+                  "  pm.expect(d.lateHours).to.equal(2);",
+                  "  pm.expect(d.lateFee).to.equal(400);",
+                  "  pm.expect(typeof d.lateFee).to.equal('number');",
+                  "  pm.expect(d.feePerHourUsed).to.equal(200);",
+                  "  pm.expect(d.scheduledReturnAt).to.equal(pm.collectionVariables.get('in_d0') + 'T23:59:59.999Z');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/bookings/{{in_m4}}/inspection",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"actualReturnTime\":\"{{in_d1}}T01:00:00.000Z\",\"odometer\":1000,\"fuelLevel\":50}"
+            }
+          }
+        },
+        {
+          "name": "create booking for matrix 5",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"create booking for matrix 5\", function () {",
+                  "  pm.response.to.have.status(201);",
+                  "  pm.collectionVariables.set('in_m5', pm.response.json().data._id);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/providers/{{in_p200}}/bookings",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"date\":\"{{in_dm2}}T00:00:00.000Z\",\"returnDate\":\"{{in_d0}}T00:00:00.000Z\"}"
+            }
+          }
+        },
+        {
+          "name": "matrix: 2 h after the anchor -> 2 h, 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"matrix: 2 h after the anchor -> 2 h, 400\", function () {",
+                  "  pm.response.to.have.status(201);",
+                  "  const d = pm.response.json().data;",
+                  "  pm.expect(pm.response.json().success).to.equal(true);",
+                  "  pm.expect(d.lateHours).to.equal(2);",
+                  "  pm.expect(d.lateFee).to.equal(400);",
+                  "  pm.expect(typeof d.lateFee).to.equal('number');",
+                  "  pm.expect(d.feePerHourUsed).to.equal(200);",
+                  "  pm.expect(d.scheduledReturnAt).to.equal(pm.collectionVariables.get('in_d0') + 'T23:59:59.999Z');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/bookings/{{in_m5}}/inspection",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"actualReturnTime\":\"{{in_d1}}T01:59:59.999Z\",\"odometer\":1000,\"fuelLevel\":50}"
+            }
+          }
+        },
+        {
+          "name": "create booking for matrix 6",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"create booking for matrix 6\", function () {",
+                  "  pm.response.to.have.status(201);",
+                  "  pm.collectionVariables.set('in_m6', pm.response.json().data._id);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/providers/{{in_p200}}/bookings",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"date\":\"{{in_dm2}}T00:00:00.000Z\",\"returnDate\":\"{{in_d0}}T00:00:00.000Z\"}"
+            }
+          }
+        },
+        {
+          "name": "matrix: 2 h + 1 ms after the anchor -> 3 h, 600",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"matrix: 2 h + 1 ms after the anchor -> 3 h, 600\", function () {",
+                  "  pm.response.to.have.status(201);",
+                  "  const d = pm.response.json().data;",
+                  "  pm.expect(pm.response.json().success).to.equal(true);",
+                  "  pm.expect(d.lateHours).to.equal(3);",
+                  "  pm.expect(d.lateFee).to.equal(600);",
+                  "  pm.expect(typeof d.lateFee).to.equal('number');",
+                  "  pm.expect(d.feePerHourUsed).to.equal(200);",
+                  "  pm.expect(d.scheduledReturnAt).to.equal(pm.collectionVariables.get('in_d0') + 'T23:59:59.999Z');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/bookings/{{in_m6}}/inspection",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"actualReturnTime\":\"{{in_d1}}T02:00:00.000Z\",\"odometer\":1000,\"fuelLevel\":50}"
+            }
+          }
+        },
+        {
+          "name": "create booking for matrix 7",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"create booking for matrix 7\", function () {",
+                  "  pm.response.to.have.status(201);",
+                  "  pm.collectionVariables.set('in_m7', pm.response.json().data._id);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/providers/{{in_p200}}/bookings",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"date\":\"{{in_dm2}}T00:00:00.000Z\",\"returnDate\":\"{{in_d0}}T00:00:00.000Z\"}"
+            }
+          }
+        },
+        {
+          "name": "matrix: early return two days before -> 0 h, 0",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"matrix: early return two days before -> 0 h, 0\", function () {",
+                  "  pm.response.to.have.status(201);",
+                  "  const d = pm.response.json().data;",
+                  "  pm.expect(pm.response.json().success).to.equal(true);",
+                  "  pm.expect(d.lateHours).to.equal(0);",
+                  "  pm.expect(d.lateFee).to.equal(0);",
+                  "  pm.expect(typeof d.lateFee).to.equal('number');",
+                  "  pm.expect(d.feePerHourUsed).to.equal(200);",
+                  "  pm.expect(d.scheduledReturnAt).to.equal(pm.collectionVariables.get('in_d0') + 'T23:59:59.999Z');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/bookings/{{in_m7}}/inspection",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"actualReturnTime\":\"{{in_dm2}}T10:00:00Z\",\"odometer\":1000,\"fuelLevel\":50}"
+            }
+          }
+        },
+        {
+          "name": "create booking for zero-rate provider",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"create booking for zero-rate provider\", function () {",
+                  "  pm.response.to.have.status(201);",
+                  "  pm.collectionVariables.set('in_z', pm.response.json().data._id);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/providers/{{in_p0}}/bookings",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"date\":\"{{in_dm2}}T00:00:00.000Z\",\"returnDate\":\"{{in_d0}}T00:00:00.000Z\"}"
+            }
+          }
+        },
+        {
+          "name": "zero-rate provider 3 h late -> 3 h, fee 0 (a number)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"zero-rate provider 3 h late -> 3 h, fee 0 (a number)\", function () {",
+                  "  pm.response.to.have.status(201);",
+                  "  const d = pm.response.json().data;",
+                  "  pm.expect(pm.response.json().success).to.equal(true);",
+                  "  pm.expect(d.lateHours).to.equal(3);",
+                  "  pm.expect(d.lateFee).to.equal(0);",
+                  "  pm.expect(typeof d.lateFee).to.equal('number');",
+                  "  pm.expect(d.feePerHourUsed).to.equal(0);",
+                  "  pm.expect(d.scheduledReturnAt).to.equal(pm.collectionVariables.get('in_d0') + 'T23:59:59.999Z');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/bookings/{{in_z}}/inspection",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"actualReturnTime\":\"{{in_d1}}T02:59:59.999Z\",\"odometer\":10,\"fuelLevel\":10}"
+            }
+          }
+        },
+        {
+          "name": "create booking for decimal-rate provider 3 h",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"create booking for decimal-rate provider 3 h\", function () {",
+                  "  pm.response.to.have.status(201);",
+                  "  pm.collectionVariables.set('in_bd3', pm.response.json().data._id);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/providers/{{in_p33}}/bookings",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"date\":\"{{in_dm2}}T00:00:00.000Z\",\"returnDate\":\"{{in_d0}}T00:00:00.000Z\"}"
+            }
+          }
+        },
+        {
+          "name": "decimal rate 33.33, 3 h late -> 99.99 exactly",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"decimal rate 33.33, 3 h late -> 99.99 exactly\", function () {",
+                  "  pm.response.to.have.status(201);",
+                  "  const d = pm.response.json().data;",
+                  "  pm.expect(pm.response.json().success).to.equal(true);",
+                  "  pm.expect(d.lateHours).to.equal(3);",
+                  "  pm.expect(d.lateFee).to.equal(99.99);",
+                  "  pm.expect(typeof d.lateFee).to.equal('number');",
+                  "  pm.expect(d.feePerHourUsed).to.equal(33.33);",
+                  "  pm.expect(d.scheduledReturnAt).to.equal(pm.collectionVariables.get('in_d0') + 'T23:59:59.999Z');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/bookings/{{in_bd3}}/inspection",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"actualReturnTime\":\"{{in_d1}}T02:59:59.999Z\",\"odometer\":10,\"fuelLevel\":10}"
+            }
+          }
+        },
+        {
+          "name": "create booking for decimal-rate provider 1 h",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"create booking for decimal-rate provider 1 h\", function () {",
+                  "  pm.response.to.have.status(201);",
+                  "  pm.collectionVariables.set('in_bd1', pm.response.json().data._id);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/providers/{{in_p33}}/bookings",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"date\":\"{{in_dm2}}T00:00:00.000Z\",\"returnDate\":\"{{in_d0}}T00:00:00.000Z\"}"
+            }
+          }
+        },
+        {
+          "name": "decimal rate 33.33, 1 h late -> 33.33",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"decimal rate 33.33, 1 h late -> 33.33\", function () {",
+                  "  pm.response.to.have.status(201);",
+                  "  const d = pm.response.json().data;",
+                  "  pm.expect(pm.response.json().success).to.equal(true);",
+                  "  pm.expect(d.lateHours).to.equal(1);",
+                  "  pm.expect(d.lateFee).to.equal(33.33);",
+                  "  pm.expect(typeof d.lateFee).to.equal('number');",
+                  "  pm.expect(d.feePerHourUsed).to.equal(33.33);",
+                  "  pm.expect(d.scheduledReturnAt).to.equal(pm.collectionVariables.get('in_d0') + 'T23:59:59.999Z');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/bookings/{{in_bd1}}/inspection",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"actualReturnTime\":\"{{in_d1}}T00:59:59.999Z\",\"odometer\":10,\"fuelLevel\":10}"
+            }
+          }
+        },
+        {
+          "name": "admin changes the provider rate afterwards",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"admin changes the provider rate afterwards\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.json().data.lateFeePerHour).to.equal(999);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/providers/{{in_p33}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"lateFeePerHour\":999}"
+            }
+          }
+        },
+        {
+          "name": "stored inspection keeps feePerHourUsed after the provider rate change",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"stored inspection keeps feePerHourUsed after the provider rate change\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  const d = pm.response.json().data;",
+                  "  pm.expect(d.feePerHourUsed).to.equal(33.33);",
+                  "  pm.expect(d.lateFee).to.equal(33.33);",
+                  "  pm.expect(d.lateHours).to.equal(1);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/bookings/{{in_bd1}}/inspection"
+          }
+        },
+        {
+          "name": "create booking for U1 own",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"create booking for U1 own\", function () {",
+                  "  pm.response.to.have.status(201);",
+                  "  pm.collectionVariables.set('in_own', pm.response.json().data._id);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{in1T}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/providers/{{in_p200}}/bookings",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"date\":\"{{in_dm2}}T00:00:00.000Z\",\"returnDate\":\"{{in_d0}}T00:00:00.000Z\"}"
+            }
+          }
+        },
+        {
+          "name": "create booking for U1 no inspection",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"create booking for U1 no inspection\", function () {",
+                  "  pm.response.to.have.status(201);",
+                  "  pm.collectionVariables.set('in_none', pm.response.json().data._id);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{in1T}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/providers/{{in_p200}}/bookings",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"date\":\"{{in_dm2}}T00:00:00.000Z\",\"returnDate\":\"{{in_d0}}T00:00:00.000Z\"}"
+            }
+          }
+        },
+        {
+          "name": "create booking for U1 to be deleted",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"create booking for U1 to be deleted\", function () {",
+                  "  pm.response.to.have.status(201);",
+                  "  pm.collectionVariables.set('in_del', pm.response.json().data._id);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{in1T}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/providers/{{in_p200}}/bookings",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"date\":\"{{in_dm2}}T00:00:00.000Z\",\"returnDate\":\"{{in_d0}}T00:00:00.000Z\"}"
+            }
+          }
+        },
+        {
+          "name": "missing odometer -> 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"missing odometer -> 400\", function () {",
+                  "  pm.response.to.have.status(400);",
+                  "  pm.expect(pm.response.json().success).to.equal(false);",
+                  "  pm.expect(pm.response.json().message).to.equal(\"odometer must be a number between 0 and 10000000\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/bookings/{{in_none}}/inspection",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"actualReturnTime\":\"{{in_d0}}T10:00:00Z\",\"fuelLevel\":50}"
+            }
+          }
+        },
+        {
+          "name": "fuel 150 -> 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"fuel 150 -> 400\", function () {",
+                  "  pm.response.to.have.status(400);",
+                  "  pm.expect(pm.response.json().success).to.equal(false);",
+                  "  pm.expect(pm.response.json().message).to.equal(\"fuelLevel must be a number between 0 and 100\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/bookings/{{in_none}}/inspection",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"actualReturnTime\":\"{{in_d0}}T10:00:00Z\",\"odometer\":100,\"fuelLevel\":150}"
+            }
+          }
+        },
+        {
+          "name": "fuel -1 -> 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"fuel -1 -> 400\", function () {",
+                  "  pm.response.to.have.status(400);",
+                  "  pm.expect(pm.response.json().success).to.equal(false);",
+                  "  pm.expect(pm.response.json().message).to.equal(\"fuelLevel must be a number between 0 and 100\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/bookings/{{in_none}}/inspection",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"actualReturnTime\":\"{{in_d0}}T10:00:00Z\",\"odometer\":100,\"fuelLevel\":-1}"
+            }
+          }
+        },
+        {
+          "name": "odometer as a string -> 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"odometer as a string -> 400\", function () {",
+                  "  pm.response.to.have.status(400);",
+                  "  pm.expect(pm.response.json().success).to.equal(false);",
+                  "  pm.expect(pm.response.json().message).to.equal(\"odometer must be a number between 0 and 10000000\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/bookings/{{in_none}}/inspection",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"actualReturnTime\":\"{{in_d0}}T10:00:00Z\",\"odometer\":\"100\",\"fuelLevel\":50}"
+            }
+          }
+        },
+        {
+          "name": "odometer above range -> 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"odometer above range -> 400\", function () {",
+                  "  pm.response.to.have.status(400);",
+                  "  pm.expect(pm.response.json().success).to.equal(false);",
+                  "  pm.expect(pm.response.json().message).to.equal(\"odometer must be a number between 0 and 10000000\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/bookings/{{in_none}}/inspection",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"actualReturnTime\":\"{{in_d0}}T10:00:00Z\",\"odometer\":10000001,\"fuelLevel\":50}"
+            }
+          }
+        },
+        {
+          "name": "missing actualReturnTime -> 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"missing actualReturnTime -> 400\", function () {",
+                  "  pm.response.to.have.status(400);",
+                  "  pm.expect(pm.response.json().success).to.equal(false);",
+                  "  pm.expect(pm.response.json().message).to.equal(\"actualReturnTime must be an ISO 8601 date-time with a zone designator (Z or +hh:mm)\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/bookings/{{in_none}}/inspection",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"odometer\":1,\"fuelLevel\":1}"
+            }
+          }
+        },
+        {
+          "name": "actualReturnTime without a zone -> 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"actualReturnTime without a zone -> 400\", function () {",
+                  "  pm.response.to.have.status(400);",
+                  "  pm.expect(pm.response.json().success).to.equal(false);",
+                  "  pm.expect(pm.response.json().message).to.equal(\"actualReturnTime must be an ISO 8601 date-time with a zone designator (Z or +hh:mm)\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/bookings/{{in_none}}/inspection",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"actualReturnTime\":\"{{in_d0}}T10:00:00\",\"odometer\":100,\"fuelLevel\":50}"
+            }
+          }
+        },
+        {
+          "name": "actualReturnTime date only -> 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"actualReturnTime date only -> 400\", function () {",
+                  "  pm.response.to.have.status(400);",
+                  "  pm.expect(pm.response.json().success).to.equal(false);",
+                  "  pm.expect(pm.response.json().message).to.equal(\"actualReturnTime must be an ISO 8601 date-time with a zone designator (Z or +hh:mm)\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/bookings/{{in_none}}/inspection",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"actualReturnTime\":\"{{in_d0}}\",\"odometer\":100,\"fuelLevel\":50}"
+            }
+          }
+        },
+        {
+          "name": "actualReturnTime as a number -> 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"actualReturnTime as a number -> 400\", function () {",
+                  "  pm.response.to.have.status(400);",
+                  "  pm.expect(pm.response.json().success).to.equal(false);",
+                  "  pm.expect(pm.response.json().message).to.equal(\"actualReturnTime must be an ISO 8601 date-time with a zone designator (Z or +hh:mm)\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/bookings/{{in_none}}/inspection",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"actualReturnTime\":1940000000000,\"odometer\":100,\"fuelLevel\":50}"
+            }
+          }
+        },
+        {
+          "name": "actualReturnTime invalid date -> 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"actualReturnTime invalid date -> 400\", function () {",
+                  "  pm.response.to.have.status(400);",
+                  "  pm.expect(pm.response.json().success).to.equal(false);",
+                  "  pm.expect(pm.response.json().message).to.equal(\"actualReturnTime is not a valid date-time\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/bookings/{{in_none}}/inspection",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"actualReturnTime\":\"2031-02-30T10:00:00Z\",\"odometer\":100,\"fuelLevel\":50}"
+            }
+          }
+        },
+        {
+          "name": "actualReturnTime before the pickup date -> 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"actualReturnTime before the pickup date -> 400\", function () {",
+                  "  pm.response.to.have.status(400);",
+                  "  pm.expect(pm.response.json().success).to.equal(false);",
+                  "  pm.expect(pm.response.json().message).to.equal(\"actualReturnTime must not be before the pickup date\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/bookings/{{in_none}}/inspection",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"actualReturnTime\":\"{{in_dm3}}T23:59:59Z\",\"odometer\":100,\"fuelLevel\":50}"
+            }
+          }
+        },
+        {
+          "name": "damageNotes not a string -> 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"damageNotes not a string -> 400\", function () {",
+                  "  pm.response.to.have.status(400);",
+                  "  pm.expect(pm.response.json().success).to.equal(false);",
+                  "  pm.expect(pm.response.json().message).to.equal(\"damageNotes must be a string of at most 5000 characters\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/bookings/{{in_none}}/inspection",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"actualReturnTime\":\"{{in_d0}}T10:00:00Z\",\"odometer\":100,\"fuelLevel\":50,\"damageNotes\":5}"
+            }
+          }
+        },
+        {
+          "name": "damageNotes over 5000 chars -> 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"damageNotes over 5000 chars -> 400\", function () {",
+                  "  pm.response.to.have.status(400);",
+                  "  pm.expect(pm.response.json().success).to.equal(false);",
+                  "  pm.expect(pm.response.json().message).to.equal(\"damageNotes must be a string of at most 5000 characters\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/bookings/{{in_none}}/inspection",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"actualReturnTime\":\"{{in_d0}}T10:00:00Z\",\"odometer\":100,\"fuelLevel\":50,\"damageNotes\":\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\"}"
+            }
+          }
+        },
+        {
+          "name": "actualReturnTime more than 24 h in the future -> 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"actualReturnTime more than 24 h in the future -> 400\", function () {",
+                  "  pm.response.to.have.status(400);",
+                  "  pm.expect(pm.response.json().message).to.equal(\"actualReturnTime must not be more than 24 hours in the future\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/bookings/{{in_none}}/inspection",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"actualReturnTime\":\"{{in_future}}\",\"odometer\":1,\"fuelLevel\":1}"
+            }
+          }
+        },
+        {
+          "name": "malformed JSON -> 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"malformed JSON -> 400\", function () {",
+                  "  pm.response.to.have.status(400);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/bookings/{{in_none}}/inspection",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"odometer\":"
+            }
+          }
+        },
+        {
+          "name": "non-admin create -> 403",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"non-admin create -> 403\", function () {",
+                  "  pm.response.to.have.status(403);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{in1T}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/bookings/{{in_none}}/inspection",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"actualReturnTime\":\"{{in_d0}}T10:00:00Z\",\"odometer\":100,\"fuelLevel\":50}"
+            }
+          }
+        },
+        {
+          "name": "no token create -> 401",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"no token create -> 401\", function () {",
+                  "  pm.response.to.have.status(401);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/bookings/{{in_none}}/inspection",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"actualReturnTime\":\"{{in_d0}}T10:00:00Z\",\"odometer\":100,\"fuelLevel\":50}"
+            }
+          }
+        },
+        {
+          "name": "malformed booking id create -> 404",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"malformed booking id create -> 404\", function () {",
+                  "  pm.response.to.have.status(404);",
+                  "  pm.expect(pm.response.json().message).to.equal(\"Booking not found\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/bookings/not-an-id/inspection",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"actualReturnTime\":\"{{in_d0}}T10:00:00Z\",\"odometer\":100,\"fuelLevel\":50}"
+            }
+          }
+        },
+        {
+          "name": "unknown booking id create -> 404",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"unknown booking id create -> 404\", function () {",
+                  "  pm.response.to.have.status(404);",
+                  "  pm.expect(pm.response.json().message).to.equal(\"Booking not found\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/bookings/000000000000000000000000/inspection",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"actualReturnTime\":\"{{in_d0}}T10:00:00Z\",\"odometer\":100,\"fuelLevel\":50}"
+            }
+          }
+        },
+        {
+          "name": "owner GET before any inspection -> 404 distinct message",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"owner GET before any inspection -> 404 distinct message\", function () {",
+                  "  pm.response.to.have.status(404);",
+                  "  pm.expect(pm.response.json().message).to.equal(\"Inspection not found for this booking\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{in1T}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/bookings/{{in_none}}/inspection"
+          }
+        },
+        {
+          "name": "admin GET before any inspection -> 404 distinct message",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"admin GET before any inspection -> 404 distinct message\", function () {",
+                  "  pm.response.to.have.status(404);",
+                  "  pm.expect(pm.response.json().message).to.equal(\"Inspection not found for this booking\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/bookings/{{in_none}}/inspection"
+          }
+        },
+        {
+          "name": "malformed booking id GET -> 404",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"malformed booking id GET -> 404\", function () {",
+                  "  pm.response.to.have.status(404);",
+                  "  pm.expect(pm.response.json().message).to.equal(\"Booking not found\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/bookings/not-an-id/inspection"
+          }
+        },
+        {
+          "name": "unknown booking id GET -> 404",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"unknown booking id GET -> 404\", function () {",
+                  "  pm.response.to.have.status(404);",
+                  "  pm.expect(pm.response.json().message).to.equal(\"Booking not found\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/bookings/000000000000000000000000/inspection"
+          }
+        },
+        {
+          "name": "no token GET -> 401",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"no token GET -> 401\", function () {",
+                  "  pm.response.to.have.status(401);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/bookings/{{in_none}}/inspection"
+          }
+        },
+        {
+          "name": "create with client-sent computed fields: ignored",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"create with client-sent computed fields: ignored\", function () {",
+                  "  pm.response.to.have.status(201);",
+                  "  const d = pm.response.json().data;",
+                  "  pm.expect(pm.response.json().success).to.equal(true);",
+                  "  pm.expect(d.lateHours).to.equal(1);",
+                  "  pm.expect(d.lateFee).to.equal(200);",
+                  "  pm.expect(typeof d.lateFee).to.equal('number');",
+                  "  pm.expect(d.feePerHourUsed).to.equal(200);",
+                  "  pm.expect(d.scheduledReturnAt).to.equal(pm.collectionVariables.get('in_d0') + 'T23:59:59.999Z');",
+                  "  pm.expect(d.booking).to.equal(pm.collectionVariables.get('in_own'));",
+                  "  pm.expect(d.recordedBy).to.be.a('string').and.not.equal('000000000000000000000000');",
+                  "  pm.expect(d.createdAt).to.not.equal('2000-01-01T00:00:00.000Z');",
+                  "  pm.expect(d.dispute).to.equal(null);",
+                  "  pm.expect(d.extra).to.equal(undefined);",
+                  "  pm.expect(d.odometer).to.equal(54321);",
+                  "  pm.expect(d.fuelLevel).to.equal(75);",
+                  "  pm.expect(d.damageNotes).to.equal('Scratch on the left door');",
+                  "  pm.expect(d.actualReturnTime).to.equal(pm.collectionVariables.get('in_d1') + 'T00:00:00.000Z');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/bookings/{{in_own}}/inspection",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"actualReturnTime\":\"{{in_d1}}T00:00:00.000Z\",\"odometer\":54321,\"fuelLevel\":75,\"damageNotes\":\"Scratch on the left door\",\"lateFee\":99999,\"lateHours\":99,\"feePerHourUsed\":1,\"dispute\":{\"comment\":\"x\",\"status\":\"open\"},\"booking\":\"000000000000000000000000\",\"recordedBy\":\"000000000000000000000000\",\"createdAt\":\"2000-01-01T00:00:00.000Z\",\"scheduledReturnAt\":\"2000-01-01T00:00:00.000Z\",\"extra\":\"nope\"}"
+            }
+          }
+        },
+        {
+          "name": "second inspection for the same booking -> 409",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"second inspection for the same booking -> 409\", function () {",
+                  "  pm.response.to.have.status(409);",
+                  "  pm.expect(pm.response.json().success).to.equal(false);",
+                  "  pm.expect(pm.response.json().message).to.equal(\"Inspection already recorded for this booking\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/bookings/{{in_own}}/inspection",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"actualReturnTime\":\"{{in_d0}}T10:00:00Z\",\"odometer\":100,\"fuelLevel\":50}"
+            }
+          }
+        },
+        {
+          "name": "owner GET own inspection -> 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"owner GET own inspection -> 200\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  const d = pm.response.json().data;",
+                  "  pm.expect(pm.response.json().success).to.equal(true);",
+                  "  pm.expect(d.lateFee).to.equal(200);",
+                  "  pm.expect(d.lateHours).to.equal(1);",
+                  "  pm.expect(d.scheduledReturnAt).to.equal(pm.collectionVariables.get('in_d0') + 'T23:59:59.999Z');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{in1T}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/bookings/{{in_own}}/inspection"
+          }
+        },
+        {
+          "name": "stranger GET -> 403",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"stranger GET -> 403\", function () {",
+                  "  pm.response.to.have.status(403);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{in2T}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/bookings/{{in_own}}/inspection"
+          }
+        },
+        {
+          "name": "admin GET -> 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"admin GET -> 200\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.json().data.odometer).to.equal(54321);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/bookings/{{in_own}}/inspection"
+          }
+        },
+        {
+          "name": "PUT on the inspection is not routed -> 404",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"PUT on the inspection is not routed -> 404\", function () {",
+                  "  pm.response.to.have.status(404);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/bookings/{{in_own}}/inspection",
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            }
+          }
+        },
+        {
+          "name": "PATCH on the inspection is not routed -> 404",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"PATCH on the inspection is not routed -> 404\", function () {",
+                  "  pm.response.to.have.status(404);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/bookings/{{in_own}}/inspection",
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            }
+          }
+        },
+        {
+          "name": "DELETE on the inspection is not routed -> 404",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"DELETE on the inspection is not routed -> 404\", function () {",
+                  "  pm.response.to.have.status(404);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/bookings/{{in_own}}/inspection"
+          }
+        },
+        {
+          "name": "create inspection for the booking about to be deleted",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"create inspection for the booking about to be deleted\", function () {",
+                  "  pm.response.to.have.status(201);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/bookings/{{in_del}}/inspection",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"actualReturnTime\":\"{{in_d0}}T12:00:00Z\",\"odometer\":5,\"fuelLevel\":5}"
+            }
+          }
+        },
+        {
+          "name": "admin deletes that booking",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"admin deletes that booking\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/bookings/{{in_del}}"
+          }
+        },
+        {
+          "name": "admin still reads the inspection of the deleted booking -> 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"admin still reads the inspection of the deleted booking -> 200\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.json().data.odometer).to.equal(5);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/bookings/{{in_del}}/inspection"
+          }
+        },
+        {
+          "name": "owner GET after the booking is gone -> 404 Booking not found",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"owner GET after the booking is gone -> 404 Booking not found\", function () {",
+                  "  pm.response.to.have.status(404);",
+                  "  pm.expect(pm.response.json().message).to.equal(\"Booking not found\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{in1T}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/bookings/{{in_del}}/inspection"
+          }
+        },
+        {
+          "name": "create for the deleted booking -> 404",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"create for the deleted booking -> 404\", function () {",
+                  "  pm.response.to.have.status(404);",
+                  "  pm.expect(pm.response.json().message).to.equal(\"Booking not found\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/bookings/{{in_del}}/inspection",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"actualReturnTime\":\"{{in_d0}}T10:00:00Z\",\"odometer\":100,\"fuelLevel\":50}"
+            }
+          }
+        }
+      ]
     }
   ]
 }

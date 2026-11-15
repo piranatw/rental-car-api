@@ -20,6 +20,7 @@ app.use(cookieParser());
 // Route mounting: one line per resource, added by later tasks.
 app.use('/api/v1/auth', require('./routes/auth'));
 app.use('/api/v1/providers', require('./routes/providers'));
+app.use('/api/v1/bookings/:id/inspection', require('./routes/inspections'));
 app.use('/api/v1/bookings', require('./routes/bookings'));
 app.use('/api/v1/promos', require('./routes/promos'));
 app.use('/api/v1/audit', require('./routes/audit'));
