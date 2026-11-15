@@ -39,6 +39,9 @@ else
   exit 1
 fi
 
+# Guard first: the collection must not contain duplicate folders/requests or missing folders.
+node scripts/collection-check.js || exit 1
+
 # Start clean: drop the test database (name check above already passed).
 node -e "
 const mongoose = require('mongoose');
@@ -125,7 +128,7 @@ age_booking() {
   node scripts/age-inspection.js "$id" "$3"
 }
 
-# Disputes: three Newman phases with database ageing between them (Postman cannot spawn processes).
+# Disputes: three Newman phases with database ageing between them (phase 3: 7 days - 30 s, so Newman start-up cannot push it out of the window) (Postman cannot spawn processes).
 run_disputes() {
   local d rc=0
   d="$(mktemp -d)" || return 1
@@ -140,7 +143,7 @@ run_disputes() {
     echo "Disputes: ageing failed; phase 2 not run" >&2; rc=1
   fi
   [ -s "$d/e2.json" ] || { rm -rf "$d"; return 1; }
-  if age_booking "$d/e2.json" ds_b4 604795000ms; then
+  if age_booking "$d/e2.json" ds_b4 604770000ms; then
     run_phase newman-report-disputes3.json "$d/e2.json" "$d/e3.json" "Disputes 3 inclusive boundary" || rc=1
   else
     echo "Disputes: boundary ageing failed; phase 3 not run" >&2; rc=1

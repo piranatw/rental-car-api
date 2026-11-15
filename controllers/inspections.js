@@ -130,8 +130,11 @@ const getInspection = async (req, res) => {
 const WINDOW_MS = 7 * 24 * HOUR_MS;
 const MAX_TEXT = 2000;
 
+// Oldest createdAt that still allows a dispute at `now`; the submit filter uses exactly this value.
+const windowStart = (now) => new Date(now - WINDOW_MS);
+
 // Pure: a dispute is allowed while (now - createdAt) <= 7 days, inclusive, in integer milliseconds.
-// Mirrors the atomic filter { createdAt: { $gte: now - WINDOW_MS } } used by submitDispute.
+// Agrees with the atomic filter { createdAt: { $gte: windowStart(now) } } used by submitDispute.
 const isWithinWindow = (createdAt, now) => now - createdAt.getTime() <= WINDOW_MS;
 
 // Returns { value } or { error }. A non-empty comment: string, trimmed, 1..2000 characters.
@@ -160,15 +163,16 @@ const submitDispute = async (req, res) => {
     if (!mongoose.isValidObjectId(req.params.id)) return fail(res, 404, 'Booking not found');
     const booking = await Booking.findById(req.params.id).select('user').lean();
     if (!booking) return fail(res, 404, 'Booking not found');
+    // Ownership first: a stranger gets the same 403 whether or not an inspection exists.
+    if (booking.user.toString() !== req.user.id) return fail(res, 403, 'Not authorized to dispute this inspection');
     const exists = await Inspection.exists({ booking: booking._id });
     if (!exists) return fail(res, 404, 'Inspection not found for this booking');
-    if (booking.user.toString() !== req.user.id) return fail(res, 403, 'Not authorized to dispute this inspection');
     const parsed = parseComment(req.body);
     if (parsed.error) return fail(res, 400, parsed.error);
 
     const now = Date.now();
     const updated = await Inspection.findOneAndUpdate(
-      { booking: booking._id, dispute: null, createdAt: { $gte: new Date(now - WINDOW_MS) } },
+      { booking: booking._id, dispute: null, createdAt: { $gte: windowStart(now) } },
       { $set: { dispute: { comment: parsed.value, createdAt: new Date(now), status: 'open', resolutionNote: '', resolvedAt: null, resolvedBy: null } } },
       { new: true }
     );
@@ -218,5 +222,5 @@ const resolveDispute = async (req, res) => {
 
 module.exports = {
   calcLateFee, scheduledReturnInstant, createInspection, getInspection,
-  WINDOW_MS, isWithinWindow, submitDispute, resolveDispute
+  WINDOW_MS, windowStart, isWithinWindow, submitDispute, resolveDispute
 };
