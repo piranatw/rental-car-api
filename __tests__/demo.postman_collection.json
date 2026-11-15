@@ -175,9 +175,15 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('status is 200', function () { pm.response.to.have.status(200); });",
-                  "pm.test('login returns a token', function () { pm.expect(pm.response.json().token).to.be.a('string'); });",
-                  "pm.collectionVariables.set('tokenA1', pm.response.json().token);"
+                  "if (pm.response.code === 429) {",
+                  "  const ra = (pm.response.json() || {}).retryAfter;",
+                  "  pm.test('RATE LIMIT ALREADY SPENT: a previous demo run used this minute of login requests. Wait ' + (ra || 60) + ' seconds and run the demo again (nothing else was run)', function () { pm.expect.fail('login answered 429 Too Many Requests'); });",
+                  "  postman.setNextRequest(null);",
+                  "} else {",
+                  "  pm.test('status is 200', function () { pm.response.to.have.status(200); });",
+                  "  pm.test('login returns a token', function () { pm.expect(pm.response.json().token).to.be.a('string'); });",
+                  "  pm.collectionVariables.set('tokenA1', pm.response.json().token);",
+                  "}"
                 ]
               }
             }
@@ -326,9 +332,15 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('status is 200', function () { pm.response.to.have.status(200); });",
-                  "pm.test('admin token and role admin', function () { const j = pm.response.json(); pm.expect(j.token).to.be.a('string'); pm.expect(j.data.role).to.eql('admin'); });",
-                  "pm.collectionVariables.set('tokenAdmin', pm.response.json().token);"
+                  "if (pm.response.code === 429) {",
+                  "  const ra = (pm.response.json() || {}).retryAfter;",
+                  "  pm.test('RATE LIMIT ALREADY SPENT: the login budget of this minute is used up. Wait ' + (ra || 60) + ' seconds and run the demo again (nothing else was run)', function () { pm.expect.fail('admin login answered 429 Too Many Requests'); });",
+                  "  postman.setNextRequest(null);",
+                  "} else {",
+                  "  pm.test('status is 200', function () { pm.response.to.have.status(200); });",
+                  "  pm.test('admin token and role admin', function () { const j = pm.response.json(); pm.expect(j.token).to.be.a('string'); pm.expect(j.data.role).to.eql('admin'); });",
+                  "  pm.collectionVariables.set('tokenAdmin', pm.response.json().token);",
+                  "}"
                 ]
               }
             }
