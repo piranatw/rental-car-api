@@ -19998,6 +19998,1640 @@
           ]
         }
       ]
+    },
+    {
+      "name": "Stats",
+      "item": [
+        {
+          "name": "register stats user",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set('st_sfx', Date.now().toString(36) + Math.floor(Math.random() * 1e6).toString(36));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"registered a throwaway non-admin user\", function () {",
+                  "  pm.response.to.have.status(201);",
+                  "  pm.collectionVariables.set('stUserT', pm.response.json().token);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/auth/register",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"name\":\"statsU1\",\"telephone\":\"0812345678\",\"email\":\"statsu1{{st_sfx}}@example.com\",\"password\":\"secret123\"}"
+            }
+          }
+        },
+        {
+          "name": "no token is 401",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"401\", function () {",
+                  "  pm.response.to.have.status(401);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/stats?from=2090-01-01&to=2090-12-31"
+          }
+        },
+        {
+          "name": "non-admin is 403",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"403 for a non-admin user\", function () {",
+                  "  pm.response.to.have.status(403);",
+                  "  pm.expect(pm.response.json().success).to.eql(false);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{stUserT}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/stats?from=2090-01-01&to=2090-12-31"
+          }
+        },
+        {
+          "name": "non-admin with an invalid range is still 403",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"403 before validation\", function () {",
+                  "  pm.response.to.have.status(403);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{stUserT}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/stats?from=nope"
+          }
+        },
+        {
+          "name": "full 2090 range matches the seed",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "const d = body.data;",
+                  "const sum = function (a) { return a.reduce(function (s, x) { return s + x.count; }, 0); };",
+                  "const slim = function (a) { return a.map(function (x) { return { name: x.name, count: x.count }; }); };",
+                  "pm.test(\"200 and report equals the seed for the range\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(body.success).to.eql(true);",
+                  "  pm.expect(d.total).to.eql(5000);",
+                  "  pm.expect(slim(d.perProvider)).to.eql([{\"name\":\"Stats Provider A\",\"count\":1400},{\"name\":\"Stats Provider B\",\"count\":1000},{\"name\":\"Stats Provider C\",\"count\":1000},{\"name\":\"Stats Provider D\",\"count\":800},{\"name\":\"Stats Provider E\",\"count\":400},{\"name\":\"Stats Provider F\",\"count\":400}]);",
+                  "  pm.expect(d.perMonth).to.eql([{\"month\":\"2090-01\",\"count\":502},{\"month\":\"2090-02\",\"count\":501},{\"month\":\"2090-04\",\"count\":501},{\"month\":\"2090-05\",\"count\":501},{\"month\":\"2090-06\",\"count\":499},{\"month\":\"2090-07\",\"count\":499},{\"month\":\"2090-09\",\"count\":499},{\"month\":\"2090-10\",\"count\":499},{\"month\":\"2090-11\",\"count\":499},{\"month\":\"2090-12\",\"count\":500}]);",
+                  "  pm.expect(d.top5).to.eql(d.perProvider.slice(0, 5));",
+                  "  pm.expect(d.range).to.eql({ from: \"2090-01-01T00:00:00.000Z\", to: \"2090-12-31T23:59:59.999Z\" });",
+                  "  pm.expect(d.basis).to.eql('booking.date');",
+                  "});",
+                  "pm.test(\"total = sum(perProvider) = sum(perMonth), total is an integer\", function () {",
+                  "  pm.expect(Number.isInteger(d.total)).to.eql(true);",
+                  "  pm.expect(sum(d.perProvider)).to.eql(d.total);",
+                  "  pm.expect(sum(d.perMonth)).to.eql(d.total);",
+                  "});",
+                  "pm.test(\"known seed figures and 5000-booking response time\", function () {",
+                  "  pm.expect(d.total).to.eql(5000);",
+                  "  pm.expect(d.perProvider).to.have.lengthOf(6);",
+                  "  d.perProvider.forEach(function (p) { pm.expect(p.provider).to.match(/^[0-9a-f]{24}$/); });",
+                  "  pm.expect(pm.response.responseTime).to.be.below(3000);",
+                  "});",
+                  "pm.test(\"perMonth ascending and omits months without bookings\", function () {",
+                  "  const months = d.perMonth.map(function (m) { return m.month; });",
+                  "  pm.expect(months).to.eql(months.slice().sort());",
+                  "  pm.expect(months).to.not.include('2090-03');",
+                  "  pm.expect(months).to.not.include('2090-08');",
+                  "  pm.expect(months).to.have.lengthOf(10);",
+                  "});",
+                  "pm.test(\"top5: exactly 5, descending, ties by name ascending, F cut by the tie-break\", function () {",
+                  "  pm.expect(d.top5).to.have.lengthOf(5);",
+                  "  pm.expect(d.top5.map(function (p) { return p.name; })).to.eql(['Stats Provider A', 'Stats Provider B', 'Stats Provider C', 'Stats Provider D', 'Stats Provider E']);",
+                  "  for (var i = 1; i < d.top5.length; i++) { pm.expect(d.top5[i - 1].count).to.be.at.least(d.top5[i].count); }",
+                  "  pm.expect(d.perProvider.map(function (p) { return p.name; }).slice(5)).to.eql(['Stats Provider F']);",
+                  "});",
+                  "pm.test(\"providers with zero bookings are excluded from perProvider and top5\", function () {",
+                  "  const all = d.perProvider.concat(d.top5).map(function (p) { return p.name; });",
+                  "  pm.expect(all.join('|')).to.not.include('Zero');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/stats?from=2090-01-01&to=2090-12-31"
+          }
+        },
+        {
+          "name": "unknown params are ignored",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "const d = body.data;",
+                  "const sum = function (a) { return a.reduce(function (s, x) { return s + x.count; }, 0); };",
+                  "const slim = function (a) { return a.map(function (x) { return { name: x.name, count: x.count }; }); };",
+                  "pm.test(\"200 and report equals the seed for the range\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(body.success).to.eql(true);",
+                  "  pm.expect(d.total).to.eql(5000);",
+                  "  pm.expect(slim(d.perProvider)).to.eql([{\"name\":\"Stats Provider A\",\"count\":1400},{\"name\":\"Stats Provider B\",\"count\":1000},{\"name\":\"Stats Provider C\",\"count\":1000},{\"name\":\"Stats Provider D\",\"count\":800},{\"name\":\"Stats Provider E\",\"count\":400},{\"name\":\"Stats Provider F\",\"count\":400}]);",
+                  "  pm.expect(d.perMonth).to.eql([{\"month\":\"2090-01\",\"count\":502},{\"month\":\"2090-02\",\"count\":501},{\"month\":\"2090-04\",\"count\":501},{\"month\":\"2090-05\",\"count\":501},{\"month\":\"2090-06\",\"count\":499},{\"month\":\"2090-07\",\"count\":499},{\"month\":\"2090-09\",\"count\":499},{\"month\":\"2090-10\",\"count\":499},{\"month\":\"2090-11\",\"count\":499},{\"month\":\"2090-12\",\"count\":500}]);",
+                  "  pm.expect(d.top5).to.eql(d.perProvider.slice(0, 5));",
+                  "  pm.expect(d.range).to.eql({ from: \"2090-01-01T00:00:00.000Z\", to: \"2090-12-31T23:59:59.999Z\" });",
+                  "  pm.expect(d.basis).to.eql('booking.date');",
+                  "});",
+                  "pm.test(\"total = sum(perProvider) = sum(perMonth), total is an integer\", function () {",
+                  "  pm.expect(Number.isInteger(d.total)).to.eql(true);",
+                  "  pm.expect(sum(d.perProvider)).to.eql(d.total);",
+                  "  pm.expect(sum(d.perMonth)).to.eql(d.total);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/stats?from=2090-01-01&to=2090-12-31&foo=bar&limit=1&page=3"
+          }
+        },
+        {
+          "name": "one month range June",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "const d = body.data;",
+                  "const sum = function (a) { return a.reduce(function (s, x) { return s + x.count; }, 0); };",
+                  "const slim = function (a) { return a.map(function (x) { return { name: x.name, count: x.count }; }); };",
+                  "pm.test(\"200 and report equals the seed for the range\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(body.success).to.eql(true);",
+                  "  pm.expect(d.total).to.eql(499);",
+                  "  pm.expect(slim(d.perProvider)).to.eql([{\"name\":\"Stats Provider A\",\"count\":140},{\"name\":\"Stats Provider B\",\"count\":100},{\"name\":\"Stats Provider C\",\"count\":100},{\"name\":\"Stats Provider D\",\"count\":79},{\"name\":\"Stats Provider E\",\"count\":40},{\"name\":\"Stats Provider F\",\"count\":40}]);",
+                  "  pm.expect(d.perMonth).to.eql([{\"month\":\"2090-06\",\"count\":499}]);",
+                  "  pm.expect(d.top5).to.eql(d.perProvider.slice(0, 5));",
+                  "  pm.expect(d.range).to.eql({ from: \"2090-06-01T00:00:00.000Z\", to: \"2090-06-30T23:59:59.999Z\" });",
+                  "  pm.expect(d.basis).to.eql('booking.date');",
+                  "});",
+                  "pm.test(\"total = sum(perProvider) = sum(perMonth), total is an integer\", function () {",
+                  "  pm.expect(Number.isInteger(d.total)).to.eql(true);",
+                  "  pm.expect(sum(d.perProvider)).to.eql(d.total);",
+                  "  pm.expect(sum(d.perMonth)).to.eql(d.total);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/stats?from=2090-06-01&to=2090-06-30"
+          }
+        },
+        {
+          "name": "from equal to date-only covers the whole day",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "const d = body.data;",
+                  "const sum = function (a) { return a.reduce(function (s, x) { return s + x.count; }, 0); };",
+                  "const slim = function (a) { return a.map(function (x) { return { name: x.name, count: x.count }; }); };",
+                  "pm.test(\"200 and report equals the seed for the range\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(body.success).to.eql(true);",
+                  "  pm.expect(d.total).to.eql(19);",
+                  "  pm.expect(slim(d.perProvider)).to.eql([{\"name\":\"Stats Provider A\",\"count\":6},{\"name\":\"Stats Provider B\",\"count\":4},{\"name\":\"Stats Provider C\",\"count\":3},{\"name\":\"Stats Provider D\",\"count\":3},{\"name\":\"Stats Provider E\",\"count\":2},{\"name\":\"Stats Provider F\",\"count\":1}]);",
+                  "  pm.expect(d.perMonth).to.eql([{\"month\":\"2090-06\",\"count\":19}]);",
+                  "  pm.expect(d.top5).to.eql(d.perProvider.slice(0, 5));",
+                  "  pm.expect(d.range).to.eql({ from: \"2090-06-10T00:00:00.000Z\", to: \"2090-06-10T23:59:59.999Z\" });",
+                  "  pm.expect(d.basis).to.eql('booking.date');",
+                  "});",
+                  "pm.test(\"total = sum(perProvider) = sum(perMonth), total is an integer\", function () {",
+                  "  pm.expect(Number.isInteger(d.total)).to.eql(true);",
+                  "  pm.expect(sum(d.perProvider)).to.eql(d.total);",
+                  "  pm.expect(sum(d.perMonth)).to.eql(d.total);",
+                  "});",
+                  "pm.test(\"the one-day range is not empty\", function () {",
+                  "  pm.expect(d.total).to.eql(19);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/stats?from=2090-06-10&to=2090-06-10"
+          }
+        },
+        {
+          "name": "two-day range includes both boundary days",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "const d = body.data;",
+                  "const sum = function (a) { return a.reduce(function (s, x) { return s + x.count; }, 0); };",
+                  "const slim = function (a) { return a.map(function (x) { return { name: x.name, count: x.count }; }); };",
+                  "pm.test(\"200 and report equals the seed for the range\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(body.success).to.eql(true);",
+                  "  pm.expect(d.total).to.eql(38);",
+                  "  pm.expect(slim(d.perProvider)).to.eql([{\"name\":\"Stats Provider A\",\"count\":12},{\"name\":\"Stats Provider B\",\"count\":8},{\"name\":\"Stats Provider C\",\"count\":6},{\"name\":\"Stats Provider D\",\"count\":6},{\"name\":\"Stats Provider E\",\"count\":4},{\"name\":\"Stats Provider F\",\"count\":2}]);",
+                  "  pm.expect(d.perMonth).to.eql([{\"month\":\"2090-06\",\"count\":38}]);",
+                  "  pm.expect(d.top5).to.eql(d.perProvider.slice(0, 5));",
+                  "  pm.expect(d.range).to.eql({ from: \"2090-06-10T00:00:00.000Z\", to: \"2090-06-11T23:59:59.999Z\" });",
+                  "  pm.expect(d.basis).to.eql('booking.date');",
+                  "});",
+                  "pm.test(\"total = sum(perProvider) = sum(perMonth), total is an integer\", function () {",
+                  "  pm.expect(Number.isInteger(d.total)).to.eql(true);",
+                  "  pm.expect(sum(d.perProvider)).to.eql(d.total);",
+                  "  pm.expect(sum(d.perMonth)).to.eql(d.total);",
+                  "});",
+                  "pm.test(\"both boundary days counted\", function () {",
+                  "  pm.expect(d.total).to.eql(38);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/stats?from=2090-06-10&to=2090-06-11"
+          }
+        },
+        {
+          "name": "last ms of April lands in April",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "const d = body.data;",
+                  "const sum = function (a) { return a.reduce(function (s, x) { return s + x.count; }, 0); };",
+                  "const slim = function (a) { return a.map(function (x) { return { name: x.name, count: x.count }; }); };",
+                  "pm.test(\"200 and report equals the seed for the range\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(body.success).to.eql(true);",
+                  "  pm.expect(d.total).to.eql(1);",
+                  "  pm.expect(slim(d.perProvider)).to.eql([{\"name\":\"Stats Provider A\",\"count\":1}]);",
+                  "  pm.expect(d.perMonth).to.eql([{\"month\":\"2090-04\",\"count\":1}]);",
+                  "  pm.expect(d.top5).to.eql(d.perProvider.slice(0, 5));",
+                  "  pm.expect(d.range).to.eql({ from: \"2090-04-30T23:59:59.999Z\", to: \"2090-04-30T23:59:59.999Z\" });",
+                  "  pm.expect(d.basis).to.eql('booking.date');",
+                  "});",
+                  "pm.test(\"total = sum(perProvider) = sum(perMonth), total is an integer\", function () {",
+                  "  pm.expect(Number.isInteger(d.total)).to.eql(true);",
+                  "  pm.expect(sum(d.perProvider)).to.eql(d.total);",
+                  "  pm.expect(sum(d.perMonth)).to.eql(d.total);",
+                  "});",
+                  "pm.test(\"one booking, in 2090-04\", function () {",
+                  "  pm.expect(d.total).to.eql(1);",
+                  "  pm.expect(d.perMonth).to.eql([{ month: '2090-04', count: 1 }]);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/stats?from=2090-04-30T23:59:59.999Z&to=2090-04-30T23:59:59.999Z"
+          }
+        },
+        {
+          "name": "first ms of May lands in May",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "const d = body.data;",
+                  "const sum = function (a) { return a.reduce(function (s, x) { return s + x.count; }, 0); };",
+                  "const slim = function (a) { return a.map(function (x) { return { name: x.name, count: x.count }; }); };",
+                  "pm.test(\"200 and report equals the seed for the range\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(body.success).to.eql(true);",
+                  "  pm.expect(d.total).to.eql(1);",
+                  "  pm.expect(slim(d.perProvider)).to.eql([{\"name\":\"Stats Provider B\",\"count\":1}]);",
+                  "  pm.expect(d.perMonth).to.eql([{\"month\":\"2090-05\",\"count\":1}]);",
+                  "  pm.expect(d.top5).to.eql(d.perProvider.slice(0, 5));",
+                  "  pm.expect(d.range).to.eql({ from: \"2090-05-01T00:00:00.000Z\", to: \"2090-05-01T00:00:00.000Z\" });",
+                  "  pm.expect(d.basis).to.eql('booking.date');",
+                  "});",
+                  "pm.test(\"total = sum(perProvider) = sum(perMonth), total is an integer\", function () {",
+                  "  pm.expect(Number.isInteger(d.total)).to.eql(true);",
+                  "  pm.expect(sum(d.perProvider)).to.eql(d.total);",
+                  "  pm.expect(sum(d.perMonth)).to.eql(d.total);",
+                  "});",
+                  "pm.test(\"one booking, in 2090-05\", function () {",
+                  "  pm.expect(d.total).to.eql(1);",
+                  "  pm.expect(d.perMonth).to.eql([{ month: '2090-05', count: 1 }]);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/stats?from=2090-05-01T00:00:00.000Z&to=2090-05-01T00:00:00.000Z"
+          }
+        },
+        {
+          "name": "April May boundary pair",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "const d = body.data;",
+                  "const sum = function (a) { return a.reduce(function (s, x) { return s + x.count; }, 0); };",
+                  "const slim = function (a) { return a.map(function (x) { return { name: x.name, count: x.count }; }); };",
+                  "pm.test(\"200 and report equals the seed for the range\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(body.success).to.eql(true);",
+                  "  pm.expect(d.total).to.eql(2);",
+                  "  pm.expect(slim(d.perProvider)).to.eql([{\"name\":\"Stats Provider A\",\"count\":1},{\"name\":\"Stats Provider B\",\"count\":1}]);",
+                  "  pm.expect(d.perMonth).to.eql([{\"month\":\"2090-04\",\"count\":1},{\"month\":\"2090-05\",\"count\":1}]);",
+                  "  pm.expect(d.top5).to.eql(d.perProvider.slice(0, 5));",
+                  "  pm.expect(d.range).to.eql({ from: \"2090-04-30T23:59:59.999Z\", to: \"2090-05-01T00:00:00.000Z\" });",
+                  "  pm.expect(d.basis).to.eql('booking.date');",
+                  "});",
+                  "pm.test(\"total = sum(perProvider) = sum(perMonth), total is an integer\", function () {",
+                  "  pm.expect(Number.isInteger(d.total)).to.eql(true);",
+                  "  pm.expect(sum(d.perProvider)).to.eql(d.total);",
+                  "  pm.expect(sum(d.perMonth)).to.eql(d.total);",
+                  "});",
+                  "pm.test(\"one in each month\", function () {",
+                  "  pm.expect(d.total).to.eql(2);",
+                  "  pm.expect(d.perMonth).to.eql([{ month: '2090-04', count: 1 }, { month: '2090-05', count: 1 }]);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/stats?from=2090-04-30T23:59:59.999Z&to=2090-05-01T00:00:00.000Z"
+          }
+        },
+        {
+          "name": "January February boundary with a zone offset",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "const d = body.data;",
+                  "const sum = function (a) { return a.reduce(function (s, x) { return s + x.count; }, 0); };",
+                  "const slim = function (a) { return a.map(function (x) { return { name: x.name, count: x.count }; }); };",
+                  "pm.test(\"200 and report equals the seed for the range\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(body.success).to.eql(true);",
+                  "  pm.expect(d.total).to.eql(2);",
+                  "  pm.expect(slim(d.perProvider)).to.eql([{\"name\":\"Stats Provider A\",\"count\":1},{\"name\":\"Stats Provider B\",\"count\":1}]);",
+                  "  pm.expect(d.perMonth).to.eql([{\"month\":\"2090-01\",\"count\":1},{\"month\":\"2090-02\",\"count\":1}]);",
+                  "  pm.expect(d.top5).to.eql(d.perProvider.slice(0, 5));",
+                  "  pm.expect(d.range).to.eql({ from: \"2090-01-31T23:59:59.999Z\", to: \"2090-02-01T00:00:00.000Z\" });",
+                  "  pm.expect(d.basis).to.eql('booking.date');",
+                  "});",
+                  "pm.test(\"total = sum(perProvider) = sum(perMonth), total is an integer\", function () {",
+                  "  pm.expect(Number.isInteger(d.total)).to.eql(true);",
+                  "  pm.expect(sum(d.perProvider)).to.eql(d.total);",
+                  "  pm.expect(sum(d.perMonth)).to.eql(d.total);",
+                  "});",
+                  "pm.test(\"one in each month, +07:00 read as the same instant\", function () {",
+                  "  pm.expect(d.total).to.eql(2);",
+                  "  pm.expect(d.perMonth).to.eql([{ month: '2090-01', count: 1 }, { month: '2090-02', count: 1 }]);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/stats?from=2090-01-31T23:59:59.999Z&to=2090-02-01T07:00:00%2B07:00"
+          }
+        },
+        {
+          "name": "first ms of the year",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "const d = body.data;",
+                  "const sum = function (a) { return a.reduce(function (s, x) { return s + x.count; }, 0); };",
+                  "const slim = function (a) { return a.map(function (x) { return { name: x.name, count: x.count }; }); };",
+                  "pm.test(\"200 and report equals the seed for the range\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(body.success).to.eql(true);",
+                  "  pm.expect(d.total).to.eql(1);",
+                  "  pm.expect(slim(d.perProvider)).to.eql([{\"name\":\"Stats Provider D\",\"count\":1}]);",
+                  "  pm.expect(d.perMonth).to.eql([{\"month\":\"2090-01\",\"count\":1}]);",
+                  "  pm.expect(d.top5).to.eql(d.perProvider.slice(0, 5));",
+                  "  pm.expect(d.range).to.eql({ from: \"2090-01-01T00:00:00.000Z\", to: \"2090-01-01T00:00:00.000Z\" });",
+                  "  pm.expect(d.basis).to.eql('booking.date');",
+                  "});",
+                  "pm.test(\"total = sum(perProvider) = sum(perMonth), total is an integer\", function () {",
+                  "  pm.expect(Number.isInteger(d.total)).to.eql(true);",
+                  "  pm.expect(sum(d.perProvider)).to.eql(d.total);",
+                  "  pm.expect(sum(d.perMonth)).to.eql(d.total);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/stats?from=2090-01-01T00:00:00.000Z&to=2090-01-01T00:00:00.000Z"
+          }
+        },
+        {
+          "name": "last ms of the year",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "const d = body.data;",
+                  "const sum = function (a) { return a.reduce(function (s, x) { return s + x.count; }, 0); };",
+                  "const slim = function (a) { return a.map(function (x) { return { name: x.name, count: x.count }; }); };",
+                  "pm.test(\"200 and report equals the seed for the range\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(body.success).to.eql(true);",
+                  "  pm.expect(d.total).to.eql(1);",
+                  "  pm.expect(slim(d.perProvider)).to.eql([{\"name\":\"Stats Provider C\",\"count\":1}]);",
+                  "  pm.expect(d.perMonth).to.eql([{\"month\":\"2090-12\",\"count\":1}]);",
+                  "  pm.expect(d.top5).to.eql(d.perProvider.slice(0, 5));",
+                  "  pm.expect(d.range).to.eql({ from: \"2090-12-31T23:59:59.999Z\", to: \"2090-12-31T23:59:59.999Z\" });",
+                  "  pm.expect(d.basis).to.eql('booking.date');",
+                  "});",
+                  "pm.test(\"total = sum(perProvider) = sum(perMonth), total is an integer\", function () {",
+                  "  pm.expect(Number.isInteger(d.total)).to.eql(true);",
+                  "  pm.expect(sum(d.perProvider)).to.eql(d.total);",
+                  "  pm.expect(sum(d.perMonth)).to.eql(d.total);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/stats?from=2090-12-31T23:59:59.999Z&to=2090-12-31T23:59:59.999Z"
+          }
+        },
+        {
+          "name": "exactly ten years is accepted",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "const d = body.data;",
+                  "const sum = function (a) { return a.reduce(function (s, x) { return s + x.count; }, 0); };",
+                  "const slim = function (a) { return a.map(function (x) { return { name: x.name, count: x.count }; }); };",
+                  "pm.test(\"200 and report equals the seed for the range\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(body.success).to.eql(true);",
+                  "  pm.expect(d.total).to.eql(5000);",
+                  "  pm.expect(slim(d.perProvider)).to.eql([{\"name\":\"Stats Provider A\",\"count\":1400},{\"name\":\"Stats Provider B\",\"count\":1000},{\"name\":\"Stats Provider C\",\"count\":1000},{\"name\":\"Stats Provider D\",\"count\":800},{\"name\":\"Stats Provider E\",\"count\":400},{\"name\":\"Stats Provider F\",\"count\":400}]);",
+                  "  pm.expect(d.perMonth).to.eql([{\"month\":\"2090-01\",\"count\":502},{\"month\":\"2090-02\",\"count\":501},{\"month\":\"2090-04\",\"count\":501},{\"month\":\"2090-05\",\"count\":501},{\"month\":\"2090-06\",\"count\":499},{\"month\":\"2090-07\",\"count\":499},{\"month\":\"2090-09\",\"count\":499},{\"month\":\"2090-10\",\"count\":499},{\"month\":\"2090-11\",\"count\":499},{\"month\":\"2090-12\",\"count\":500}]);",
+                  "  pm.expect(d.top5).to.eql(d.perProvider.slice(0, 5));",
+                  "  pm.expect(d.range).to.eql({ from: \"2090-01-01T00:00:00.000Z\", to: \"2099-12-31T23:59:59.999Z\" });",
+                  "  pm.expect(d.basis).to.eql('booking.date');",
+                  "});",
+                  "pm.test(\"total = sum(perProvider) = sum(perMonth), total is an integer\", function () {",
+                  "  pm.expect(Number.isInteger(d.total)).to.eql(true);",
+                  "  pm.expect(sum(d.perProvider)).to.eql(d.total);",
+                  "  pm.expect(sum(d.perMonth)).to.eql(d.total);",
+                  "});",
+                  "pm.test(\"all 5000 bookings\", function () {",
+                  "  pm.expect(d.total).to.eql(5000);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/stats?from=2090-01-01&to=2099-12-31"
+          }
+        },
+        {
+          "name": "empty range year 2091",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "const d = body.data;",
+                  "const sum = function (a) { return a.reduce(function (s, x) { return s + x.count; }, 0); };",
+                  "const slim = function (a) { return a.map(function (x) { return { name: x.name, count: x.count }; }); };",
+                  "pm.test(\"200, total 0 and empty arrays\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(d.total).to.eql(0);",
+                  "  pm.expect(d.perProvider).to.eql([]);",
+                  "  pm.expect(d.perMonth).to.eql([]);",
+                  "  pm.expect(d.top5).to.eql([]);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/stats?from=2091-01-01&to=2091-12-31"
+          }
+        },
+        {
+          "name": "empty range year 2089",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "const d = body.data;",
+                  "const sum = function (a) { return a.reduce(function (s, x) { return s + x.count; }, 0); };",
+                  "const slim = function (a) { return a.map(function (x) { return { name: x.name, count: x.count }; }); };",
+                  "pm.test(\"200, total 0 and empty arrays\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(d.total).to.eql(0);",
+                  "  pm.expect(d.perProvider).to.eql([]);",
+                  "  pm.expect(d.perMonth).to.eql([]);",
+                  "  pm.expect(d.top5).to.eql([]);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/stats?from=2089-01-01&to=2089-12-31"
+          }
+        },
+        {
+          "name": "missing to",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "const d = body.data;",
+                  "const sum = function (a) { return a.reduce(function (s, x) { return s + x.count; }, 0); };",
+                  "const slim = function (a) { return a.map(function (x) { return { name: x.name, count: x.count }; }); };",
+                  "pm.test(\"400 with a specific message\", function () {",
+                  "  pm.response.to.have.status(400);",
+                  "  pm.expect(body.success).to.eql(false);",
+                  "  pm.expect(body.message).to.be.a(\"string\");",
+                  "  pm.expect(body.message).to.match(/to/i);",
+                  "  pm.expect(body.data).to.eql(undefined);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/stats?from=2090-01-01"
+          }
+        },
+        {
+          "name": "missing from",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "const d = body.data;",
+                  "const sum = function (a) { return a.reduce(function (s, x) { return s + x.count; }, 0); };",
+                  "const slim = function (a) { return a.map(function (x) { return { name: x.name, count: x.count }; }); };",
+                  "pm.test(\"400 with a specific message\", function () {",
+                  "  pm.response.to.have.status(400);",
+                  "  pm.expect(body.success).to.eql(false);",
+                  "  pm.expect(body.message).to.be.a(\"string\");",
+                  "  pm.expect(body.message).to.match(/from/i);",
+                  "  pm.expect(body.data).to.eql(undefined);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/stats?to=2090-01-01"
+          }
+        },
+        {
+          "name": "missing both",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "const d = body.data;",
+                  "const sum = function (a) { return a.reduce(function (s, x) { return s + x.count; }, 0); };",
+                  "const slim = function (a) { return a.map(function (x) { return { name: x.name, count: x.count }; }); };",
+                  "pm.test(\"400 with a specific message\", function () {",
+                  "  pm.response.to.have.status(400);",
+                  "  pm.expect(body.success).to.eql(false);",
+                  "  pm.expect(body.message).to.be.a(\"string\");",
+                  "  pm.expect(body.message).to.match(/from|to/i);",
+                  "  pm.expect(body.data).to.eql(undefined);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/stats"
+          }
+        },
+        {
+          "name": "empty from",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "const d = body.data;",
+                  "const sum = function (a) { return a.reduce(function (s, x) { return s + x.count; }, 0); };",
+                  "const slim = function (a) { return a.map(function (x) { return { name: x.name, count: x.count }; }); };",
+                  "pm.test(\"400 with a specific message\", function () {",
+                  "  pm.response.to.have.status(400);",
+                  "  pm.expect(body.success).to.eql(false);",
+                  "  pm.expect(body.message).to.be.a(\"string\");",
+                  "  pm.expect(body.message).to.match(/from/i);",
+                  "  pm.expect(body.data).to.eql(undefined);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/stats?from=&to=2090-01-01"
+          }
+        },
+        {
+          "name": "from as an array",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "const d = body.data;",
+                  "const sum = function (a) { return a.reduce(function (s, x) { return s + x.count; }, 0); };",
+                  "const slim = function (a) { return a.map(function (x) { return { name: x.name, count: x.count }; }); };",
+                  "pm.test(\"400 with a specific message\", function () {",
+                  "  pm.response.to.have.status(400);",
+                  "  pm.expect(body.success).to.eql(false);",
+                  "  pm.expect(body.message).to.be.a(\"string\");",
+                  "  pm.expect(body.message).to.match(/from/i);",
+                  "  pm.expect(body.data).to.eql(undefined);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/stats?from[]=2090-01-01&to=2090-12-31"
+          }
+        },
+        {
+          "name": "from repeated",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "const d = body.data;",
+                  "const sum = function (a) { return a.reduce(function (s, x) { return s + x.count; }, 0); };",
+                  "const slim = function (a) { return a.map(function (x) { return { name: x.name, count: x.count }; }); };",
+                  "pm.test(\"400 with a specific message\", function () {",
+                  "  pm.response.to.have.status(400);",
+                  "  pm.expect(body.success).to.eql(false);",
+                  "  pm.expect(body.message).to.be.a(\"string\");",
+                  "  pm.expect(body.message).to.match(/from/i);",
+                  "  pm.expect(body.data).to.eql(undefined);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/stats?from=2090-01-01&from=2090-02-01&to=2090-12-31"
+          }
+        },
+        {
+          "name": "to repeated",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "const d = body.data;",
+                  "const sum = function (a) { return a.reduce(function (s, x) { return s + x.count; }, 0); };",
+                  "const slim = function (a) { return a.map(function (x) { return { name: x.name, count: x.count }; }); };",
+                  "pm.test(\"400 with a specific message\", function () {",
+                  "  pm.response.to.have.status(400);",
+                  "  pm.expect(body.success).to.eql(false);",
+                  "  pm.expect(body.message).to.be.a(\"string\");",
+                  "  pm.expect(body.message).to.match(/to/i);",
+                  "  pm.expect(body.data).to.eql(undefined);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/stats?from=2090-01-01&to=2090-12-30&to=2090-12-31"
+          }
+        },
+        {
+          "name": "from as an object",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "const d = body.data;",
+                  "const sum = function (a) { return a.reduce(function (s, x) { return s + x.count; }, 0); };",
+                  "const slim = function (a) { return a.map(function (x) { return { name: x.name, count: x.count }; }); };",
+                  "pm.test(\"400 with a specific message\", function () {",
+                  "  pm.response.to.have.status(400);",
+                  "  pm.expect(body.success).to.eql(false);",
+                  "  pm.expect(body.message).to.be.a(\"string\");",
+                  "  pm.expect(body.message).to.match(/from/i);",
+                  "  pm.expect(body.data).to.eql(undefined);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/stats?from[a]=2090-01-01&to=2090-12-31"
+          }
+        },
+        {
+          "name": "from operator injection",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "const d = body.data;",
+                  "const sum = function (a) { return a.reduce(function (s, x) { return s + x.count; }, 0); };",
+                  "const slim = function (a) { return a.map(function (x) { return { name: x.name, count: x.count }; }); };",
+                  "pm.test(\"400 with a specific message\", function () {",
+                  "  pm.response.to.have.status(400);",
+                  "  pm.expect(body.success).to.eql(false);",
+                  "  pm.expect(body.message).to.be.a(\"string\");",
+                  "  pm.expect(body.message).to.match(/from/i);",
+                  "  pm.expect(body.data).to.eql(undefined);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/stats?from[$gt]=x&to=2090-12-31"
+          }
+        },
+        {
+          "name": "to operator injection",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "const d = body.data;",
+                  "const sum = function (a) { return a.reduce(function (s, x) { return s + x.count; }, 0); };",
+                  "const slim = function (a) { return a.map(function (x) { return { name: x.name, count: x.count }; }); };",
+                  "pm.test(\"400 with a specific message\", function () {",
+                  "  pm.response.to.have.status(400);",
+                  "  pm.expect(body.success).to.eql(false);",
+                  "  pm.expect(body.message).to.be.a(\"string\");",
+                  "  pm.expect(body.message).to.match(/to/i);",
+                  "  pm.expect(body.data).to.eql(undefined);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/stats?from=2090-01-01&to[$ne]=x"
+          }
+        },
+        {
+          "name": "impossible day 30 Feb",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "const d = body.data;",
+                  "const sum = function (a) { return a.reduce(function (s, x) { return s + x.count; }, 0); };",
+                  "const slim = function (a) { return a.map(function (x) { return { name: x.name, count: x.count }; }); };",
+                  "pm.test(\"400 with a specific message\", function () {",
+                  "  pm.response.to.have.status(400);",
+                  "  pm.expect(body.success).to.eql(false);",
+                  "  pm.expect(body.message).to.be.a(\"string\");",
+                  "  pm.expect(body.message).to.match(/from/i);",
+                  "  pm.expect(body.data).to.eql(undefined);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/stats?from=2090-02-30&to=2090-12-31"
+          }
+        },
+        {
+          "name": "impossible month 13",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "const d = body.data;",
+                  "const sum = function (a) { return a.reduce(function (s, x) { return s + x.count; }, 0); };",
+                  "const slim = function (a) { return a.map(function (x) { return { name: x.name, count: x.count }; }); };",
+                  "pm.test(\"400 with a specific message\", function () {",
+                  "  pm.response.to.have.status(400);",
+                  "  pm.expect(body.success).to.eql(false);",
+                  "  pm.expect(body.message).to.be.a(\"string\");",
+                  "  pm.expect(body.message).to.match(/from/i);",
+                  "  pm.expect(body.data).to.eql(undefined);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/stats?from=2090-13-01&to=2090-12-31"
+          }
+        },
+        {
+          "name": "non date string",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "const d = body.data;",
+                  "const sum = function (a) { return a.reduce(function (s, x) { return s + x.count; }, 0); };",
+                  "const slim = function (a) { return a.map(function (x) { return { name: x.name, count: x.count }; }); };",
+                  "pm.test(\"400 with a specific message\", function () {",
+                  "  pm.response.to.have.status(400);",
+                  "  pm.expect(body.success).to.eql(false);",
+                  "  pm.expect(body.message).to.be.a(\"string\");",
+                  "  pm.expect(body.message).to.match(/from/i);",
+                  "  pm.expect(body.data).to.eql(undefined);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/stats?from=nope&to=2090-12-31"
+          }
+        },
+        {
+          "name": "bare date-time without a zone",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "const d = body.data;",
+                  "const sum = function (a) { return a.reduce(function (s, x) { return s + x.count; }, 0); };",
+                  "const slim = function (a) { return a.map(function (x) { return { name: x.name, count: x.count }; }); };",
+                  "pm.test(\"400 with a specific message\", function () {",
+                  "  pm.response.to.have.status(400);",
+                  "  pm.expect(body.success).to.eql(false);",
+                  "  pm.expect(body.message).to.be.a(\"string\");",
+                  "  pm.expect(body.message).to.match(/from/i);",
+                  "  pm.expect(body.data).to.eql(undefined);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/stats?from=2090-01-01T00:00:00&to=2090-12-31"
+          }
+        },
+        {
+          "name": "bare date-time without a zone as to",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "const d = body.data;",
+                  "const sum = function (a) { return a.reduce(function (s, x) { return s + x.count; }, 0); };",
+                  "const slim = function (a) { return a.map(function (x) { return { name: x.name, count: x.count }; }); };",
+                  "pm.test(\"400 with a specific message\", function () {",
+                  "  pm.response.to.have.status(400);",
+                  "  pm.expect(body.success).to.eql(false);",
+                  "  pm.expect(body.message).to.be.a(\"string\");",
+                  "  pm.expect(body.message).to.match(/to/i);",
+                  "  pm.expect(body.data).to.eql(undefined);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/stats?from=2090-01-01&to=2090-12-31T00:00:00"
+          }
+        },
+        {
+          "name": "a number instead of a date",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "const d = body.data;",
+                  "const sum = function (a) { return a.reduce(function (s, x) { return s + x.count; }, 0); };",
+                  "const slim = function (a) { return a.map(function (x) { return { name: x.name, count: x.count }; }); };",
+                  "pm.test(\"400 with a specific message\", function () {",
+                  "  pm.response.to.have.status(400);",
+                  "  pm.expect(body.success).to.eql(false);",
+                  "  pm.expect(body.message).to.be.a(\"string\");",
+                  "  pm.expect(body.message).to.match(/from/i);",
+                  "  pm.expect(body.data).to.eql(undefined);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/stats?from=20900101&to=2090-12-31"
+          }
+        },
+        {
+          "name": "an epoch number as to",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "const d = body.data;",
+                  "const sum = function (a) { return a.reduce(function (s, x) { return s + x.count; }, 0); };",
+                  "const slim = function (a) { return a.map(function (x) { return { name: x.name, count: x.count }; }); };",
+                  "pm.test(\"400 with a specific message\", function () {",
+                  "  pm.response.to.have.status(400);",
+                  "  pm.expect(body.success).to.eql(false);",
+                  "  pm.expect(body.message).to.be.a(\"string\");",
+                  "  pm.expect(body.message).to.match(/to/i);",
+                  "  pm.expect(body.data).to.eql(undefined);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/stats?from=2090-01-01&to=1"
+          }
+        },
+        {
+          "name": "hour 25 date-time",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "const d = body.data;",
+                  "const sum = function (a) { return a.reduce(function (s, x) { return s + x.count; }, 0); };",
+                  "const slim = function (a) { return a.map(function (x) { return { name: x.name, count: x.count }; }); };",
+                  "pm.test(\"400 with a specific message\", function () {",
+                  "  pm.response.to.have.status(400);",
+                  "  pm.expect(body.success).to.eql(false);",
+                  "  pm.expect(body.message).to.be.a(\"string\");",
+                  "  pm.expect(body.message).to.match(/from/i);",
+                  "  pm.expect(body.data).to.eql(undefined);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/stats?from=2090-01-01T25:00:00Z&to=2090-12-31"
+          }
+        },
+        {
+          "name": "trailing junk after a date",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "const d = body.data;",
+                  "const sum = function (a) { return a.reduce(function (s, x) { return s + x.count; }, 0); };",
+                  "const slim = function (a) { return a.map(function (x) { return { name: x.name, count: x.count }; }); };",
+                  "pm.test(\"400 with a specific message\", function () {",
+                  "  pm.response.to.have.status(400);",
+                  "  pm.expect(body.success).to.eql(false);",
+                  "  pm.expect(body.message).to.be.a(\"string\");",
+                  "  pm.expect(body.message).to.match(/from/i);",
+                  "  pm.expect(body.data).to.eql(undefined);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/stats?from=2090-01-01x&to=2090-12-31"
+          }
+        },
+        {
+          "name": "non leap day 29 Feb",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "const d = body.data;",
+                  "const sum = function (a) { return a.reduce(function (s, x) { return s + x.count; }, 0); };",
+                  "const slim = function (a) { return a.map(function (x) { return { name: x.name, count: x.count }; }); };",
+                  "pm.test(\"400 with a specific message\", function () {",
+                  "  pm.response.to.have.status(400);",
+                  "  pm.expect(body.success).to.eql(false);",
+                  "  pm.expect(body.message).to.be.a(\"string\");",
+                  "  pm.expect(body.message).to.match(/from/i);",
+                  "  pm.expect(body.data).to.eql(undefined);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/stats?from=2091-02-29&to=2091-12-31"
+          }
+        },
+        {
+          "name": "invalid to 31 April",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "const d = body.data;",
+                  "const sum = function (a) { return a.reduce(function (s, x) { return s + x.count; }, 0); };",
+                  "const slim = function (a) { return a.map(function (x) { return { name: x.name, count: x.count }; }); };",
+                  "pm.test(\"400 with a specific message\", function () {",
+                  "  pm.response.to.have.status(400);",
+                  "  pm.expect(body.success).to.eql(false);",
+                  "  pm.expect(body.message).to.be.a(\"string\");",
+                  "  pm.expect(body.message).to.match(/to/i);",
+                  "  pm.expect(body.data).to.eql(undefined);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/stats?from=2090-01-01&to=2090-04-31"
+          }
+        },
+        {
+          "name": "to before from",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "const d = body.data;",
+                  "const sum = function (a) { return a.reduce(function (s, x) { return s + x.count; }, 0); };",
+                  "const slim = function (a) { return a.map(function (x) { return { name: x.name, count: x.count }; }); };",
+                  "pm.test(\"400 with a specific message\", function () {",
+                  "  pm.response.to.have.status(400);",
+                  "  pm.expect(body.success).to.eql(false);",
+                  "  pm.expect(body.message).to.be.a(\"string\");",
+                  "  pm.expect(body.message).to.match(/before/i);",
+                  "  pm.expect(body.data).to.eql(undefined);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/stats?from=2090-12-31&to=2090-01-01"
+          }
+        },
+        {
+          "name": "to before from by one millisecond",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "const d = body.data;",
+                  "const sum = function (a) { return a.reduce(function (s, x) { return s + x.count; }, 0); };",
+                  "const slim = function (a) { return a.map(function (x) { return { name: x.name, count: x.count }; }); };",
+                  "pm.test(\"400 with a specific message\", function () {",
+                  "  pm.response.to.have.status(400);",
+                  "  pm.expect(body.success).to.eql(false);",
+                  "  pm.expect(body.message).to.be.a(\"string\");",
+                  "  pm.expect(body.message).to.match(/before/i);",
+                  "  pm.expect(body.data).to.eql(undefined);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/stats?from=2090-06-01T00:00:00.001Z&to=2090-06-01T00:00:00.000Z"
+          }
+        },
+        {
+          "name": "span longer than ten years",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "const d = body.data;",
+                  "const sum = function (a) { return a.reduce(function (s, x) { return s + x.count; }, 0); };",
+                  "const slim = function (a) { return a.map(function (x) { return { name: x.name, count: x.count }; }); };",
+                  "pm.test(\"400 with a specific message\", function () {",
+                  "  pm.response.to.have.status(400);",
+                  "  pm.expect(body.success).to.eql(false);",
+                  "  pm.expect(body.message).to.be.a(\"string\");",
+                  "  pm.expect(body.message).to.match(/10 years|3653/i);",
+                  "  pm.expect(body.data).to.eql(undefined);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/stats?from=2090-01-01&to=2100-01-02"
+          }
+        },
+        {
+          "name": "span one second over 3653 days",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "const d = body.data;",
+                  "const sum = function (a) { return a.reduce(function (s, x) { return s + x.count; }, 0); };",
+                  "const slim = function (a) { return a.map(function (x) { return { name: x.name, count: x.count }; }); };",
+                  "pm.test(\"400 with a specific message\", function () {",
+                  "  pm.response.to.have.status(400);",
+                  "  pm.expect(body.success).to.eql(false);",
+                  "  pm.expect(body.message).to.be.a(\"string\");",
+                  "  pm.expect(body.message).to.match(/10 years|3653/i);",
+                  "  pm.expect(body.data).to.eql(undefined);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/stats?from=2090-01-01T00:00:00Z&to=2100-01-02T00:00:01Z"
+          }
+        },
+        {
+          "name": "span of exactly 3653 days is accepted",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "const d = body.data;",
+                  "const sum = function (a) { return a.reduce(function (s, x) { return s + x.count; }, 0); };",
+                  "const slim = function (a) { return a.map(function (x) { return { name: x.name, count: x.count }; }); };",
+                  "pm.test(\"200 and report equals the seed for the range\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(body.success).to.eql(true);",
+                  "  pm.expect(d.total).to.eql(5000);",
+                  "  pm.expect(slim(d.perProvider)).to.eql([{\"name\":\"Stats Provider A\",\"count\":1400},{\"name\":\"Stats Provider B\",\"count\":1000},{\"name\":\"Stats Provider C\",\"count\":1000},{\"name\":\"Stats Provider D\",\"count\":800},{\"name\":\"Stats Provider E\",\"count\":400},{\"name\":\"Stats Provider F\",\"count\":400}]);",
+                  "  pm.expect(d.perMonth).to.eql([{\"month\":\"2090-01\",\"count\":502},{\"month\":\"2090-02\",\"count\":501},{\"month\":\"2090-04\",\"count\":501},{\"month\":\"2090-05\",\"count\":501},{\"month\":\"2090-06\",\"count\":499},{\"month\":\"2090-07\",\"count\":499},{\"month\":\"2090-09\",\"count\":499},{\"month\":\"2090-10\",\"count\":499},{\"month\":\"2090-11\",\"count\":499},{\"month\":\"2090-12\",\"count\":500}]);",
+                  "  pm.expect(d.top5).to.eql(d.perProvider.slice(0, 5));",
+                  "  pm.expect(d.range).to.eql({ from: \"2090-01-01T00:00:00.000Z\", to: \"2100-01-02T00:00:00.000Z\" });",
+                  "  pm.expect(d.basis).to.eql('booking.date');",
+                  "});",
+                  "pm.test(\"total = sum(perProvider) = sum(perMonth), total is an integer\", function () {",
+                  "  pm.expect(Number.isInteger(d.total)).to.eql(true);",
+                  "  pm.expect(sum(d.perProvider)).to.eql(d.total);",
+                  "  pm.expect(sum(d.perMonth)).to.eql(d.total);",
+                  "});",
+                  "pm.test(\"all 5000 bookings\", function () {",
+                  "  pm.expect(d.total).to.eql(5000);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/stats?from=2090-01-01T00:00:00Z&to=2100-01-02T00:00:00Z"
+          }
+        }
+      ]
     }
   ]
 }
