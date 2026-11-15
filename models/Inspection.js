@@ -2,7 +2,19 @@ const mongoose = require('mongoose');
 
 // One return inspection per booking (the unique index is the single-winner mechanism).
 // lateHours, lateFee, feePerHourUsed, scheduledReturnAt, recordedBy and createdAt are set by the
-// server only. `dispute` belongs to the dispute feature and stays null until then.
+// server only. `dispute` stays null until the owner submits one (see controllers/inspections.js).
+const DisputeSchema = new mongoose.Schema(
+  {
+    comment: { type: String, required: true },
+    createdAt: { type: Date, required: true },
+    status: { type: String, enum: ['open', 'resolved', 'dismissed'], required: true },
+    resolutionNote: { type: String, default: '' },
+    resolvedAt: { type: Date, default: null },
+    resolvedBy: { type: mongoose.Schema.ObjectId, ref: 'User', default: null }
+  },
+  { _id: false, strict: true }
+);
+
 const InspectionSchema = new mongoose.Schema(
   {
     booking: { type: mongoose.Schema.ObjectId, ref: 'Booking', required: true, unique: true },
@@ -26,7 +38,7 @@ const InspectionSchema = new mongoose.Schema(
     feePerHourUsed: { type: Number },
     recordedBy: { type: mongoose.Schema.ObjectId, ref: 'User' },
     createdAt: { type: Date, default: Date.now },
-    dispute: { type: mongoose.Schema.Types.Mixed, default: null }
+    dispute: { type: DisputeSchema, default: null }
   },
   { strict: true }
 );
