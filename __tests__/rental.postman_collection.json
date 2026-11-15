@@ -10774,6 +10774,3521 @@
           }
         }
       ]
+    },
+    {
+      "name": "Tickets",
+      "item": [
+        {
+          "name": "register ticket user U1",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const sfx = Date.now().toString(36) + Math.floor(Math.random() * 1e6).toString(36);",
+                  "const base = Date.now() + 10 * 86400000;",
+                  "pm.collectionVariables.set('tk_sfx', sfx);",
+                  "pm.collectionVariables.set('tk_d0', new Date(base).toISOString());",
+                  "pm.collectionVariables.set('tk_d2', new Date(base + 2 * 86400000).toISOString());",
+                  "pm.collectionVariables.set('tk_s201', 'a'.repeat(201));",
+                  "pm.collectionVariables.set('tk_s200', 'b'.repeat(200));",
+                  "pm.collectionVariables.set('tk_d5001', 'c'.repeat(5001));",
+                  "pm.collectionVariables.set('tk_d5000', 'd'.repeat(5000));",
+                  "pm.collectionVariables.set('tk_c2001', 'e'.repeat(2001));",
+                  "pm.collectionVariables.set('tk_c2000', 'f'.repeat(2000));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"register ticket user U1\", function () {",
+                  "  pm.response.to.have.status(201);",
+                  "  pm.collectionVariables.set('tk1T', pm.response.json().token);",
+                  "  pm.collectionVariables.set('tk_u1', pm.response.json().data.id);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/auth/register",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"name\":\"tkU1\",\"telephone\":\"0812345678\",\"email\":\"tku1{{tk_sfx}}@example.com\",\"password\":\"secret123\"}"
+            }
+          }
+        },
+        {
+          "name": "register ticket user U2",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"register ticket user U2\", function () {",
+                  "  pm.response.to.have.status(201);",
+                  "  pm.collectionVariables.set('tk2T', pm.response.json().token);",
+                  "  pm.collectionVariables.set('tk_u2', pm.response.json().data.id);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/auth/register",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"name\":\"tkU2\",\"telephone\":\"0812345678\",\"email\":\"tku2{{tk_sfx}}@example.com\",\"password\":\"secret123\"}"
+            }
+          }
+        },
+        {
+          "name": "admin reads own id",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"admin reads own id\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.json().data.role).to.eql('admin');",
+                  "  pm.collectionVariables.set('tk_adm', pm.response.json().data._id);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/auth/me"
+          }
+        },
+        {
+          "name": "admin creates ticket provider",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"admin creates ticket provider\", function () {",
+                  "  pm.response.to.have.status(201);",
+                  "  pm.collectionVariables.set('tk_p', pm.response.json().data._id);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/providers",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"name\":\"TicketProv{{tk_sfx}}\",\"address\":\"9 Test Road\",\"tel\":\"090000009\",\"lateFeePerHour\":10,\"dailyRate\":1000}"
+            }
+          }
+        },
+        {
+          "name": "U1 books B1",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"U1 books B1\", function () {",
+                  "  pm.response.to.have.status(201);",
+                  "  pm.collectionVariables.set('tk_b1', pm.response.json().data._id);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tk1T}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/providers/{{tk_p}}/bookings",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"date\":\"{{tk_d0}}\",\"returnDate\":\"{{tk_d2}}\"}"
+            }
+          }
+        },
+        {
+          "name": "U1 books B1b",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"U1 books B1b\", function () {",
+                  "  pm.response.to.have.status(201);",
+                  "  pm.collectionVariables.set('tk_b1b', pm.response.json().data._id);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tk1T}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/providers/{{tk_p}}/bookings",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"date\":\"{{tk_d0}}\",\"returnDate\":\"{{tk_d2}}\"}"
+            }
+          }
+        },
+        {
+          "name": "U2 books B2",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"U2 books B2\", function () {",
+                  "  pm.response.to.have.status(201);",
+                  "  pm.collectionVariables.set('tk_b2', pm.response.json().data._id);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tk2T}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/providers/{{tk_p}}/bookings",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"date\":\"{{tk_d0}}\",\"returnDate\":\"{{tk_d2}}\"}"
+            }
+          }
+        },
+        {
+          "name": "admin books BA",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"admin books BA\", function () {",
+                  "  pm.response.to.have.status(201);",
+                  "  pm.collectionVariables.set('tk_ba', pm.response.json().data._id);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/providers/{{tk_p}}/bookings",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"date\":\"{{tk_d0}}\",\"returnDate\":\"{{tk_d2}}\"}"
+            }
+          }
+        },
+        {
+          "name": "create ticket without token -> 401",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"create ticket without token -> 401\", function () {",
+                  "  pm.response.to.have.status(401);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/tickets",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"booking\":\"{{tk_b1}}\",\"category\":\"billing\",\"subject\":\"x\",\"description\":\"y\"}"
+            }
+          }
+        },
+        {
+          "name": "list tickets without token -> 401",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"list tickets without token -> 401\", function () {",
+                  "  pm.response.to.have.status(401);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/tickets"
+          }
+        },
+        {
+          "name": "U1 creates T1 on own booking; status/user/comments/extra ignored",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"U1 creates T1 on own booking; status/user/comments/extra ignored\", function () {",
+                  "  pm.response.to.have.status(201);",
+                  "  const j = pm.response.json(); const t = j.data;",
+                  "  pm.expect(j.success).to.eql(true);",
+                  "  pm.expect(t.status).to.eql('open');",
+                  "  pm.expect(t.user).to.eql(pm.collectionVariables.get('tk_u1'));",
+                  "  pm.expect(t.booking).to.eql(pm.collectionVariables.get('tk_b1'));",
+                  "  pm.expect(t.category).to.eql('billing');",
+                  "  pm.expect(t.subject).to.eql('Charged twice ' + pm.collectionVariables.get('tk_sfx'));",
+                  "  pm.expect(t.description).to.eql('Two charges appeared');",
+                  "  pm.expect(t.comments).to.eql([]);",
+                  "  pm.expect(t.extra).to.eql(undefined);",
+                  "  pm.expect(t.__v).to.eql(undefined);",
+                  "  pm.expect(new Date(t.createdAt).getFullYear()).to.be.above(2020);",
+                  "  pm.collectionVariables.set('tk_t1', t._id);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tk1T}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/tickets",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"booking\":\"{{tk_b1}}\",\"category\":\"billing\",\"subject\":\"  Charged twice {{tk_sfx}}  \",\"description\":\"  Two charges appeared  \",\"status\":\"resolved\",\"user\":\"{{tk_u2}}\",\"comments\":[{\"author\":\"{{tk_u2}}\",\"role\":\"admin\",\"text\":\"forged\"}],\"createdAt\":\"2000-01-01T00:00:00.000Z\",\"extra\":\"x\"}"
+            }
+          }
+        },
+        {
+          "name": "U1 creates T2 vehicle issue on same booking",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"U1 creates T2 vehicle issue on same booking\", function () {",
+                  "  pm.response.to.have.status(201);",
+                  "  pm.expect(pm.response.json().data.category).to.eql('vehicle issue');",
+                  "  pm.collectionVariables.set('tk_t2', pm.response.json().data._id);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tk1T}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/tickets",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"booking\":\"{{tk_b1}}\",\"category\":\"vehicle issue\",\"subject\":\"Scratch {{tk_sfx}}\",\"description\":\"Scratch on door\"}"
+            }
+          }
+        },
+        {
+          "name": "U2 creates T3 other on own booking",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"U2 creates T3 other on own booking\", function () {",
+                  "  pm.response.to.have.status(201);",
+                  "  pm.expect(pm.response.json().data.user).to.eql(pm.collectionVariables.get('tk_u2'));",
+                  "  pm.collectionVariables.set('tk_t3', pm.response.json().data._id);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tk2T}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/tickets",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"booking\":\"{{tk_b2}}\",\"category\":\"other\",\"subject\":\"Question {{tk_sfx}}\",\"description\":\"General question\"}"
+            }
+          }
+        },
+        {
+          "name": "admin creates TA on own booking",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"admin creates TA on own booking\", function () {",
+                  "  pm.response.to.have.status(201);",
+                  "  pm.expect(pm.response.json().data.user).to.eql(pm.collectionVariables.get('tk_adm'));",
+                  "  pm.collectionVariables.set('tk_ta', pm.response.json().data._id);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/tickets",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"booking\":\"{{tk_ba}}\",\"category\":\"billing\",\"subject\":\"Admin ticket {{tk_sfx}}\",\"description\":\"Own booking\"}"
+            }
+          }
+        },
+        {
+          "name": "boundary lengths: subject 200 and description 5000 accepted",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"boundary lengths: subject 200 and description 5000 accepted\", function () {",
+                  "  pm.response.to.have.status(201);",
+                  "  pm.expect(pm.response.json().data.subject.length).to.eql(200);",
+                  "  pm.expect(pm.response.json().data.description.length).to.eql(5000);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tk2T}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/tickets",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"booking\":\"{{tk_b2}}\",\"category\":\"other\",\"subject\":\"{{tk_s200}}\",\"description\":\"{{tk_d5000}}\"}"
+            }
+          }
+        },
+        {
+          "name": "U1 on U2's booking -> 403",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"U1 on U2's booking -> 403\", function () {",
+                  "  pm.response.to.have.status(403);",
+                  "  pm.expect(pm.response.json().success).to.eql(false);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tk1T}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/tickets",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"booking\":\"{{tk_b2}}\",\"category\":\"billing\",\"subject\":\"s\",\"description\":\"d\"}"
+            }
+          }
+        },
+        {
+          "name": "admin on a user's booking -> 403 (no impersonation)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"admin on a user's booking -> 403 (no impersonation)\", function () {",
+                  "  pm.response.to.have.status(403);",
+                  "  pm.expect(pm.response.json().success).to.eql(false);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/tickets",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"booking\":\"{{tk_b1}}\",\"category\":\"billing\",\"subject\":\"s\",\"description\":\"d\"}"
+            }
+          }
+        },
+        {
+          "name": "nonexistent booking -> 404",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"nonexistent booking -> 404\", function () {",
+                  "  pm.response.to.have.status(404);",
+                  "  pm.expect(pm.response.json().success).to.eql(false);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tk1T}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/tickets",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"booking\":\"000000000000000000000000\",\"category\":\"billing\",\"subject\":\"s\",\"description\":\"d\"}"
+            }
+          }
+        },
+        {
+          "name": "malformed booking -> 404",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"malformed booking -> 404\", function () {",
+                  "  pm.response.to.have.status(404);",
+                  "  pm.expect(pm.response.json().success).to.eql(false);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tk1T}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/tickets",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"booking\":\"not-an-id\",\"category\":\"billing\",\"subject\":\"s\",\"description\":\"d\"}"
+            }
+          }
+        },
+        {
+          "name": "non-string booking (operator object) -> 404",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"non-string booking (operator object) -> 404\", function () {",
+                  "  pm.response.to.have.status(404);",
+                  "  pm.expect(pm.response.json().success).to.eql(false);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tk1T}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/tickets",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"booking\":{\"$ne\":null},\"category\":\"billing\",\"subject\":\"s\",\"description\":\"d\"}"
+            }
+          }
+        },
+        {
+          "name": "missing booking -> 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"missing booking -> 400\", function () {",
+                  "  pm.response.to.have.status(400);",
+                  "  pm.expect(pm.response.json().success).to.eql(false);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tk1T}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/tickets",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"category\":\"billing\",\"subject\":\"s\",\"description\":\"d\"}"
+            }
+          }
+        },
+        {
+          "name": "category Billing (case) -> 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"category Billing (case) -> 400\", function () {",
+                  "  pm.response.to.have.status(400);",
+                  "  pm.expect(pm.response.json().success).to.eql(false);",
+                  "  pm.expect(pm.response.json().message).to.be.a('string').and.not.empty;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tk1T}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/tickets",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"booking\":\"{{tk_b1}}\",\"category\":\"Billing\",\"subject\":\"s\",\"description\":\"d\"}"
+            }
+          }
+        },
+        {
+          "name": "category unknown -> 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"category unknown -> 400\", function () {",
+                  "  pm.response.to.have.status(400);",
+                  "  pm.expect(pm.response.json().success).to.eql(false);",
+                  "  pm.expect(pm.response.json().message).to.be.a('string').and.not.empty;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tk1T}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/tickets",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"booking\":\"{{tk_b1}}\",\"category\":\"refund\",\"subject\":\"s\",\"description\":\"d\"}"
+            }
+          }
+        },
+        {
+          "name": "category missing -> 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"category missing -> 400\", function () {",
+                  "  pm.response.to.have.status(400);",
+                  "  pm.expect(pm.response.json().success).to.eql(false);",
+                  "  pm.expect(pm.response.json().message).to.be.a('string').and.not.empty;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tk1T}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/tickets",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"booking\":\"{{tk_b1}}\",\"subject\":\"s\",\"description\":\"d\"}"
+            }
+          }
+        },
+        {
+          "name": "category non-string -> 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"category non-string -> 400\", function () {",
+                  "  pm.response.to.have.status(400);",
+                  "  pm.expect(pm.response.json().success).to.eql(false);",
+                  "  pm.expect(pm.response.json().message).to.be.a('string').and.not.empty;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tk1T}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/tickets",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"booking\":\"{{tk_b1}}\",\"category\":[\"billing\"],\"subject\":\"s\",\"description\":\"d\"}"
+            }
+          }
+        },
+        {
+          "name": "subject empty -> 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"subject empty -> 400\", function () {",
+                  "  pm.response.to.have.status(400);",
+                  "  pm.expect(pm.response.json().success).to.eql(false);",
+                  "  pm.expect(pm.response.json().message).to.be.a('string').and.not.empty;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tk1T}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/tickets",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"booking\":\"{{tk_b1}}\",\"category\":\"billing\",\"subject\":\"\",\"description\":\"d\"}"
+            }
+          }
+        },
+        {
+          "name": "subject whitespace-only -> 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"subject whitespace-only -> 400\", function () {",
+                  "  pm.response.to.have.status(400);",
+                  "  pm.expect(pm.response.json().success).to.eql(false);",
+                  "  pm.expect(pm.response.json().message).to.be.a('string').and.not.empty;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tk1T}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/tickets",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"booking\":\"{{tk_b1}}\",\"category\":\"billing\",\"subject\":\"   \",\"description\":\"d\"}"
+            }
+          }
+        },
+        {
+          "name": "subject missing -> 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"subject missing -> 400\", function () {",
+                  "  pm.response.to.have.status(400);",
+                  "  pm.expect(pm.response.json().success).to.eql(false);",
+                  "  pm.expect(pm.response.json().message).to.be.a('string').and.not.empty;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tk1T}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/tickets",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"booking\":\"{{tk_b1}}\",\"category\":\"billing\",\"description\":\"d\"}"
+            }
+          }
+        },
+        {
+          "name": "subject number -> 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"subject number -> 400\", function () {",
+                  "  pm.response.to.have.status(400);",
+                  "  pm.expect(pm.response.json().success).to.eql(false);",
+                  "  pm.expect(pm.response.json().message).to.be.a('string').and.not.empty;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tk1T}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/tickets",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"booking\":\"{{tk_b1}}\",\"category\":\"billing\",\"subject\":123,\"description\":\"d\"}"
+            }
+          }
+        },
+        {
+          "name": "subject object -> 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"subject object -> 400\", function () {",
+                  "  pm.response.to.have.status(400);",
+                  "  pm.expect(pm.response.json().success).to.eql(false);",
+                  "  pm.expect(pm.response.json().message).to.be.a('string').and.not.empty;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tk1T}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/tickets",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"booking\":\"{{tk_b1}}\",\"category\":\"billing\",\"subject\":{\"a\":1},\"description\":\"d\"}"
+            }
+          }
+        },
+        {
+          "name": "subject 201 chars -> 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"subject 201 chars -> 400\", function () {",
+                  "  pm.response.to.have.status(400);",
+                  "  pm.expect(pm.response.json().success).to.eql(false);",
+                  "  pm.expect(pm.response.json().message).to.be.a('string').and.not.empty;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tk1T}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/tickets",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"booking\":\"{{tk_b1}}\",\"category\":\"billing\",\"subject\":\"{{tk_s201}}\",\"description\":\"d\"}"
+            }
+          }
+        },
+        {
+          "name": "description empty -> 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"description empty -> 400\", function () {",
+                  "  pm.response.to.have.status(400);",
+                  "  pm.expect(pm.response.json().success).to.eql(false);",
+                  "  pm.expect(pm.response.json().message).to.be.a('string').and.not.empty;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tk1T}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/tickets",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"booking\":\"{{tk_b1}}\",\"category\":\"billing\",\"subject\":\"s\",\"description\":\"\"}"
+            }
+          }
+        },
+        {
+          "name": "description whitespace-only -> 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"description whitespace-only -> 400\", function () {",
+                  "  pm.response.to.have.status(400);",
+                  "  pm.expect(pm.response.json().success).to.eql(false);",
+                  "  pm.expect(pm.response.json().message).to.be.a('string').and.not.empty;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tk1T}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/tickets",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"booking\":\"{{tk_b1}}\",\"category\":\"billing\",\"subject\":\"s\",\"description\":\" \\t \"}"
+            }
+          }
+        },
+        {
+          "name": "description number -> 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"description number -> 400\", function () {",
+                  "  pm.response.to.have.status(400);",
+                  "  pm.expect(pm.response.json().success).to.eql(false);",
+                  "  pm.expect(pm.response.json().message).to.be.a('string').and.not.empty;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tk1T}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/tickets",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"booking\":\"{{tk_b1}}\",\"category\":\"billing\",\"subject\":\"s\",\"description\":5}"
+            }
+          }
+        },
+        {
+          "name": "description array -> 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"description array -> 400\", function () {",
+                  "  pm.response.to.have.status(400);",
+                  "  pm.expect(pm.response.json().success).to.eql(false);",
+                  "  pm.expect(pm.response.json().message).to.be.a('string').and.not.empty;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tk1T}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/tickets",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"booking\":\"{{tk_b1}}\",\"category\":\"billing\",\"subject\":\"s\",\"description\":[\"d\"]}"
+            }
+          }
+        },
+        {
+          "name": "description 5001 chars -> 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"description 5001 chars -> 400\", function () {",
+                  "  pm.response.to.have.status(400);",
+                  "  pm.expect(pm.response.json().success).to.eql(false);",
+                  "  pm.expect(pm.response.json().message).to.be.a('string').and.not.empty;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tk1T}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/tickets",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"booking\":\"{{tk_b1}}\",\"category\":\"billing\",\"subject\":\"s\",\"description\":\"{{tk_d5001}}\"}"
+            }
+          }
+        },
+        {
+          "name": "U1 lists only own tickets",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"U1 lists only own tickets\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  const j = pm.response.json();",
+                  "  pm.expect(j.success).to.eql(true);",
+                  "  pm.expect(j.data.every(function (t) { return t.user === pm.collectionVariables.get('tk_u1'); })).to.eql(true);",
+                  "  pm.expect(j.data.map(function (t) { return t._id; })).to.not.include(pm.collectionVariables.get('tk_t3'));",
+                  "  pm.expect(j.data.map(function (t) { return t._id; })).to.include.members([pm.collectionVariables.get('tk_t1'), pm.collectionVariables.get('tk_t2')]);",
+                  "  pm.expect(j.data.map(function (t) { return t._id; })).to.not.include(pm.collectionVariables.get('tk_ta'));",
+                  "  pm.expect(j.count).to.eql(j.data.length);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tk1T}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/tickets?limit=100"
+          }
+        },
+        {
+          "name": "U1 passing ?user=<U2> does not leak",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"U1 passing ?user=<U2> does not leak\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  const j = pm.response.json();",
+                  "  pm.expect(j.success).to.eql(true);",
+                  "  pm.expect(j.data.every(function (t) { return t.user === pm.collectionVariables.get('tk_u1'); })).to.eql(true);",
+                  "  pm.expect(j.data.map(function (t) { return t._id; })).to.not.include(pm.collectionVariables.get('tk_t3'));",
+                  "  pm.expect(j.data.map(function (t) { return t._id; })).to.include(pm.collectionVariables.get('tk_t1'));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tk1T}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/tickets?limit=100&user={{tk_u2}}"
+          }
+        },
+        {
+          "name": "U1 unknown params ignored",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"U1 unknown params ignored\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  const j = pm.response.json();",
+                  "  pm.expect(j.success).to.eql(true);",
+                  "  pm.expect(j.data.every(function (t) { return t.user === pm.collectionVariables.get('tk_u1'); })).to.eql(true);",
+                  "  pm.expect(j.data.map(function (t) { return t._id; })).to.not.include(pm.collectionVariables.get('tk_t3'));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tk1T}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/tickets?limit=100&foo=bar&role=admin"
+          }
+        },
+        {
+          "name": "U2 lists only own tickets",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"U2 lists only own tickets\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  const j = pm.response.json();",
+                  "  pm.expect(j.success).to.eql(true);",
+                  "  pm.expect(j.data.every(function (t) { return t.user === pm.collectionVariables.get('tk_u2'); })).to.eql(true);",
+                  "  pm.expect(j.data.map(function (t) { return t._id; })).to.not.include(pm.collectionVariables.get('tk_t1'));",
+                  "  pm.expect(j.data.map(function (t) { return t._id; })).to.include(pm.collectionVariables.get('tk_t3'));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tk2T}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/tickets?limit=100"
+          }
+        },
+        {
+          "name": "admin lists all tickets",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"admin lists all tickets\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  const j = pm.response.json();",
+                  "  pm.expect(j.data.map(function (t) { return t._id; })).to.include.members([pm.collectionVariables.get('tk_t1'), pm.collectionVariables.get('tk_t2'), pm.collectionVariables.get('tk_t3'), pm.collectionVariables.get('tk_ta')]);",
+                  "  pm.expect(j.total).to.be.at.least(4);",
+                  "  pm.expect(j.pages).to.eql(Math.ceil(j.total / 100));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/tickets?limit=100"
+          }
+        },
+        {
+          "name": "U1 filters category=billing",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"U1 filters category=billing\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  const j = pm.response.json();",
+                  "  pm.expect(j.success).to.eql(true);",
+                  "  pm.expect(j.data.every(function (t) { return t.user === pm.collectionVariables.get('tk_u1'); })).to.eql(true);",
+                  "  pm.expect(j.data.map(function (t) { return t._id; })).to.not.include(pm.collectionVariables.get('tk_t3'));",
+                  "  pm.expect(j.data.every(function (t) { return t.category === 'billing'; })).to.eql(true);",
+                  "  pm.expect(j.data.map(function (t) { return t._id; })).to.include(pm.collectionVariables.get('tk_t1')); pm.expect(j.data.map(function (t) { return t._id; })).to.not.include(pm.collectionVariables.get('tk_t2'));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tk1T}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/tickets?limit=100&category=billing"
+          }
+        },
+        {
+          "name": "U1 filters status=open&category=vehicle issue",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"U1 filters status=open&category=vehicle issue\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  const j = pm.response.json();",
+                  "  pm.expect(j.success).to.eql(true);",
+                  "  pm.expect(j.data.every(function (t) { return t.user === pm.collectionVariables.get('tk_u1'); })).to.eql(true);",
+                  "  pm.expect(j.data.map(function (t) { return t._id; })).to.not.include(pm.collectionVariables.get('tk_t3'));",
+                  "  pm.expect(j.data.map(function (t) { return t._id; })).to.eql([pm.collectionVariables.get('tk_t2')]);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tk1T}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/tickets?limit=100&status=open&category=vehicle%20issue"
+          }
+        },
+        {
+          "name": "admin filters category=vehicle issue",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"admin filters category=vehicle issue\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  const j = pm.response.json();",
+                  "  pm.expect(j.data.every(function (t) { return t.category === 'vehicle issue'; })).to.eql(true);",
+                  "  pm.expect(j.data.map(function (t) { return t._id; })).to.include(pm.collectionVariables.get('tk_t2')); pm.expect(j.data.map(function (t) { return t._id; })).to.not.include(pm.collectionVariables.get('tk_t1'));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/tickets?limit=100&category=vehicle%20issue"
+          }
+        },
+        {
+          "name": "admin filters status=open",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"admin filters status=open\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  const j = pm.response.json();",
+                  "  pm.expect(j.data.every(function (t) { return t.status === 'open'; })).to.eql(true);",
+                  "  pm.expect(j.data.map(function (t) { return t._id; })).to.include(pm.collectionVariables.get('tk_t3'));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/tickets?limit=100&status=open"
+          }
+        },
+        {
+          "name": "admin filters status=in progress -> excludes fresh tickets",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"admin filters status=in progress -> excludes fresh tickets\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  const j = pm.response.json();",
+                  "  pm.expect(j.data.every(function (t) { return t.status === 'in progress'; })).to.eql(true);",
+                  "  pm.expect(j.data.map(function (t) { return t._id; })).to.not.include(pm.collectionVariables.get('tk_t1'));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/tickets?limit=100&status=in%20progress"
+          }
+        },
+        {
+          "name": "unknown status value -> 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"unknown status value -> 400\", function () {",
+                  "  pm.response.to.have.status(400);",
+                  "  pm.expect(pm.response.json().success).to.eql(false);",
+                  "  pm.expect(pm.response.json().message).to.be.a('string').and.not.empty;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tk1T}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/tickets?status=closed"
+          }
+        },
+        {
+          "name": "status case mismatch -> 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status case mismatch -> 400\", function () {",
+                  "  pm.response.to.have.status(400);",
+                  "  pm.expect(pm.response.json().success).to.eql(false);",
+                  "  pm.expect(pm.response.json().message).to.be.a('string').and.not.empty;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/tickets?status=Open"
+          }
+        },
+        {
+          "name": "empty status -> 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"empty status -> 400\", function () {",
+                  "  pm.response.to.have.status(400);",
+                  "  pm.expect(pm.response.json().success).to.eql(false);",
+                  "  pm.expect(pm.response.json().message).to.be.a('string').and.not.empty;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tk1T}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/tickets?status="
+          }
+        },
+        {
+          "name": "unknown category value -> 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"unknown category value -> 400\", function () {",
+                  "  pm.response.to.have.status(400);",
+                  "  pm.expect(pm.response.json().success).to.eql(false);",
+                  "  pm.expect(pm.response.json().message).to.be.a('string').and.not.empty;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/tickets?category=refund"
+          }
+        },
+        {
+          "name": "status[$ne]=open -> 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status[$ne]=open -> 400\", function () {",
+                  "  pm.response.to.have.status(400);",
+                  "  pm.expect(pm.response.json().success).to.eql(false);",
+                  "  pm.expect(pm.response.json().message).to.be.a('string').and.not.empty;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tk1T}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/tickets?status%5B%24ne%5D=open"
+          }
+        },
+        {
+          "name": "category[$ne]=billing -> 400 (admin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"category[$ne]=billing -> 400 (admin)\", function () {",
+                  "  pm.response.to.have.status(400);",
+                  "  pm.expect(pm.response.json().success).to.eql(false);",
+                  "  pm.expect(pm.response.json().message).to.be.a('string').and.not.empty;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/tickets?category%5B%24ne%5D=billing"
+          }
+        },
+        {
+          "name": "repeated status params -> 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"repeated status params -> 400\", function () {",
+                  "  pm.response.to.have.status(400);",
+                  "  pm.expect(pm.response.json().success).to.eql(false);",
+                  "  pm.expect(pm.response.json().message).to.be.a('string').and.not.empty;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tk1T}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/tickets?status=open&status=resolved"
+          }
+        },
+        {
+          "name": "U1 page 1 limit 1: newest first",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"U1 page 1 limit 1: newest first\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  const j = pm.response.json();",
+                  "  pm.expect(j.count).to.eql(1);",
+                  "  pm.expect(j.page).to.eql(1);",
+                  "  pm.expect(j.total).to.be.at.least(2);",
+                  "  pm.expect(j.pages).to.eql(j.total);",
+                  "  pm.expect(j.data[0]._id).to.eql(pm.collectionVariables.get('tk_t2'));",
+                  "  pm.collectionVariables.set('tk_pg1', j.data[0]._id);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tk1T}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/tickets?page=1&limit=1"
+          }
+        },
+        {
+          "name": "U1 page 2 limit 1",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"U1 page 2 limit 1\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  const j = pm.response.json();",
+                  "  pm.expect(j.count).to.eql(1);",
+                  "  pm.expect(j.page).to.eql(2);",
+                  "  pm.expect(j.data[0]._id).to.eql(pm.collectionVariables.get('tk_t1'));",
+                  "  pm.expect(j.data[0]._id).to.not.eql(pm.collectionVariables.get('tk_pg1'));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tk1T}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/tickets?page=2&limit=1"
+          }
+        },
+        {
+          "name": "U1 page past the end is empty with right total",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"U1 page past the end is empty with right total\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  const j = pm.response.json();",
+                  "  pm.expect(j.data).to.eql([]);",
+                  "  pm.expect(j.count).to.eql(0);",
+                  "  pm.expect(j.total).to.be.at.least(2);",
+                  "  pm.expect(j.page).to.eql(999);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tk1T}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/tickets?page=999&limit=10"
+          }
+        },
+        {
+          "name": "admin list is sorted newest first",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"admin list is sorted newest first\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  const d = pm.response.json().data;",
+                  "  for (let i = 1; i < d.length; i++) { pm.expect(new Date(d[i - 1].createdAt).getTime()).to.be.at.least(new Date(d[i].createdAt).getTime()); }",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/tickets?limit=100"
+          }
+        },
+        {
+          "name": "limit=101 -> 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"limit=101 -> 400\", function () {",
+                  "  pm.response.to.have.status(400);",
+                  "  pm.expect(pm.response.json().success).to.eql(false);",
+                  "  pm.expect(pm.response.json().message).to.be.a('string').and.not.empty;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tk1T}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/tickets?limit=101"
+          }
+        },
+        {
+          "name": "page=abc -> 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"page=abc -> 400\", function () {",
+                  "  pm.response.to.have.status(400);",
+                  "  pm.expect(pm.response.json().success).to.eql(false);",
+                  "  pm.expect(pm.response.json().message).to.be.a('string').and.not.empty;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tk1T}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/tickets?page=abc"
+          }
+        },
+        {
+          "name": "page=0 -> 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"page=0 -> 400\", function () {",
+                  "  pm.response.to.have.status(400);",
+                  "  pm.expect(pm.response.json().success).to.eql(false);",
+                  "  pm.expect(pm.response.json().message).to.be.a('string').and.not.empty;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/tickets?page=0"
+          }
+        },
+        {
+          "name": "U1 comments on own ticket; body author/role/createdAt ignored",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"U1 comments on own ticket; body author/role/createdAt ignored\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  const j = pm.response.json(); const t = j.data;",
+                  "  pm.expect(j.success).to.eql(true);",
+                  "  pm.expect(t.comments.length).to.eql(1);",
+                  "  const c = t.comments[0];",
+                  "  pm.expect(c.author).to.eql(pm.collectionVariables.get('tk_u1'));",
+                  "  pm.expect(c.role).to.eql('user');",
+                  "  pm.expect(c.text).to.eql('hello there');",
+                  "  pm.expect(c._id).to.be.a('string');",
+                  "  pm.expect(Math.abs(Date.now() - new Date(c.createdAt).getTime())).to.be.below(60000);",
+                  "  pm.expect(t._id).to.eql(pm.collectionVariables.get('tk_t1'));",
+                  "  pm.collectionVariables.set('tk_c1', c._id);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tk1T}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/tickets/{{tk_t1}}/comments",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"text\":\"  hello there  \",\"author\":\"{{tk_adm}}\",\"role\":\"admin\",\"createdAt\":\"2000-01-01T00:00:00.000Z\"}"
+            }
+          }
+        },
+        {
+          "name": "admin replies on U1 ticket",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"admin replies on U1 ticket\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  const t = pm.response.json().data;",
+                  "  pm.expect(t.comments.length).to.eql(2);",
+                  "  const c = t.comments[1];",
+                  "  pm.expect(c.role).to.eql('admin');",
+                  "  pm.expect(c.author).to.eql(pm.collectionVariables.get('tk_adm'));",
+                  "  pm.expect(new Date(c.createdAt).getTime()).to.be.at.least(new Date(t.comments[0].createdAt).getTime());",
+                  "  pm.expect(c._id).to.not.eql(pm.collectionVariables.get('tk_c1'));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/tickets/{{tk_t1}}/comments",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"text\":\"We are looking into it\"}"
+            }
+          }
+        },
+        {
+          "name": "stranger U2 comments on U1 ticket -> 403",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"stranger U2 comments on U1 ticket -> 403\", function () {",
+                  "  pm.response.to.have.status(403);",
+                  "  pm.expect(pm.response.json().success).to.eql(false);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tk2T}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/tickets/{{tk_t1}}/comments",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"text\":\"let me in\"}"
+            }
+          }
+        },
+        {
+          "name": "comment without token -> 401",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"comment without token -> 401\", function () {",
+                  "  pm.response.to.have.status(401);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/tickets/{{tk_t1}}/comments",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"text\":\"x\"}"
+            }
+          }
+        },
+        {
+          "name": "comment text empty -> 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"comment text empty -> 400\", function () {",
+                  "  pm.response.to.have.status(400);",
+                  "  pm.expect(pm.response.json().success).to.eql(false);",
+                  "  pm.expect(pm.response.json().message).to.be.a('string').and.not.empty;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tk1T}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/tickets/{{tk_t1}}/comments",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"text\":\"\"}"
+            }
+          }
+        },
+        {
+          "name": "comment text whitespace-only -> 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"comment text whitespace-only -> 400\", function () {",
+                  "  pm.response.to.have.status(400);",
+                  "  pm.expect(pm.response.json().success).to.eql(false);",
+                  "  pm.expect(pm.response.json().message).to.be.a('string').and.not.empty;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tk1T}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/tickets/{{tk_t1}}/comments",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"text\":\"  \\n \"}"
+            }
+          }
+        },
+        {
+          "name": "comment text missing -> 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"comment text missing -> 400\", function () {",
+                  "  pm.response.to.have.status(400);",
+                  "  pm.expect(pm.response.json().success).to.eql(false);",
+                  "  pm.expect(pm.response.json().message).to.be.a('string').and.not.empty;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tk1T}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/tickets/{{tk_t1}}/comments",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"note\":\"x\"}"
+            }
+          }
+        },
+        {
+          "name": "comment text number -> 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"comment text number -> 400\", function () {",
+                  "  pm.response.to.have.status(400);",
+                  "  pm.expect(pm.response.json().success).to.eql(false);",
+                  "  pm.expect(pm.response.json().message).to.be.a('string').and.not.empty;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tk1T}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/tickets/{{tk_t1}}/comments",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"text\":42}"
+            }
+          }
+        },
+        {
+          "name": "comment text object -> 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"comment text object -> 400\", function () {",
+                  "  pm.response.to.have.status(400);",
+                  "  pm.expect(pm.response.json().success).to.eql(false);",
+                  "  pm.expect(pm.response.json().message).to.be.a('string').and.not.empty;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tk1T}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/tickets/{{tk_t1}}/comments",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"text\":{\"$ne\":1}}"
+            }
+          }
+        },
+        {
+          "name": "comment text 2001 chars -> 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"comment text 2001 chars -> 400\", function () {",
+                  "  pm.response.to.have.status(400);",
+                  "  pm.expect(pm.response.json().success).to.eql(false);",
+                  "  pm.expect(pm.response.json().message).to.be.a('string').and.not.empty;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tk1T}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/tickets/{{tk_t1}}/comments",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"text\":\"{{tk_c2001}}\"}"
+            }
+          }
+        },
+        {
+          "name": "comment text 2000 chars accepted",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"comment text 2000 chars accepted\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.json().data.comments.length).to.eql(3);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tk1T}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/tickets/{{tk_t1}}/comments",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"text\":\"{{tk_c2000}}\"}"
+            }
+          }
+        },
+        {
+          "name": "comment on malformed ticket id -> 404",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"comment on malformed ticket id -> 404\", function () {",
+                  "  pm.response.to.have.status(404);",
+                  "  pm.expect(pm.response.json().success).to.eql(false);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tk1T}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/tickets/not-an-id/comments",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"text\":\"x\"}"
+            }
+          }
+        },
+        {
+          "name": "comment on unknown ticket id -> 404",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"comment on unknown ticket id -> 404\", function () {",
+                  "  pm.response.to.have.status(404);",
+                  "  pm.expect(pm.response.json().success).to.eql(false);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tk1T}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/tickets/000000000000000000000000/comments",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"text\":\"x\"}"
+            }
+          }
+        },
+        {
+          "name": "U1 views own ticket with comments",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"U1 views own ticket with comments\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  const t = pm.response.json().data;",
+                  "  pm.expect(t._id).to.eql(pm.collectionVariables.get('tk_t1'));",
+                  "  pm.expect(t.comments.length).to.eql(3);",
+                  "  pm.expect(t.status).to.eql('open');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tk1T}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/tickets/{{tk_t1}}"
+          }
+        },
+        {
+          "name": "admin views any ticket",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"admin views any ticket\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/tickets/{{tk_t1}}"
+          }
+        },
+        {
+          "name": "U2 views U1's ticket -> 403",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"U2 views U1's ticket -> 403\", function () {",
+                  "  pm.response.to.have.status(403);",
+                  "  pm.expect(pm.response.json().success).to.eql(false);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tk2T}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/tickets/{{tk_t1}}"
+          }
+        },
+        {
+          "name": "view ticket without token -> 401",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"view ticket without token -> 401\", function () {",
+                  "  pm.response.to.have.status(401);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/tickets/{{tk_t1}}"
+          }
+        },
+        {
+          "name": "view malformed ticket id -> 404",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"view malformed ticket id -> 404\", function () {",
+                  "  pm.response.to.have.status(404);",
+                  "  pm.expect(pm.response.json().success).to.eql(false);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tk1T}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/tickets/not-an-id"
+          }
+        },
+        {
+          "name": "view unknown ticket id -> 404",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"view unknown ticket id -> 404\", function () {",
+                  "  pm.response.to.have.status(404);",
+                  "  pm.expect(pm.response.json().success).to.eql(false);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/tickets/000000000000000000000000"
+          }
+        },
+        {
+          "name": "user sets status -> 403",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"user sets status -> 403\", function () {",
+                  "  pm.response.to.have.status(403);",
+                  "  pm.expect(pm.response.json().success).to.eql(false);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tk1T}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/tickets/{{tk_t1}}/status",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"status\":\"resolved\"}"
+            }
+          }
+        },
+        {
+          "name": "status without token -> 401",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status without token -> 401\", function () {",
+                  "  pm.response.to.have.status(401);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/tickets/{{tk_t1}}/status",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"status\":\"resolved\"}"
+            }
+          }
+        },
+        {
+          "name": "admin sets in progress",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"admin sets in progress\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.json().data.status).to.eql('in progress');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/tickets/{{tk_t1}}/status",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"status\":\"in progress\"}"
+            }
+          }
+        },
+        {
+          "name": "admin sets same status again (no-op) -> 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"admin sets same status again (no-op) -> 200\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.json().data.status).to.eql('in progress');",
+                  "  pm.expect(pm.response.json().data.comments.length).to.eql(3);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/tickets/{{tk_t1}}/status",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"status\":\"in progress\"}"
+            }
+          }
+        },
+        {
+          "name": "U1 comments while in progress -> 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"U1 comments while in progress -> 200\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.json().data.comments.length).to.eql(4);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tk1T}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/tickets/{{tk_t1}}/comments",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"text\":\"any update?\"}"
+            }
+          }
+        },
+        {
+          "name": "invalid status -> 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"invalid status -> 400\", function () {",
+                  "  pm.response.to.have.status(400);",
+                  "  pm.expect(pm.response.json().success).to.eql(false);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/tickets/{{tk_t1}}/status",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"status\":\"closed\"}"
+            }
+          }
+        },
+        {
+          "name": "status case mismatch -> 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status case mismatch -> 400\", function () {",
+                  "  pm.response.to.have.status(400);",
+                  "  pm.expect(pm.response.json().success).to.eql(false);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/tickets/{{tk_t1}}/status",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"status\":\"Resolved\"}"
+            }
+          }
+        },
+        {
+          "name": "missing status -> 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"missing status -> 400\", function () {",
+                  "  pm.response.to.have.status(400);",
+                  "  pm.expect(pm.response.json().success).to.eql(false);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/tickets/{{tk_t1}}/status",
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            }
+          }
+        },
+        {
+          "name": "status number -> 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status number -> 400\", function () {",
+                  "  pm.response.to.have.status(400);",
+                  "  pm.expect(pm.response.json().success).to.eql(false);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/tickets/{{tk_t1}}/status",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"status\":1}"
+            }
+          }
+        },
+        {
+          "name": "status operator object -> 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status operator object -> 400\", function () {",
+                  "  pm.response.to.have.status(400);",
+                  "  pm.expect(pm.response.json().success).to.eql(false);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/tickets/{{tk_t1}}/status",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"status\":{\"$ne\":\"open\"}}"
+            }
+          }
+        },
+        {
+          "name": "malformed ticket id on status -> 404",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"malformed ticket id on status -> 404\", function () {",
+                  "  pm.response.to.have.status(404);",
+                  "  pm.expect(pm.response.json().success).to.eql(false);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/tickets/not-an-id/status",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"status\":\"open\"}"
+            }
+          }
+        },
+        {
+          "name": "unknown ticket id on status -> 404",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"unknown ticket id on status -> 404\", function () {",
+                  "  pm.response.to.have.status(404);",
+                  "  pm.expect(pm.response.json().success).to.eql(false);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/tickets/000000000000000000000000/status",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"status\":\"open\"}"
+            }
+          }
+        },
+        {
+          "name": "status still in progress after rejected updates",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status still in progress after rejected updates\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.json().data.status).to.eql('in progress');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/tickets/{{tk_t1}}"
+          }
+        },
+        {
+          "name": "admin resolves; comments kept",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"admin resolves; comments kept\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.json().data.status).to.eql('resolved');",
+                  "  pm.expect(pm.response.json().data.comments.length).to.eql(4);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/tickets/{{tk_t1}}/status",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"status\":\"resolved\"}"
+            }
+          }
+        },
+        {
+          "name": "U1 comment on resolved ticket -> 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"U1 comment on resolved ticket -> 400\", function () {",
+                  "  pm.response.to.have.status(400);",
+                  "  pm.expect(pm.response.json().success).to.eql(false); pm.expect(pm.response.json().message).to.eql(\"Ticket is resolved\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tk1T}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/tickets/{{tk_t1}}/comments",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"text\":\"too late\"}"
+            }
+          }
+        },
+        {
+          "name": "admin comment on resolved ticket -> 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"admin comment on resolved ticket -> 400\", function () {",
+                  "  pm.response.to.have.status(400);",
+                  "  pm.expect(pm.response.json().success).to.eql(false); pm.expect(pm.response.json().message).to.eql(\"Ticket is resolved\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/tickets/{{tk_t1}}/comments",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"text\":\"too late\"}"
+            }
+          }
+        },
+        {
+          "name": "resolved ticket unchanged by rejected comments",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"resolved ticket unchanged by rejected comments\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.json().data.status).to.eql('resolved');",
+                  "  pm.expect(pm.response.json().data.comments.length).to.eql(4);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tk1T}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/tickets/{{tk_t1}}"
+          }
+        },
+        {
+          "name": "admin filters status=resolved",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"admin filters status=resolved\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  const j = pm.response.json();",
+                  "  pm.expect(j.data.every(function (t) { return t.status === 'resolved'; })).to.eql(true);",
+                  "  pm.expect(j.data.map(function (t) { return t._id; })).to.include(pm.collectionVariables.get('tk_t1'));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/tickets?limit=100&status=resolved"
+          }
+        },
+        {
+          "name": "U1 filters status=resolved",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"U1 filters status=resolved\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  const j = pm.response.json();",
+                  "  pm.expect(j.success).to.eql(true);",
+                  "  pm.expect(j.data.every(function (t) { return t.user === pm.collectionVariables.get('tk_u1'); })).to.eql(true);",
+                  "  pm.expect(j.data.map(function (t) { return t._id; })).to.not.include(pm.collectionVariables.get('tk_t3'));",
+                  "  pm.expect(j.data.map(function (t) { return t._id; })).to.include(pm.collectionVariables.get('tk_t1'));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tk1T}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/tickets?limit=100&status=resolved"
+          }
+        },
+        {
+          "name": "admin reopens resolved ticket",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"admin reopens resolved ticket\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.json().data.status).to.eql('open');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/tickets/{{tk_t1}}/status",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"status\":\"open\"}"
+            }
+          }
+        },
+        {
+          "name": "reopened ticket accepts comments again",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"reopened ticket accepts comments again\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.json().data.comments.length).to.eql(5);",
+                  "  pm.expect(pm.response.json().data.status).to.eql('open');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tk1T}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/tickets/{{tk_t1}}/comments",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"text\":\"thanks, one more thing\"}"
+            }
+          }
+        },
+        {
+          "name": "U1 creates T4 on B1b",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"U1 creates T4 on B1b\", function () {",
+                  "  pm.response.to.have.status(201);",
+                  "  pm.collectionVariables.set('tk_t4', pm.response.json().data._id);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tk1T}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/tickets",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"booking\":\"{{tk_b1b}}\",\"category\":\"other\",\"subject\":\"Soon orphaned {{tk_sfx}}\",\"description\":\"Booking will be deleted\"}"
+            }
+          }
+        },
+        {
+          "name": "U1 deletes B1b",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"U1 deletes B1b\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tk1T}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/bookings/{{tk_b1b}}"
+          }
+        },
+        {
+          "name": "T4 stays readable after its booking is deleted",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"T4 stays readable after its booking is deleted\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.json().data.booking).to.eql(pm.collectionVariables.get('tk_b1b'));",
+                  "  pm.expect(pm.response.json().data.subject).to.include('Soon orphaned');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tk1T}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/tickets/{{tk_t4}}"
+          }
+        },
+        {
+          "name": "T4 accepts comments after its booking is deleted",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"T4 accepts comments after its booking is deleted\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.json().data.comments.length).to.eql(1);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tk1T}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/tickets/{{tk_t4}}/comments",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"text\":\"still here\"}"
+            }
+          }
+        },
+        {
+          "name": "T4 in admin list after booking deleted",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"T4 in admin list after booking deleted\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.json().data.map(function (t) { return t._id; })).to.include(pm.collectionVariables.get('tk_t4'));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/tickets?limit=100"
+          }
+        },
+        {
+          "name": "ticket on the deleted booking -> 404",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"ticket on the deleted booking -> 404\", function () {",
+                  "  pm.response.to.have.status(404);",
+                  "  pm.expect(pm.response.json().success).to.eql(false);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tk1T}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/tickets",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"booking\":\"{{tk_b1b}}\",\"category\":\"other\",\"subject\":\"s\",\"description\":\"d\"}"
+            }
+          }
+        }
+      ]
     }
   ]
 }

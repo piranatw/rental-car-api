@@ -23,6 +23,7 @@ app.use('/api/v1/providers', require('./routes/providers'));
 app.use('/api/v1/bookings', require('./routes/bookings'));
 app.use('/api/v1/promos', require('./routes/promos'));
 app.use('/api/v1/audit', require('./routes/audit'));
+app.use('/api/v1/tickets', require('./routes/tickets'));
 
 const seedAdmin = async () => {
   const email = process.env.SEED_ADMIN_EMAIL;
