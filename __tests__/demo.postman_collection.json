@@ -1,0 +1,1641 @@
+{
+  "info": {
+    "name": "Rental Car Booking API - Presentation Demo",
+    "description": "Rental Car Booking API, 7-minute presentation demo. Self-contained, re-runnable, no server-side helper scripts.\nRun it in Postman (Collection Runner, run order as listed, import demo.postman_environment.json and set baseUrl, adminEmail, adminPassword) or with: npm run demo.\nStart the API normally (npm start, NODE_ENV=development) so the login limiter is ON. With NODE_ENV=test the limiter is off and the single 429 assertion is reported as skipped.\n\nRun-time data: the collection pre-request script creates a random runId on the first request and derives every email, promo code and date from it and from today's UTC date. Nothing is shared between runs, so the demo can run on a dirty database.\n\nLOGIN BUDGET (the limiter allows 10 POST /auth/login per minute per IP, counted whether the login succeeds or not; register does not count):\n #1 2.3 login A, #2 2.7 login A again, #3 3.1 admin login  = 3\n #4..#8 9.2-9.6 five wrong passwords on the throwaway user  = 5 (the 5th locks the account)\n #9 9.7 correct password on the locked account              = 1  -> 9 logins, one below the limit\n #10 9.8 flood iteration 1: unknown email, still allowed (401)\n #11 9.8 flood iteration 2: the limiter answers 429.\nThe 429 demonstration is last and the lockout demonstration is before it. Run the demo at most once per minute per machine (wait 60 s between runs), otherwise the previous run's logins still count. Everything before the flood stays at 9 logins, so a fresh minute is all it needs.\nThe 20-way atomic promo race is shown from the terminal: node scripts/promo-race.js (see README).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Runs before every request. A new run (first request) generates fresh run-time data.",
+          "const FIRST = '1.1 List providers (public, no token)';",
+          "const day = (n) => { const d = new Date(); d.setUTCHours(0, 0, 0, 0); return new Date(d.getTime() + n * 86400000).toISOString().slice(0, 10); };",
+          "if (!pm.collectionVariables.get('runId') || pm.info.requestName === FIRST) {",
+          "  const id = Math.random().toString(36).slice(2, 8) + Date.now().toString(36).slice(-4);",
+          "  const set = (k, v) => pm.collectionVariables.set(k, v);",
+          "  set('runId', id);",
+          "  set('emailA', 'demo-a-' + id + '@example.com');",
+          "  set('emailB', 'demo-b-' + id + '@example.com');",
+          "  set('emailX', 'demo-lock-' + id + '@example.com');",
+          "  set('emailU', 'nobody-' + id + '@example.com');",
+          "  set('promoCode', 'DEMO' + id.toUpperCase());",
+          "  // future bookings of user A (the 4th is refused), the booking edit, the promo validity and the stats range",
+          "  set('a1Date', day(10)); set('a1Ret', day(12)); set('a1NewRet', day(13));",
+          "  set('a2Date', day(20)); set('a2Ret', day(21));",
+          "  set('a3Date', day(30)); set('a3Ret', day(31));",
+          "  set('a4Date', day(40)); set('a4Ret', day(41));",
+          "  set('promoFrom', day(-1)); set('promoTo', day(365));",
+          "  set('statsFrom', day(-5)); set('statsTo', day(45));",
+          "  // late return: returnDate = today (UTC) minus 2 days; the actual return is 3 h after that day's 23:59:59.999Z anchor (yesterday 02:59:59.999Z, in the past, inside the 24 h future bound)",
+          "  set('lateDate', day(-3)); set('lateRet', day(-2));",
+          "  set('actualReturn', new Date(Date.parse(day(-2) + 'T23:59:59.999Z') + 3 * 3600000).toISOString());",
+          "  set('floodCount', '0');",
+          "}"
+        ]
+      }
+    }
+  ],
+  "item": [
+    {
+      "name": "1 Public",
+      "item": [
+        {
+          "name": "1.1 List providers (public, no token)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', function () { pm.response.to.have.status(200); });",
+                  "const j = pm.response.json();",
+                  "const find = (n) => j.data.find((p) => p.name === n);",
+                  "pm.test('both seeded providers are listed (Alpha Rentals, Beta Cars)', function () { pm.expect(find('Alpha Rentals')).to.be.an('object'); pm.expect(find('Beta Cars')).to.be.an('object'); });",
+                  "const a = find('Alpha Rentals'), b = find('Beta Cars');",
+                  "pm.collectionVariables.set('alphaId', a._id); pm.collectionVariables.set('alphaRate', String(a.dailyRate));",
+                  "pm.collectionVariables.set('betaId', b._id); pm.collectionVariables.set('betaRate', String(b.dailyRate)); pm.collectionVariables.set('betaLate', String(b.lateFeePerHour));",
+                  "console.log('Alpha Rentals dailyRate=' + a.dailyRate + ', Beta Cars dailyRate=' + b.dailyRate + ' lateFeePerHour=' + b.lateFeePerHour);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/providers"
+          }
+        },
+        {
+          "name": "1.2 Get one provider by id (public)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('it is Alpha Rentals', function () { pm.expect(pm.response.json().data.name).to.eql('Alpha Rentals'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/providers/{{alphaId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "2 Register, login, logout",
+      "item": [
+        {
+          "name": "2.1 Register user A",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 201', function () { pm.response.to.have.status(201); });",
+                  "const j = pm.response.json();",
+                  "pm.test('response has a token and the user, and no password', function () {",
+                  "  pm.expect(j.token).to.be.a('string');",
+                  "  pm.expect(j.data.email).to.eql(pm.collectionVariables.get('emailA'));",
+                  "  pm.expect(j.data).to.not.have.property('password');",
+                  "  pm.expect(pm.response.text()).to.not.include('demoPass123');",
+                  "});",
+                  "pm.collectionVariables.set('idA', j.data.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/auth/register",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"name\":\"Demo User\",\"telephone\":\"0812345678\",\"email\":\"{{emailA}}\",\"password\":\"demoPass123\"}"
+            }
+          }
+        },
+        {
+          "name": "2.2 Register the same email again",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('duplicate email -> 400 Email already registered', function () { pm.response.to.have.status(400); pm.expect(pm.response.json().message).to.eql('Email already registered'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/auth/register",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"name\":\"Demo User\",\"telephone\":\"0812345678\",\"email\":\"{{emailA}}\",\"password\":\"demoPass123\"}"
+            }
+          }
+        },
+        {
+          "name": "2.3 Login user A (login #1)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('login returns a token', function () { pm.expect(pm.response.json().token).to.be.a('string'); });",
+                  "pm.collectionVariables.set('tokenA1', pm.response.json().token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\":\"{{emailA}}\",\"password\":\"demoPass123\"}"
+            }
+          }
+        },
+        {
+          "name": "2.4 Who am I (GET /auth/me)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('me is user A with role user', function () { const d = pm.response.json().data; pm.expect(d.email).to.eql(pm.collectionVariables.get('emailA')); pm.expect(d.role).to.eql('user'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenA1}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/auth/me"
+          }
+        },
+        {
+          "name": "2.5 Logout (revokes the token on the server)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenA1}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/auth/logout"
+          }
+        },
+        {
+          "name": "2.6 Replay the OLD token on /auth/me",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('revoked token is refused -> 401', function () { pm.response.to.have.status(401); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenA1}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/auth/me"
+          }
+        },
+        {
+          "name": "2.7 Login user A again for the working session (login #2)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', function () { pm.response.to.have.status(200); });",
+                  "const t = pm.response.json().token;",
+                  "pm.test('a new token, different from the revoked one', function () { pm.expect(t).to.be.a('string'); pm.expect(t).to.not.eql(pm.collectionVariables.get('tokenA1')); });",
+                  "pm.collectionVariables.set('tokenA', t);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\":\"{{emailA}}\",\"password\":\"demoPass123\"}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "3 Bookings",
+      "item": [
+        {
+          "name": "3.1 Admin login (login #3)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('admin token and role admin', function () { const j = pm.response.json(); pm.expect(j.token).to.be.a('string'); pm.expect(j.data.role).to.eql('admin'); });",
+                  "pm.collectionVariables.set('tokenAdmin', pm.response.json().token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\":\"{{adminEmail}}\",\"password\":\"{{adminPassword}}\"}"
+            }
+          }
+        },
+        {
+          "name": "3.2 Register user B",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 201', function () { pm.response.to.have.status(201); });",
+                  "pm.collectionVariables.set('tokenB', pm.response.json().token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/auth/register",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"name\":\"Demo User\",\"telephone\":\"0812345678\",\"email\":\"{{emailB}}\",\"password\":\"demoPass123\"}"
+            }
+          }
+        },
+        {
+          "name": "3.3 User A books Alpha Rentals (2 days)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 201', function () { pm.response.to.have.status(201); });",
+                  "const d = pm.response.json().data;",
+                  "const expected = Number(pm.collectionVariables.get('alphaRate')) * 2;",
+                  "pm.test('totalPrice = dailyRate x 2 days = ' + expected, function () { pm.expect(d.totalPrice).to.eql(expected); });",
+                  "console.log('booking 1: totalPrice ' + d.totalPrice + ' (dailyRate ' + pm.collectionVariables.get('alphaRate') + ' x 2 days)');",
+                  "pm.collectionVariables.set('bookA1', d._id); pm.collectionVariables.set('priceA1', String(d.totalPrice));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenA}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/providers/{{alphaId}}/bookings",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"date\":\"{{a1Date}}\",\"returnDate\":\"{{a1Ret}}\"}"
+            }
+          }
+        },
+        {
+          "name": "3.4 User A books a 2nd car",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 201', function () { pm.response.to.have.status(201); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenA}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/providers/{{alphaId}}/bookings",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"date\":\"{{a2Date}}\",\"returnDate\":\"{{a2Ret}}\"}"
+            }
+          }
+        },
+        {
+          "name": "3.5 User A books a 3rd car",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 201', function () { pm.response.to.have.status(201); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenA}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/providers/{{alphaId}}/bookings",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"date\":\"{{a3Date}}\",\"returnDate\":\"{{a3Ret}}\"}"
+            }
+          }
+        },
+        {
+          "name": "3.6 User A tries a 4th booking (limit is 3)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('4th booking -> 400 (at most 3 cars)', function () { pm.response.to.have.status(400); pm.expect(pm.response.json().message).to.include('at most 3'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenA}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/providers/{{alphaId}}/bookings",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"date\":\"{{a4Date}}\",\"returnDate\":\"{{a4Ret}}\"}"
+            }
+          }
+        },
+        {
+          "name": "3.7 User B reads user A booking",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('another user cannot read it -> 403', function () { pm.response.to.have.status(403); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenB}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/bookings/{{bookA1}}"
+          }
+        },
+        {
+          "name": "3.8 Admin reads user A booking",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('admin sees the booking', function () { pm.expect(pm.response.json().data._id).to.eql(pm.collectionVariables.get('bookA1')); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenAdmin}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/bookings/{{bookA1}}"
+          }
+        },
+        {
+          "name": "3.9 User B books Beta Cars with a pickup 3 days ago (for the late-return demo)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 201', function () { pm.response.to.have.status(201); });",
+                  "const d = pm.response.json().data;",
+                  "pm.test('totalPrice = Beta dailyRate x 1 day', function () { pm.expect(d.totalPrice).to.eql(Number(pm.collectionVariables.get('betaRate'))); });",
+                  "pm.collectionVariables.set('bookB', d._id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenB}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/providers/{{betaId}}/bookings",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"date\":\"{{lateDate}}\",\"returnDate\":\"{{lateRet}}\"}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "4 Promo code",
+      "item": [
+        {
+          "name": "4.1 Admin creates a promo (10 percent, maxRedemptions 1)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 201', function () { pm.response.to.have.status(201); });",
+                  "const d = pm.response.json().data;",
+                  "pm.test('code stored upper-case with maxRedemptions 1', function () { pm.expect(d.code).to.eql(pm.collectionVariables.get('promoCode')); pm.expect(d.maxRedemptions).to.eql(1); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenAdmin}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/promos",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"code\":\"{{promoCode}}\",\"type\":\"percentage\",\"value\":10,\"validFrom\":\"{{promoFrom}}T00:00:00.000Z\",\"validTo\":\"{{promoTo}}T00:00:00.000Z\",\"maxRedemptions\":1}"
+            }
+          }
+        },
+        {
+          "name": "4.2 Admin lists promos",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('the new code is listed', function () { pm.expect(pm.response.json().data.map((p) => p.code)).to.include(pm.collectionVariables.get('promoCode')); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenAdmin}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/promos"
+          }
+        },
+        {
+          "name": "4.3 User A applies the code to their booking",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', function () { pm.response.to.have.status(200); });",
+                  "const d = pm.response.json().data;",
+                  "const before = Number(pm.collectionVariables.get('priceA1'));",
+                  "pm.test('discount applied: 10 percent of ' + before, function () { pm.expect(d.discount).to.eql(before * 0.1); });",
+                  "pm.test('totalPrice reduced to ' + before * 0.9, function () { pm.expect(d.totalPrice).to.eql(before * 0.9); pm.expect(d.totalPrice).to.be.below(before); });",
+                  "console.log('price ' + before + ' -> ' + d.totalPrice + ' (discount ' + d.discount + ')');",
+                  "pm.collectionVariables.set('priceA1Promo', String(d.totalPrice));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenA}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/bookings/{{bookA1}}/promo",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"code\":\"{{promoCode}}\"}"
+            }
+          }
+        },
+        {
+          "name": "4.4 User B applies the SAME code (sequential redemption limit)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('second redemption -> 400 maximum redemptions', function () { pm.response.to.have.status(400); pm.expect(pm.response.json().message).to.eql('Promo code has reached its maximum redemptions'); });",
+                  "// The 20-way concurrent race is proven from the terminal: node scripts/promo-race.js"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenB}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/bookings/{{bookB}}/promo",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"code\":\"{{promoCode}}\"}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "5 Audit log",
+      "item": [
+        {
+          "name": "5.1 Admin views user A booking (logged as a view)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenAdmin}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/bookings/{{bookA1}}"
+          }
+        },
+        {
+          "name": "5.2 Admin edits the return date of user A booking",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('return date changed and the price re-derived (3 days, promo kept)', function () { const d = pm.response.json().data; pm.expect(d.returnDate.slice(0, 10)).to.eql(pm.collectionVariables.get('a1NewRet')); pm.expect(d.totalPrice).to.eql(Number(pm.collectionVariables.get('alphaRate')) * 3 * 0.9); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenAdmin}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/bookings/{{bookA1}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"returnDate\":\"{{a1NewRet}}\"}"
+            }
+          }
+        },
+        {
+          "name": "5.3 Admin reads the audit log of that booking",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', function () { pm.response.to.have.status(200); });",
+                  "const j = pm.response.json();",
+                  "const view = j.data.find((e) => e.action === 'view');",
+                  "const edit = j.data.find((e) => e.action === 'edit');",
+                  "pm.test('a view entry and an edit entry exist for the booking', function () { pm.expect(view, 'view entry').to.be.an('object'); pm.expect(edit, 'edit entry').to.be.an('object'); });",
+                  "pm.test('the edit entry records before and after of returnDate', function () {",
+                  "  pm.expect(edit.before.returnDate.slice(0, 10)).to.eql(pm.collectionVariables.get('a1Ret'));",
+                  "  pm.expect(edit.after.returnDate.slice(0, 10)).to.eql(pm.collectionVariables.get('a1NewRet'));",
+                  "});",
+                  "console.log('audit edit: returnDate ' + edit.before.returnDate.slice(0, 10) + ' -> ' + edit.after.returnDate.slice(0, 10));",
+                  "pm.collectionVariables.set('auditId', edit._id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenAdmin}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/audit?booking={{bookA1}}"
+          }
+        },
+        {
+          "name": "5.4 Try to PUT an audit entry (immutable)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('PUT /audit/:id -> 404 (no such route)', function () { pm.response.to.have.status(404); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenAdmin}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/audit/{{auditId}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"action\":\"view\"}"
+            }
+          }
+        },
+        {
+          "name": "5.5 Try to PATCH an audit entry (immutable)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('PATCH /audit/:id -> 404', function () { pm.response.to.have.status(404); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenAdmin}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/audit/{{auditId}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"action\":\"view\"}"
+            }
+          }
+        },
+        {
+          "name": "5.6 Try to DELETE an audit entry (immutable)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('DELETE /audit/:id -> 404', function () { pm.response.to.have.status(404); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenAdmin}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/audit/{{auditId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "6 Support tickets",
+      "item": [
+        {
+          "name": "6.1 User A opens a ticket for their booking",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 201', function () { pm.response.to.have.status(201); });",
+                  "pm.test('ticket is open', function () { pm.expect(pm.response.json().data.status).to.eql('open'); });",
+                  "pm.collectionVariables.set('ticketId', pm.response.json().data._id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenA}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/tickets",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"booking\":\"{{bookA1}}\",\"category\":\"billing\",\"subject\":\"Question about my price {{runId}}\",\"description\":\"Why was the total changed after the admin edit?\"}"
+            }
+          }
+        },
+        {
+          "name": "6.2 Admin replies to the ticket",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('last comment has role admin', function () { const c = pm.response.json().data.comments; pm.expect(c[c.length - 1].role).to.eql('admin'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenAdmin}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/tickets/{{ticketId}}/comments",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"text\":\"We re-priced the booking after the date change.\"}"
+            }
+          }
+        },
+        {
+          "name": "6.3 User A reads the ticket",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('ticket holds the admin comment', function () { pm.expect(pm.response.json().data.comments.length).to.eql(1); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenA}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/tickets/{{ticketId}}"
+          }
+        },
+        {
+          "name": "6.4 Admin resolves the ticket",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('status is resolved', function () { pm.expect(pm.response.json().data.status).to.eql('resolved'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenAdmin}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/tickets/{{ticketId}}/status",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"status\":\"resolved\"}"
+            }
+          }
+        },
+        {
+          "name": "6.5 User A comments on the resolved ticket",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('comment on a resolved ticket -> 400 Ticket is resolved', function () { pm.response.to.have.status(400); pm.expect(pm.response.json().message).to.eql('Ticket is resolved'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenA}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/tickets/{{ticketId}}/comments",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"text\":\"One more thing\"}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "7 Inspection and late fee",
+      "item": [
+        {
+          "name": "7.1 User B (not admin) tries to record an inspection",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('only admins record inspections -> 403', function () { pm.response.to.have.status(403); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenB}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/bookings/{{bookB}}/inspection",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"actualReturnTime\":\"{{actualReturn}}\",\"odometer\":1000,\"fuelLevel\":50}"
+            }
+          }
+        },
+        {
+          "name": "7.2 Admin records the inspection 3 hours after the end of the return date",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 201', function () { pm.response.to.have.status(201); });",
+                  "const d = pm.response.json().data;",
+                  "const fee = Number(pm.collectionVariables.get('betaLate'));",
+                  "pm.test('lateHours is 3 (anchor: 23:59:59.999Z on the return date)', function () { pm.expect(d.lateHours).to.eql(3); });",
+                  "pm.test('lateFee = 3 x lateFeePerHour = ' + 3 * fee, function () { pm.expect(d.lateFee).to.eql(3 * fee); });",
+                  "console.log('late return: ' + d.lateHours + ' h x ' + fee + ' = ' + d.lateFee);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenAdmin}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/bookings/{{bookB}}/inspection",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"actualReturnTime\":\"{{actualReturn}}\",\"odometer\":45210,\"fuelLevel\":40,\"damageNotes\":\"Scratch on the rear bumper\"}"
+            }
+          }
+        },
+        {
+          "name": "7.3 Owner (user B) views the return report",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('report shows odometer and fee', function () { const d = pm.response.json().data; pm.expect(d.odometer).to.eql(45210); pm.expect(d.lateFee).to.be.above(0); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenB}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/bookings/{{bookB}}/inspection"
+          }
+        },
+        {
+          "name": "7.4 Owner submits a dispute",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('dispute is open', function () { pm.expect(pm.response.json().data.dispute.status).to.eql('open'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenB}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/bookings/{{bookB}}/inspection/dispute",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"comment\":\"The scratch was already there at pickup.\"}"
+            }
+          }
+        },
+        {
+          "name": "7.5 Owner submits a second dispute",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('second dispute -> 400 already submitted', function () { pm.response.to.have.status(400); pm.expect(pm.response.json().message).to.eql('A dispute has already been submitted'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenB}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/bookings/{{bookB}}/inspection/dispute",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"comment\":\"Again\"}"
+            }
+          }
+        },
+        {
+          "name": "7.6 Admin resolves the dispute",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('dispute is resolved', function () { pm.expect(pm.response.json().data.dispute.status).to.eql('resolved'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenAdmin}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/bookings/{{bookB}}/inspection/dispute",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"status\":\"resolved\",\"resolutionNote\":\"Photos at pickup confirm it.\"}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "8 Statistics",
+      "item": [
+        {
+          "name": "8.1 Admin reads the statistics report",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', function () { pm.response.to.have.status(200); });",
+                  "const d = pm.response.json().data;",
+                  "const sum = (a) => a.reduce((s, x) => s + x.count, 0);",
+                  "pm.test('total >= 1 (this run created bookings in the range)', function () { pm.expect(d.total).to.be.at.least(1); });",
+                  "pm.test('total == sum(perProvider) == sum(perMonth)', function () { pm.expect(sum(d.perProvider)).to.eql(d.total); pm.expect(sum(d.perMonth)).to.eql(d.total); });",
+                  "console.log('stats total ' + d.total + ', top provider ' + (d.top5[0] && d.top5[0].name));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenAdmin}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/stats?from={{statsFrom}}&to={{statsTo}}"
+          }
+        },
+        {
+          "name": "8.2 Non-admin tries the statistics report",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('non-admin -> 403', function () { pm.response.to.have.status(403); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenA}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/stats?from={{statsFrom}}&to={{statsTo}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "9 Login protection and rate limit (must stay last)",
+      "item": [
+        {
+          "name": "9.1 Register a throwaway user for the lockout demo",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 201', function () { pm.response.to.have.status(201); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/auth/register",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"name\":\"Demo User\",\"telephone\":\"0812345678\",\"email\":\"{{emailX}}\",\"password\":\"demoPass123\"}"
+            }
+          }
+        },
+        {
+          "name": "9.2 Wrong password attempt 1 of 5 (login #4)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('wrong password 1: 401 with the identical body', function () {",
+                  "  pm.response.to.have.status(401);",
+                  "  pm.expect(pm.response.text()).to.eql('{\"success\":false,\"message\":\"Invalid credentials\"}');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\":\"{{emailX}}\",\"password\":\"wrong-password-1\"}"
+            }
+          }
+        },
+        {
+          "name": "9.3 Wrong password attempt 2 of 5 (login #5)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('wrong password 2: 401 with the identical body', function () {",
+                  "  pm.response.to.have.status(401);",
+                  "  pm.expect(pm.response.text()).to.eql('{\"success\":false,\"message\":\"Invalid credentials\"}');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\":\"{{emailX}}\",\"password\":\"wrong-password-2\"}"
+            }
+          }
+        },
+        {
+          "name": "9.4 Wrong password attempt 3 of 5 (login #6)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('wrong password 3: 401 with the identical body', function () {",
+                  "  pm.response.to.have.status(401);",
+                  "  pm.expect(pm.response.text()).to.eql('{\"success\":false,\"message\":\"Invalid credentials\"}');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\":\"{{emailX}}\",\"password\":\"wrong-password-3\"}"
+            }
+          }
+        },
+        {
+          "name": "9.5 Wrong password attempt 4 of 5 (login #7)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('wrong password 4: 401 with the identical body', function () {",
+                  "  pm.response.to.have.status(401);",
+                  "  pm.expect(pm.response.text()).to.eql('{\"success\":false,\"message\":\"Invalid credentials\"}');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\":\"{{emailX}}\",\"password\":\"wrong-password-4\"}"
+            }
+          }
+        },
+        {
+          "name": "9.6 Wrong password attempt 5 of 5 (login #8)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('wrong password 5: 401 with the identical body', function () {",
+                  "  pm.response.to.have.status(401);",
+                  "  pm.expect(pm.response.text()).to.eql('{\"success\":false,\"message\":\"Invalid credentials\"}');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\":\"{{emailX}}\",\"password\":\"wrong-password-5\"}"
+            }
+          }
+        },
+        {
+          "name": "9.7 CORRECT password on the now-locked account (login #9)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('locked account with the right password: 401 with the identical body', function () {",
+                  "  pm.response.to.have.status(401);",
+                  "  pm.expect(pm.response.text()).to.eql('{\"success\":false,\"message\":\"Invalid credentials\"}');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\":\"{{emailX}}\",\"password\":\"demoPass123\"}"
+            }
+          }
+        },
+        {
+          "name": "9.8 Flood login until 429 (unknown email; loops, hard cap 12)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const n = Number(pm.collectionVariables.get('floodCount') || 0) + 1;",
+                  "pm.collectionVariables.set('floodCount', String(n));",
+                  "const CAP = 12;",
+                  "if (n === 1) {",
+                  "  pm.test('unknown email answers the identical 401 (login #10)', function () { pm.response.to.have.status(401); pm.expect(pm.response.text()).to.eql('{\"success\":false,\"message\":\"Invalid credentials\"}'); });",
+                  "}",
+                  "if (pm.response.code === 429) {",
+                  "  pm.test('limiter answered 429 on request #' + n + ' of the flood', function () {",
+                  "    pm.response.to.have.status(429);",
+                  "    pm.expect(pm.response.headers.get('Retry-After'), 'Retry-After header').to.be.ok;",
+                  "    pm.expect(pm.response.json().retryAfter, 'retryAfter in body').to.be.a('number');",
+                  "  });",
+                  "  console.log('429 after ' + (9 + n) + ' login requests in this run; Retry-After ' + pm.response.headers.get('Retry-After') + ' s');",
+                  "} else if (n < CAP) {",
+                  "  (pm.execution && pm.execution.setNextRequest ? pm.execution.setNextRequest : postman.setNextRequest)(pm.info.requestName);",
+                  "} else {",
+                  "  pm.test.skip('429 from the login limiter (not reached in ' + CAP + ' requests: the server runs with NODE_ENV=test, limiter OFF)');",
+                  "  console.log('No 429 after ' + CAP + ' floods: the IP limiter is off (NODE_ENV=test). Start the server with NODE_ENV=development to see it.');",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\":\"{{emailU}}\",\"password\":\"whatever123\"}"
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

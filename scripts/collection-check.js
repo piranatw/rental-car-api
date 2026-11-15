@@ -4,6 +4,9 @@
 //  - a folder named in PASS_A_FOLDERS, PASS_B_FOLDERS or the Disputes phases that does not exist exactly once.
 // The folder-name lists are read by parsing scripts/run-newman.sh (the single source of truth):
 // the PASS_A_FOLDERS=(...) / PASS_B_FOLDERS=(...) arrays and every quoted "Disputes <n> ..." phase name.
+// With no argument it checks the main collection and then __tests__/demo.postman_collection.json.
+// A collection whose file name contains "demo" is not run by run-newman.sh, so it only gets the duplicate checks
+// (sibling names, and every request name unique across the whole collection: setNextRequest finds requests by name).
 // Usage: node scripts/collection-check.js [collection.json]
 const fs = require('fs');
 const path = require('path');
@@ -13,6 +16,7 @@ const collectionPath = process.argv[2] || path.join(root, '__tests__', 'rental.p
 const script = fs.readFileSync(path.join(__dirname, 'run-newman.sh'), 'utf8');
 const col = JSON.parse(fs.readFileSync(collectionPath, 'utf8'));
 
+const dupOnly = path.basename(collectionPath).includes('demo');
 const problems = [];
 
 const arrayOf = (name) => {
@@ -37,7 +41,15 @@ const walk = (items, trail) => {
   }
 };
 walk(col.item || [], []);
+if (dupOnly) {
+  const names = new Map();
+  const all = (items) => items.forEach((it) => { if (Array.isArray(it.item)) all(it.item); else names.set(it.name, (names.get(it.name) || 0) + 1); });
+  all(col.item || []);
+  for (const [n, c] of names) if (c > 1) problems.push(`request name "${n}" is used ${c} times in the collection`);
+}
 
+if (!dupOnly) checkRunLists();
+function checkRunLists() {
 const topLevel = new Set((col.item || []).filter((i) => Array.isArray(i.item)).map((i) => i.name));
 for (const f of [...arrayOf('PASS_A_FOLDERS'), ...arrayOf('PASS_B_FOLDERS')]) {
   const n = folderCount.get(f) || 0;
@@ -57,9 +69,15 @@ for (const name of topLevel) {
   if (!accounted.has(name)) problems.push(`top-level folder "${name}" exists in the collection but is not named in PASS_A_FOLDERS or PASS_B_FOLDERS in scripts/run-newman.sh, so it would never run`);
 }
 
+}
+
 if (problems.length) {
   for (const p of problems) console.error('collection-check: ' + p);
   console.error(`collection-check: ${problems.length} problem(s)`);
   process.exit(1);
 }
-console.log('collection-check: ok');
+console.log(`collection-check: ok (${path.basename(collectionPath)})`);
+if (!process.argv[2]) {
+  const r = require('child_process').spawnSync(process.execPath, [__filename, path.join(root, '__tests__', 'demo.postman_collection.json')], { stdio: 'inherit' });
+  process.exit(r.status === null ? 1 : r.status);
+}
