@@ -60,7 +60,7 @@ The API is served under `/api/v1`.
 
 ## API documentation
 
-`openapi.yaml` describes all 28 endpoints (request bodies, responses, error messages, who may call what). With the server running, open `http://localhost:5050/api-docs` for the interactive Swagger UI: paste a token into **Authorize** and try the calls from the browser. The spec can also be imported into Postman.
+`openapi.yaml` (the OpenAPI 3 description) describes all 28 endpoints (request bodies, responses, error messages, who may call what). With the server running, open `http://localhost:5050/api-docs` for the interactive Swagger UI: paste a token into **Authorize** and try the calls from the browser. The spec can also be imported into Postman.
 
 ## Run with Docker
 
@@ -203,6 +203,11 @@ The course documents describe the whole API (it was built as a fresh project):
 - [docs/use-cases.md](docs/use-cases.md): actors, a use-case diagram and a use-case catalogue with the exact error flows.
 - [docs/sequence-diagrams.md](docs/sequence-diagrams.md): one sequence diagram per added capability.
 - [docs/uml-profile-for-api.md](docs/uml-profile-for-api.md): the UML profile for the API (every endpoint with access, request, responses) and a class diagram of the resources.
+- [docs/architecture.md](docs/architecture.md): layers, request lifecycle, where each rule lives and the design decisions behind it.
+- [docs/api-examples.md](docs/api-examples.md): curl walk-through of every main flow.
+- [docs/testing.md](docs/testing.md): the four test levels and how to add a test.
+- [docs/deployment.md](docs/deployment.md): configuration, Docker, MongoDB options, proxy and production notes.
+- [CONTRIBUTING.md](CONTRIBUTING.md): workflow, commit style and how to add an endpoint.
 - [docs/work-division.md](docs/work-division.md): a template the team fills in with who wrote which code and documents.
 
 ## Repository layout
