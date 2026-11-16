@@ -18,6 +18,8 @@ app.use(cookieParser());
 
 // Route mounting: one line per resource, added by later tasks.
 app.use('/api/v1/auth', require('./routes/auth'));
+app.use('/api/v1/providers', require('./routes/providers'));
+app.use('/api/v1/bookings', require('./routes/bookings'));
 
 const seedAdmin = async () => {
   const email = process.env.SEED_ADMIN_EMAIL;
