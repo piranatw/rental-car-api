@@ -182,6 +182,7 @@ The course documents describe the whole API (it was built as a fresh project):
 - [docs/use-cases.md](docs/use-cases.md): actors, a use-case diagram and a use-case catalogue with the exact error flows.
 - [docs/sequence-diagrams.md](docs/sequence-diagrams.md): one sequence diagram per added capability.
 - [docs/uml-profile-for-api.md](docs/uml-profile-for-api.md): the UML profile for the API (every endpoint with access, request, responses) and a class diagram of the resources.
+- [docs/demo-script.md](docs/demo-script.md): presenter notes for the Postman demo, with a request by request talking track and a troubleshooting table.
 - [docs/work-division.md](docs/work-division.md): a template the team fills in with who wrote which code and documents.
 
 ## Repository layout
