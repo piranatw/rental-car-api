@@ -19,7 +19,7 @@ Run the unit tests every time. Run the full suite before anything that touches a
 
 - Branch from `main` for anything bigger than a one-file fix; open a pull request and let the other person read it.
 - One idea per commit. The message starts with a type: `feat:`, `fix:`, `test:`, `docs:` or `chore:`, then what changed and why in a short line.
-- Commit under your own name and email (`git config user.name`, `git config user.email`). The course grades each person's real contribution, and `git shortlog` and `git blame` must match [docs/work-division.md](docs/work-division.md).
+- Commit under your own name and email (`git config user.name`, `git config user.email`). The course grades each person's real contribution, so `git shortlog` and `git blame` must show who really wrote what.
 
 ## Adding or changing an endpoint
 

@@ -8,7 +8,7 @@ This document describes the WHOLE API, because the modified class code (Assignme
 
 > **Modified from the class code (Assignment 7, VacQ).** The starting point is the Assignment 7 source exactly as received, commit `c617bb6` ("base: Assignment 7 source as received"). See what differs with `git diff c617bb6 main --stat`. In short: Hospital and Appointment became Provider and Booking; the A7 auth code was modified (the role is no longer chosen by the client, one `401` for every login failure, logout with token revocation, account lockout and a per-IP limit, no hard-coded seed password); and promo codes, the audit log, support tickets, return inspections and statistics were added.
 
-Related documents: [use cases](use-cases.md), [sequence diagrams](sequence-diagrams.md), [UML profile for API](uml-profile-for-api.md), [work division](work-division.md).
+Related documents: [use cases](use-cases.md), [sequence diagrams](sequence-diagrams.md), [UML profile for API](uml-profile-for-api.md).
 
 ## How to read the "Verified by" column
 
@@ -129,7 +129,7 @@ Additional audit behaviour (design decision beyond the stories): the entry is wr
 | ID | Requirement | Actor | Where | Verified by |
 | --- | --- | --- | --- | --- |
 | R71 | A Postman collection runnable in Postman Runner or Newman that proves each requirement including failure paths | Grader | `__tests__/rental.postman_collection.json` (test suite) and `__tests__/demo.postman_collection.json` (7-minute demo), see the README | `npm test` (`scripts/run-newman.sh`), `npm run demo`; `scripts/collection-check.js` guards against duplicate or unlisted folders |
-| R72 | The code and the documents each student wrote are visible so that individual contribution is assessable | Grader | [work-division.md](work-division.md) and the git history | the team fills in the template; the git history must agree with it |
+| R72 | The code and the documents each student wrote are visible so that individual contribution is assessable | Grader | the git history (`git shortlog`, `git blame`) and the GitHub Contributors page | each person commits under their own name and email |
 | R73 | Present within 7 minutes, Q and A up to 3 minutes | Presenter | README section "Present the demo (7 minutes)" | rehearsal by the team (not testable in code) |
 
 ## Non-functional requirements and constraints

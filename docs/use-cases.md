@@ -8,7 +8,7 @@ This document describes the WHOLE API, because the modified class code (Assignme
 
 > **Modified from the class code (Assignment 7, VacQ).** The starting point is the Assignment 7 source exactly as received, commit `c617bb6` ("base: Assignment 7 source as received"). See what differs with `git diff c617bb6 main --stat`. In short: Hospital and Appointment became Provider and Booking; the A7 auth code was modified (the role is no longer chosen by the client, one `401` for every login failure, logout with token revocation, account lockout and a per-IP limit, no hard-coded seed password); and promo codes, the audit log, support tickets, return inspections and statistics were added.
 
-Related documents: [requirements](requirements.md), [sequence diagrams](sequence-diagrams.md), [UML profile for API](uml-profile-for-api.md), [work division](work-division.md).
+Related documents: [requirements](requirements.md), [sequence diagrams](sequence-diagrams.md), [UML profile for API](uml-profile-for-api.md).
 
 ## Actors
 

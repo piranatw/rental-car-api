@@ -210,7 +210,6 @@ The course documents describe the whole API (the Assignment 7 class code as modi
 - [docs/testing.md](docs/testing.md): the four test levels and how to add a test.
 - [docs/deployment.md](docs/deployment.md): configuration, Docker, MongoDB options, proxy and production notes.
 - [CONTRIBUTING.md](CONTRIBUTING.md): workflow, commit style and how to add an endpoint.
-- [docs/work-division.md](docs/work-division.md): a template the team fills in with who wrote which code and documents.
 - [docs/diagrams/](docs/diagrams/): large PNG and SVG versions of the presentation diagrams (use cases, UML profile class diagrams, sequence diagrams); amber marks what was modified from the class code, teal what is new.
 
 ## Repository layout
@@ -225,7 +224,7 @@ middleware/          auth (protect, authorize) and the login limiter
 utils/               pricing and paging helpers
 scripts/             run-newman.sh (npm test), demo-race.sh, seeds, race and index checks, collection-check.js
 __tests__/           rental.postman_collection.json (+ environment) = test suite; demo.postman_collection.json (+ environment) = presentation demo
-docs/                requirements.md, use-cases.md, sequence-diagrams.md, uml-profile-for-api.md, work-division.md
+docs/                requirements.md, use-cases.md, sequence-diagrams.md, uml-profile-for-api.md
 docs/plans/          implementation plan
 spec.md              requirements
 ```
