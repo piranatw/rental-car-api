@@ -4,9 +4,9 @@ Rental Car Booking REST API (Project #7), course 2110336 SW Dev Practice.
 
 ## Scope
 
-This document describes the WHOLE API, because this repository was built as a fresh project and not as a patch on the class code. Every route listed here exists in `routes/*.js` and is mounted in `server.js`.
+This document describes the WHOLE API, because the modified class code (Assignment 7) and the added capabilities form one API. Every route listed here exists in `routes/*.js` and is mounted in `server.js`.
 
-> **Team to fill in:** Mark here which parts differ from the class (Hospital/Appointment) code, as the slide requires; only the team knows that.
+> **Modified from the class code (Assignment 7, VacQ).** The starting point is the Assignment 7 source exactly as received, commit `c617bb6` ("base: Assignment 7 source as received"). See what differs with `git diff c617bb6 main --stat`. In short: Hospital and Appointment became Provider and Booking; the A7 auth code was modified (the role is no longer chosen by the client, one `401` for every login failure, logout with token revocation, account lockout and a per-IP limit, no hard-coded seed password); and promo codes, the audit log, support tickets, return inspections and statistics were added.
 
 Related documents: [requirements](requirements.md), [use cases](use-cases.md), [sequence diagrams](sequence-diagrams.md), [work division](work-division.md).
 

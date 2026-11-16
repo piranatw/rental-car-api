@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1805" height="737" viewBox="0 0 1805 737" font-family="Helvetica, Arial, sans-serif" font-size="17">
+<rect width="1805" height="737" fill="white"/>
+<defs><marker id="ah" markerWidth="12" markerHeight="10" refX="11" refY="5" orient="auto"><path d="M0,0 L12,5 L0,10 z" fill="#374151"/></marker><marker id="ao" markerWidth="12" markerHeight="10" refX="11" refY="5" orient="auto"><path d="M1,1 L11,5 L1,9" fill="none" stroke="#374151" stroke-width="1.6"/></marker></defs>
+<rect x="14" y="444" width="1777" height="153" rx="4" fill="none" stroke="#94A3B8" stroke-width="1.6"/>
+<path d="M14,444 h46.5 v22 l-8,8 h-38.5 z" fill="#E2E8F0" stroke="#94A3B8" stroke-width="1.2"/><text x="23" y="464" font-weight="700" font-size="15">alt</text>
+<text x="72.5" y="466" font-style="italic" fill="#334155">[updated]</text>
+<line x1="14" y1="519" x2="1791" y2="519" stroke="#94A3B8" stroke-width="1.4" stroke-dasharray="7 5"/>
+<text x="26" y="541" font-style="italic" fill="#334155">[not updated]</text>
+<line x1="212.5" y1="90" x2="212.5" y2="723" stroke="#9CA3AF" stroke-width="1.5" stroke-dasharray="6 6"/>
+<rect x="87.5" y="24" width="250" height="66" rx="6" fill="#E5E7EB" stroke="#6B7280" stroke-width="2"/>
+<text x="212.5" y="49" text-anchor="middle" font-style="italic" font-size="15">«client»</text>
+<text x="212.5" y="71" text-anchor="middle" font-weight="700">Postman (admin)</text>
+<line x1="557.5" y1="90" x2="557.5" y2="723" stroke="#9CA3AF" stroke-width="1.5" stroke-dasharray="6 6"/>
+<rect x="432.5" y="24" width="250" height="66" rx="6" fill="#E5E7EB" stroke="#6B7280" stroke-width="2"/>
+<text x="557.5" y="49" text-anchor="middle" font-style="italic" font-size="15">«client»</text>
+<text x="557.5" y="71" text-anchor="middle" font-weight="700">Postman (owner)</text>
+<line x1="902.5" y1="90" x2="902.5" y2="723" stroke="#9CA3AF" stroke-width="1.5" stroke-dasharray="6 6"/>
+<rect x="777.5" y="24" width="250" height="66" rx="6" fill="#DCE8F7" stroke="#5B7DB1" stroke-width="2"/>
+<text x="902.5" y="49" text-anchor="middle" font-style="italic" font-size="15">«controllers»</text>
+<text x="902.5" y="71" text-anchor="middle" font-weight="700">inspections.js</text>
+<line x1="1247.5" y1="90" x2="1247.5" y2="723" stroke="#9CA3AF" stroke-width="1.5" stroke-dasharray="6 6"/>
+<rect x="1122.5" y="24" width="250" height="66" rx="6" fill="#DDF1E4" stroke="#4F9A6A" stroke-width="2"/>
+<text x="1247.5" y="49" text-anchor="middle" font-style="italic" font-size="15">«model»</text>
+<text x="1247.5" y="71" text-anchor="middle" font-weight="700">Booking + Provider</text>
+<line x1="1592.5" y1="90" x2="1592.5" y2="723" stroke="#9CA3AF" stroke-width="1.5" stroke-dasharray="6 6"/>
+<rect x="1467.5" y="24" width="250" height="66" rx="6" fill="#DDF1E4" stroke="#4F9A6A" stroke-width="2"/>
+<text x="1592.5" y="49" text-anchor="middle" font-style="italic" font-size="15">«model»</text>
+<text x="1592.5" y="71" text-anchor="middle" font-weight="700">Inspection</text>
+<line x1="216.5" y1="129" x2="900.5" y2="129" stroke="#374151" stroke-width="1.8" marker-end="url(#ah)"/>
+<text x="557.5" y="124" text-anchor="middle" fill="#0B6F63" font-weight="700">POST /bookings/:id/inspection { actualReturnTime, odometer, fuelLevel }</text>
+<line x1="906.5" y1="165" x2="1245.5" y2="165" stroke="#374151" stroke-width="1.8" marker-end="url(#ah)"/>
+<text x="1075" y="160" text-anchor="middle" fill="#1B2430">load booking and provider</text>
+<path d="M905.5,226 h56 v30 h-56" fill="none" stroke="#374151" stroke-width="1.8" marker-end="url(#ah)"/>
+<text x="970.5" y="196" fill="#0B6F63" font-weight="700">lateHours = hours after end of returnDate (UTC), rounded</text>
+<text x="970.5" y="217" fill="#0B6F63" font-weight="700">up. lateFee = lateHours x lateFeePerHour</text>
+<line x1="906.5" y1="279" x2="1590.5" y2="279" stroke="#374151" stroke-width="1.8" marker-end="url(#ah)"/>
+<text x="1247.5" y="274" text-anchor="middle" fill="#0B6F63" font-weight="700">create (unique per booking)</text>
+<line x1="898.5" y1="315" x2="214.5" y2="315" stroke="#374151" stroke-width="1.8" stroke-dasharray="7 5" marker-end="url(#ao)"/>
+<text x="557.5" y="310" text-anchor="middle" fill="#1B2430">201 inspection (409 if already recorded)</text>
+<line x1="561.5" y1="393" x2="900.5" y2="393" stroke="#374151" stroke-width="1.8" marker-end="url(#ah)"/>
+<text x="730" y="346" text-anchor="middle" fill="#0B6F63" font-weight="700">POST</text>
+<text x="730" y="367" text-anchor="middle" fill="#0B6F63" font-weight="700">/bookings/:id/inspection/dispute {</text>
+<text x="730" y="388" text-anchor="middle" fill="#0B6F63" font-weight="700">comment } owner only</text>
+<line x1="906.5" y1="429" x2="1590.5" y2="429" stroke="#374151" stroke-width="1.8" marker-end="url(#ah)"/>
+<text x="1247.5" y="424" text-anchor="middle" fill="#0B6F63" font-weight="700">ONE update: set dispute if none and record not older than 7 days</text>
+<line x1="898.5" y1="496" x2="559.5" y2="496" stroke="#374151" stroke-width="1.8" stroke-dasharray="7 5" marker-end="url(#ao)"/>
+<text x="730" y="491" text-anchor="middle" fill="#1B2430">200 inspection, dispute open</text>
+<line x1="898.5" y1="582" x2="559.5" y2="582" stroke="#374151" stroke-width="1.8" stroke-dasharray="7 5" marker-end="url(#ao)"/>
+<text x="730" y="556" text-anchor="middle" fill="#1B2430">400 already submitted, or 7 days</text>
+<text x="730" y="577" text-anchor="middle" fill="#1B2430">passed</text>
+<line x1="216.5" y1="626" x2="900.5" y2="626" stroke="#374151" stroke-width="1.8" marker-end="url(#ah)"/>
+<text x="557.5" y="621" text-anchor="middle" fill="#0B6F63" font-weight="700">PUT /bookings/:id/inspection/dispute { status: resolved | dismissed }</text>
+<line x1="906.5" y1="662" x2="1590.5" y2="662" stroke="#374151" stroke-width="1.8" marker-end="url(#ah)"/>
+<text x="1247.5" y="657" text-anchor="middle" fill="#0B6F63" font-weight="700">ONE update: set status where dispute.status is open</text>
+<line x1="898.5" y1="698" x2="214.5" y2="698" stroke="#374151" stroke-width="1.8" stroke-dasharray="7 5" marker-end="url(#ao)"/>
+<text x="557.5" y="693" text-anchor="middle" fill="#1B2430">200 (lateFee unchanged) / 400 already closed</text>
+</svg>

@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1460" height="910" viewBox="0 0 1460 910" font-family="Helvetica, Arial, sans-serif" font-size="17">
+<rect width="1460" height="910" fill="white"/>
+<defs><marker id="ah" markerWidth="12" markerHeight="10" refX="11" refY="5" orient="auto"><path d="M0,0 L12,5 L0,10 z" fill="#374151"/></marker><marker id="ao" markerWidth="12" markerHeight="10" refX="11" refY="5" orient="auto"><path d="M1,1 L11,5 L1,9" fill="none" stroke="#374151" stroke-width="1.6"/></marker></defs>
+<rect x="14" y="165" width="1432" height="428" rx="4" fill="none" stroke="#94A3B8" stroke-width="1.6"/>
+<path d="M14,165 h46.5 v22 l-8,8 h-38.5 z" fill="#E2E8F0" stroke="#94A3B8" stroke-width="1.2"/><text x="23" y="185" font-weight="700" font-size="15">alt</text>
+<text x="72.5" y="187" font-style="italic" fill="#334155">[more than 10 login requests per minute from this IP]</text>
+<line x1="14" y1="261" x2="1446" y2="261" stroke="#94A3B8" stroke-width="1.4" stroke-dasharray="7 5"/>
+<text x="26" y="283" font-style="italic" fill="#334155">[allowed]</text>
+<rect x="26" y="453" width="1408" height="132" rx="4" fill="none" stroke="#94A3B8" stroke-width="1.6"/>
+<path d="M26,453 h46.5 v22 l-8,8 h-38.5 z" fill="#E2E8F0" stroke="#94A3B8" stroke-width="1.2"/><text x="35" y="473" font-weight="700" font-size="15">alt</text>
+<text x="84.5" y="475" font-style="italic" fill="#334155">[unknown email, wrong password or locked account]</text>
+<line x1="26" y1="528" x2="1434" y2="528" stroke="#94A3B8" stroke-width="1.4" stroke-dasharray="7 5"/>
+<text x="38" y="550" font-style="italic" fill="#334155">[password correct]</text>
+<line x1="212.5" y1="90" x2="212.5" y2="896" stroke="#9CA3AF" stroke-width="1.5" stroke-dasharray="6 6"/>
+<rect x="87.5" y="24" width="250" height="66" rx="6" fill="#E5E7EB" stroke="#6B7280" stroke-width="2"/>
+<text x="212.5" y="49" text-anchor="middle" font-style="italic" font-size="15">«client»</text>
+<text x="212.5" y="71" text-anchor="middle" font-weight="700">Postman</text>
+<line x1="557.5" y1="90" x2="557.5" y2="896" stroke="#9CA3AF" stroke-width="1.5" stroke-dasharray="6 6"/>
+<rect x="432.5" y="24" width="250" height="66" rx="6" fill="#FDEBD0" stroke="#B9770E" stroke-width="2"/>
+<text x="557.5" y="49" text-anchor="middle" font-style="italic" font-size="15">«middleware»</text>
+<text x="557.5" y="71" text-anchor="middle" font-weight="700">loginLimiter / protect</text>
+<line x1="902.5" y1="90" x2="902.5" y2="896" stroke="#9CA3AF" stroke-width="1.5" stroke-dasharray="6 6"/>
+<rect x="777.5" y="24" width="250" height="66" rx="6" fill="#DCE8F7" stroke="#5B7DB1" stroke-width="2"/>
+<text x="902.5" y="49" text-anchor="middle" font-style="italic" font-size="15">«controllers»</text>
+<text x="902.5" y="71" text-anchor="middle" font-weight="700">auth.js</text>
+<line x1="1247.5" y1="90" x2="1247.5" y2="896" stroke="#9CA3AF" stroke-width="1.5" stroke-dasharray="6 6"/>
+<rect x="1122.5" y="24" width="250" height="66" rx="6" fill="#DDF1E4" stroke="#4F9A6A" stroke-width="2"/>
+<text x="1247.5" y="49" text-anchor="middle" font-style="italic" font-size="15">«model» + «MongoDB»</text>
+<text x="1247.5" y="71" text-anchor="middle" font-weight="700">User, RevokedToken</text>
+<line x1="216.5" y1="150" x2="555.5" y2="150" stroke="#374151" stroke-width="1.8" marker-end="url(#ah)"/>
+<text x="385" y="124" text-anchor="middle" fill="#1B2430">POST /api/v1/auth/login { email,</text>
+<text x="385" y="145" text-anchor="middle" fill="#1B2430">password }</text>
+<line x1="553.5" y1="238" x2="214.5" y2="238" stroke="#374151" stroke-width="1.8" stroke-dasharray="7 5" marker-end="url(#ao)"/>
+<text x="385" y="212" text-anchor="middle" fill="#0B6F63" font-weight="700">429 Too many login attempts,</text>
+<text x="385" y="233" text-anchor="middle" fill="#0B6F63" font-weight="700">Retry-After</text>
+<line x1="561.5" y1="303" x2="900.5" y2="303" stroke="#374151" stroke-width="1.8" marker-end="url(#ah)"/>
+<text x="730" y="298" text-anchor="middle" fill="#1B2430">login()</text>
+<line x1="906.5" y1="381" x2="1245.5" y2="381" stroke="#374151" stroke-width="1.8" marker-end="url(#ah)"/>
+<text x="1075" y="334" text-anchor="middle" fill="#0B6F63" font-weight="700">one atomic update reserves the</text>
+<text x="1075" y="355" text-anchor="middle" fill="#0B6F63" font-weight="700">attempt (counter and lock),</text>
+<text x="1075" y="376" text-anchor="middle" fill="#0B6F63" font-weight="700">returns the user</text>
+<path d="M905.5,421 h56 v30 h-56" fill="none" stroke="#374151" stroke-width="1.8" marker-end="url(#ah)"/>
+<text x="970.5" y="412" fill="#0B6F63" font-weight="700">bcrypt compare (dummy hash when the email is unknown)</text>
+<line x1="898.5" y1="505" x2="214.5" y2="505" stroke="#374151" stroke-width="1.8" stroke-dasharray="7 5" marker-end="url(#ao)"/>
+<text x="557.5" y="500" text-anchor="middle" fill="#8A5A00" font-weight="700">401 Invalid credentials (identical body). 5 failures lock 15 min</text>
+<line x1="898.5" y1="570" x2="214.5" y2="570" stroke="#374151" stroke-width="1.8" stroke-dasharray="7 5" marker-end="url(#ao)"/>
+<text x="557.5" y="565" text-anchor="middle" fill="#8A5A00" font-weight="700">200 { token (unique id), data }</text>
+<line x1="216.5" y1="643" x2="555.5" y2="643" stroke="#374151" stroke-width="1.8" marker-end="url(#ah)"/>
+<text x="385" y="617" text-anchor="middle" fill="#0B6F63" font-weight="700">POST /api/v1/auth/logout (Bearer</text>
+<text x="385" y="638" text-anchor="middle" fill="#0B6F63" font-weight="700">token)</text>
+<line x1="561.5" y1="679" x2="1245.5" y2="679" stroke="#374151" stroke-width="1.8" marker-end="url(#ah)"/>
+<text x="902.5" y="674" text-anchor="middle" fill="#0B6F63" font-weight="700">protect: is sha256(token) in RevokedToken? no: continue</text>
+<line x1="906.5" y1="757" x2="1245.5" y2="757" stroke="#374151" stroke-width="1.8" marker-end="url(#ah)"/>
+<text x="1075" y="710" text-anchor="middle" fill="#0B6F63" font-weight="700">upsert RevokedToken {</text>
+<text x="1075" y="731" text-anchor="middle" fill="#0B6F63" font-weight="700">sha256(token), expiresAt = token</text>
+<text x="1075" y="752" text-anchor="middle" fill="#0B6F63" font-weight="700">exp }</text>
+<line x1="216.5" y1="814" x2="555.5" y2="814" stroke="#374151" stroke-width="1.8" marker-end="url(#ah)"/>
+<text x="385" y="788" text-anchor="middle" fill="#0B6F63" font-weight="700">any request with the same token</text>
+<text x="385" y="809" text-anchor="middle" fill="#0B6F63" font-weight="700">again</text>
+<line x1="553.5" y1="871" x2="214.5" y2="871" stroke="#374151" stroke-width="1.8" stroke-dasharray="7 5" marker-end="url(#ao)"/>
+<text x="385" y="845" text-anchor="middle" fill="#0B6F63" font-weight="700">401 Not authorized to access this</text>
+<text x="385" y="866" text-anchor="middle" fill="#0B6F63" font-weight="700">route (hash found)</text>
+</svg>

@@ -199,7 +199,7 @@ All paths are under `/api/v1`. "Own" means the owner of the booking/ticket; admi
 
 ## Documents
 
-The course documents describe the whole API (it was built as a fresh project):
+The course documents describe the whole API (the Assignment 7 class code as modified here, plus the added capabilities). Compare with the class code using `git diff c617bb6 main --stat`:
 
 - [docs/requirements.md](docs/requirements.md): the requirements, the endpoint that satisfies each and how it is verified, the interpretations and what is not implemented.
 - [docs/use-cases.md](docs/use-cases.md): actors, a use-case diagram and a use-case catalogue with the exact error flows.
@@ -211,6 +211,7 @@ The course documents describe the whole API (it was built as a fresh project):
 - [docs/deployment.md](docs/deployment.md): configuration, Docker, MongoDB options, proxy and production notes.
 - [CONTRIBUTING.md](CONTRIBUTING.md): workflow, commit style and how to add an endpoint.
 - [docs/work-division.md](docs/work-division.md): a template the team fills in with who wrote which code and documents.
+- [docs/diagrams/](docs/diagrams/): large PNG and SVG versions of the presentation diagrams (use cases, UML profile class diagrams, sequence diagrams); amber marks what was modified from the class code, teal what is new.
 
 ## Repository layout
 
