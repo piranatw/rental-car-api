@@ -3,5 +3,4 @@ config/config.env
 config/test-env.sh
 .env
 newman-report*
-.superpowers/
 .DS_Store

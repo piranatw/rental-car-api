@@ -1,7 +1,5 @@
 # Rental Car Booking API Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
-
 **Goal:** Build the Project #7 Rental Car Booking REST API from scratch in this directory, with promo codes, admin audit log, login brute-force protection, support tickets, return inspection with disputes, and a statistics report, proven by a Newman-runnable Postman collection.
 
 **Architecture:** A new Express app with the layered layout `config`, `models`, `controllers`, `routes`, `middleware`, `server.js`, written fresh in this directory with no code, config, database or credentials taken from any other project. Each capability is one model, controller and route file mounted under `/api/v1`. Behaviour is verified only through HTTP, by a Postman collection run with Newman against a MongoDB the user provisions (see "Thing left for user").
