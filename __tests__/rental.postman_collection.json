@@ -62,7 +62,12 @@
           ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\"name\":\"Test User\",\"telephone\":\"0812345678\",\"email\":\"{{userEmail}}\",\"password\":\"{{userPassword}}\",\"role\":\"admin\"}"
@@ -87,7 +92,12 @@
           ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\"name\":\"Test User\",\"telephone\":\"0812345678\",\"email\":\"{{userEmail}}\",\"password\":\"{{userPassword}}\"}"
@@ -112,12 +122,73 @@
           ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\"name\":\"No Phone\",\"email\":\"nophone{{$timestamp}}@example.com\",\"password\":\"secret123\"}"
             },
             "url": "{{baseUrl}}/api/v1/auth/register"
+          }
+        },
+        {
+          "name": "register password too short",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 400', function () { pm.response.to.have.status(400); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/auth/register",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"name\":\"Short\",\"telephone\":\"0812345678\",\"email\":\"short{{$timestamp}}@example.com\",\"password\":\"12345\"}"
+            }
+          }
+        },
+        {
+          "name": "register malformed email",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 400', function () { pm.response.to.have.status(400); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/auth/register",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"name\":\"Bad Mail\",\"telephone\":\"0812345678\",\"email\":\"not-an-email\",\"password\":\"secret123\"}"
+            }
           }
         },
         {
@@ -138,7 +209,12 @@
           ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\"email\":\"{{userEmail}}\",\"password\":\"wrong-password\"}"
@@ -164,7 +240,12 @@
           ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\"email\":\"nobody{{$timestamp}}@example.com\",\"password\":\"whatever123\"}"
@@ -191,7 +272,12 @@
           ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\"email\":\"{{userEmail}}\",\"password\":\"{{userPassword}}\"}"
@@ -217,7 +303,12 @@
           ],
           "request": {
             "method": "GET",
-            "header": [{ "key": "Authorization", "value": "Bearer {{userToken}}" }],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userToken}}"
+              }
+            ],
             "url": "{{baseUrl}}/api/v1/auth/me"
           }
         },
@@ -262,7 +353,12 @@
           ],
           "request": {
             "method": "GET",
-            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
             "url": "{{baseUrl}}/api/v1/auth/me"
           }
         },
@@ -293,7 +389,12 @@
           ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\"name\":\"Logout User\",\"telephone\":\"0812345678\",\"email\":\"{{logoutEmail}}\",\"password\":\"{{logoutPassword}}\"}"
@@ -320,7 +421,12 @@
           ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\"email\":\"{{logoutEmail}}\",\"password\":\"{{logoutPassword}}\"}"
@@ -368,7 +474,12 @@
           ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Authorization", "value": "Bearer {{logoutToken1}}" }],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{logoutToken1}}"
+              }
+            ],
             "url": "{{baseUrl}}/api/v1/auth/logout"
           }
         },
@@ -391,7 +502,12 @@
           ],
           "request": {
             "method": "GET",
-            "header": [{ "key": "Authorization", "value": "Bearer not-a-real-token" }],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer not-a-real-token"
+              }
+            ],
             "url": "{{baseUrl}}/api/v1/auth/me"
           }
         },
@@ -416,7 +532,12 @@
           ],
           "request": {
             "method": "GET",
-            "header": [{ "key": "Authorization", "value": "Bearer {{logoutToken1}}" }],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{logoutToken1}}"
+              }
+            ],
             "url": "{{baseUrl}}/api/v1/auth/me"
           }
         },
@@ -437,7 +558,12 @@
           ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Authorization", "value": "Bearer {{logoutToken1}}" }],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{logoutToken1}}"
+              }
+            ],
             "url": "{{baseUrl}}/api/v1/auth/logout"
           }
         },
@@ -462,7 +588,12 @@
           ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\"email\":\"{{logoutEmail}}\",\"password\":\"{{logoutPassword}}\"}"
@@ -488,7 +619,12 @@
           ],
           "request": {
             "method": "GET",
-            "header": [{ "key": "Authorization", "value": "Bearer {{logoutToken2}}" }],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{logoutToken2}}"
+              }
+            ],
             "url": "{{baseUrl}}/api/v1/auth/me"
           }
         },
@@ -513,7 +649,12 @@
           ],
           "request": {
             "method": "GET",
-            "header": [{ "key": "Authorization", "value": "Bearer {{logoutToken1}}" }],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{logoutToken1}}"
+              }
+            ],
             "url": "{{baseUrl}}/api/v1/auth/me"
           }
         }
@@ -887,6 +1028,150 @@
             "body": {
               "mode": "raw",
               "raw": "{\"dailyRate\":1}"
+            }
+          }
+        },
+        {
+          "name": "provider delete as user",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 403', function () { pm.response.to.have.status(403); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bkAToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/providers/{{tempProviderId}}"
+          }
+        },
+        {
+          "name": "provider delete without token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 401', function () { pm.response.to.have.status(401); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/providers/{{tempProviderId}}"
+          }
+        },
+        {
+          "name": "provider delete unknown id",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 404', function () { pm.response.to.have.status(404); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/providers/000000000000000000000000"
+          }
+        },
+        {
+          "name": "provider update malformed id",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 404', function () { pm.response.to.have.status(404); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/providers/not-an-id",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"dailyRate\":1}"
+            }
+          }
+        },
+        {
+          "name": "provider create missing name",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 400', function () { pm.response.to.have.status(400); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/providers",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"address\":\"a\",\"tel\":\"1\"}"
             }
           }
         },
