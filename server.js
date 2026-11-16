@@ -3,6 +3,7 @@ const express = require('express');
 const dotenv = require('dotenv');
 const cookieParser = require('cookie-parser');
 const cors = require('cors');
+const helmet = require('helmet');
 const fs = require('fs');
 const YAML = require('yaml');
 const swaggerUi = require('swagger-ui-express');
@@ -16,6 +17,8 @@ const Provider = require('./models/Provider');
 
 const app = express();
 
+// Standard security headers (nosniff, frame protection, no X-Powered-By, HSTS ...).
+app.use(helmet());
 app.use(cors());
 app.use(express.json());
 app.use(cookieParser());
