@@ -81,6 +81,8 @@ Runs with Node's built-in test runner and needs no database. It covers the prici
 
 ## Run the test suite
 
+Two more checks run without Postman collections of your own: `npm run test:unit` (no database) and `npm run test:robustness` (bad-input checks, needs the `_test` database like the main suite; see [docs/testing.md](docs/testing.md)).
+
 ```bash
 source config/test-env.sh && npm test
 ```

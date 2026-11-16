@@ -43,6 +43,8 @@ jobs:
       - run: npm ci
       - name: Run the Newman suite
         run: npm test
+      - name: Run the robustness suite
+        run: npm run test:robustness
       - name: Keep the reports
         if: always()
         uses: actions/upload-artifact@v4

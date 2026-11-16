@@ -9,7 +9,8 @@
     "test": "bash scripts/run-newman.sh",
     "demo": "newman run __tests__/demo.postman_collection.json -e __tests__/demo.postman_environment.json --env-var baseUrl=http://localhost:5050 --env-var adminEmail=$adminEmail --env-var adminPassword=$adminPassword --reporters cli",
     "demo:race": "bash scripts/demo-race.sh",
-    "test:unit": "node --test \"__tests__/unit/*.test.js\""
+    "test:unit": "node --test \"__tests__/unit/*.test.js\"",
+    "test:robustness": "bash scripts/run-robustness.sh"
   },
   "license": "ISC",
   "dependencies": {

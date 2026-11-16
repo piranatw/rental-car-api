@@ -1,11 +1,12 @@
 # Testing
 
-The project is tested at four levels, from fastest to slowest. Each level exists because the one above it cannot see a certain kind of bug.
+The project is tested at five levels, from fastest to slowest. Each level exists because the one above it cannot see a certain kind of bug.
 
 | Level | Command | Needs a database | Time | What it proves |
 | --- | --- | --- | --- | --- |
 | Unit tests | `npm run test:unit` | no | about 3 s | single functions and schemas behave as specified |
 | Newman suite | `source config/test-env.sh && npm test` | yes (`_test`) | about 5 min | every endpoint, end to end, with its error cases |
+| Robustness suite | `npm run test:robustness` | yes (`_test`) | about 10 s | bad input gets a clean 4xx in the JSON envelope: never a 5xx, never an HTML page |
 | Race and index checks | run by `npm test`, or `npm run demo:race -- <name>` | yes (`_test`) | seconds each | parallel requests cannot break a limit; list queries use their index |
 | Demo collection | `npm run demo` | yes (development) | about 10 s | the 7-minute presentation path works |
 
@@ -37,6 +38,21 @@ About 670 requests in folders: Auth, Bookings, LoginProtection, Promos, RateLimi
 5. runs the race and index checks and exits non-zero if anything failed.
 
 To add a folder, add its name to `PASS_A_FOLDERS` in `scripts/run-newman.sh`.
+
+## 2b. Robustness suite (`__tests__/robustness.postman_collection.json`)
+
+A second, separate collection of about 220 requests, run by `scripts/run-robustness.sh` against a fresh `_test` database (same guard as `npm test`). It exists to answer: what happens when a client sends something wrong or hostile? Every request expects a clean 4xx answer in the JSON envelope.
+
+| Folder | What it sends |
+| --- | --- |
+| 1 Malformed JSON bodies | broken JSON on every write endpoint, a 200 KB body (413), the wrong content type, empty, null, array and string bodies |
+| 2 Unknown routes | any other path or method answers a JSON 404 |
+| 3 Operator injection | `{"$gt": ""}`, `$ne`, `$regex`, arrays and objects where a string is expected, in bodies and in query strings (`status[$ne]=x`, a key given twice) |
+| 4 Fields the client must not control | `role`, `status`, `user`, comment author and time, promo counters, a client `_id`, lockout counters: all ignored |
+| 5 Odd ids | `null`, `undefined`, 23 and 25 characters, non-hex, encoded slashes, on every resource |
+| 6 Pagination limits | the same 14 bad `page` and `limit` values on bookings, audit and tickets, plus a huge page that must be empty, not an error |
+| 7 Odd Authorization headers | lower-case scheme, Basic, no token, two spaces, a token only in the query or a cookie, an unsigned token |
+| 8 Text and date edge cases | Thai and emoji text, trimming, length limits, e-mail case, invalid dates, a leap day, a zone-less date-time |
 
 ## 3. Race and index checks (`scripts/`)
 
