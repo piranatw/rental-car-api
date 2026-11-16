@@ -9,6 +9,7 @@ dotenv.config({ path: path.join(__dirname, 'config', 'config.env') });
 
 const connectDB = require('./config/db');
 const User = require('./models/User');
+const Provider = require('./models/Provider');
 
 const app = express();
 
@@ -31,9 +32,19 @@ const seedAdmin = async () => {
   await User.create({ name: 'Admin', telephone: '0000000000', email, password, role: 'admin' });
 };
 
+// Seed two providers only when the collection is empty.
+const seedProviders = async () => {
+  if (await Provider.countDocuments() > 0) return;
+  await Provider.create([
+    { name: 'Alpha Rentals', address: '1 Test Road', tel: '020000001', lateFeePerHour: 200, dailyRate: 1000 },
+    { name: 'Beta Cars', address: '2 Test Road', tel: '020000002', lateFeePerHour: 500, dailyRate: 2500 }
+  ]);
+};
+
 const start = async () => {
   await connectDB();
   await seedAdmin();
+  await seedProviders();
   const PORT = process.env.PORT;
   const server = app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);

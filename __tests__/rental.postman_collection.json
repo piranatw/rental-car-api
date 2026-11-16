@@ -518,6 +518,1561 @@
           }
         }
       ]
+    },
+    {
+      "name": "Bookings",
+      "item": [
+        {
+          "name": "register booking user A",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const email = 'bookinga' + Date.now() + '@example.com';",
+                  "pm.collectionVariables.set('bkAEmail', email);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('registered bookinga', function () {",
+                  "  pm.response.to.have.status(201);",
+                  "  pm.collectionVariables.set('bkAToken', pm.response.json().token);",
+                  "  pm.collectionVariables.set('bkAId', pm.response.json().data.id);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/auth/register",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"name\":\"bookinga\",\"telephone\":\"0812345678\",\"email\":\"{{bkAEmail}}\",\"password\":\"secret123\"}"
+            }
+          }
+        },
+        {
+          "name": "register booking user B",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const email = 'bookingb' + Date.now() + '@example.com';",
+                  "pm.collectionVariables.set('bkBEmail', email);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('registered bookingb', function () {",
+                  "  pm.response.to.have.status(201);",
+                  "  pm.collectionVariables.set('bkBToken', pm.response.json().token);",
+                  "  pm.collectionVariables.set('bkBId', pm.response.json().data.id);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/auth/register",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"name\":\"bookingb\",\"telephone\":\"0812345678\",\"email\":\"{{bkBEmail}}\",\"password\":\"secret123\"}"
+            }
+          }
+        },
+        {
+          "name": "list providers",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('providers listed with name, address, tel', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.data).to.be.an('array').that.is.not.empty;",
+                  "  body.data.forEach(function (p) {",
+                  "    pm.expect(p).to.have.property('name');",
+                  "    pm.expect(p).to.have.property('address');",
+                  "    pm.expect(p).to.have.property('tel');",
+                  "  });",
+                  "  const alpha = body.data.find(function (p) { return p.name === 'Alpha Rentals'; });",
+                  "  const beta = body.data.find(function (p) { return p.name === 'Beta Cars'; });",
+                  "  pm.expect(alpha.dailyRate).to.eql(1000);",
+                  "  pm.expect(beta.dailyRate).to.eql(2500);",
+                  "  pm.collectionVariables.set('alphaId', alpha._id);",
+                  "  pm.collectionVariables.set('betaId', beta._id);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/providers"
+          }
+        },
+        {
+          "name": "get one provider",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('provider fetched publicly', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.json().data.name).to.eql('Alpha Rentals');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/providers/{{alphaId}}"
+          }
+        },
+        {
+          "name": "provider malformed id",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 404', function () { pm.response.to.have.status(404);  });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/providers/not-an-id"
+          }
+        },
+        {
+          "name": "provider create as user",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 403', function () { pm.response.to.have.status(403);  });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bkAToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/providers",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"name\":\"X\",\"address\":\"a\",\"tel\":\"1\"}"
+            }
+          }
+        },
+        {
+          "name": "provider create without token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 401', function () { pm.response.to.have.status(401);  });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/providers",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"name\":\"X\",\"address\":\"a\",\"tel\":\"1\"}"
+            }
+          }
+        },
+        {
+          "name": "provider create negative rate",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 400', function () { pm.response.to.have.status(400);  });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/providers",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"name\":\"Bad\",\"address\":\"a\",\"tel\":\"1\",\"dailyRate\":-5}"
+            }
+          }
+        },
+        {
+          "name": "provider create as admin",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('admin created provider', function () {",
+                  "  pm.response.to.have.status(201);",
+                  "  pm.collectionVariables.set('tempProviderId', pm.response.json().data._id);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/providers",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"name\":\"Temp Provider\",\"address\":\"3 Test Road\",\"tel\":\"030000003\",\"lateFeePerHour\":10,\"dailyRate\":300}"
+            }
+          }
+        },
+        {
+          "name": "provider update as admin",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('admin updated provider', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.json().data.dailyRate).to.eql(400);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/providers/{{tempProviderId}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"dailyRate\":400}"
+            }
+          }
+        },
+        {
+          "name": "provider update as user",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 403', function () { pm.response.to.have.status(403);  });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bkAToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/providers/{{tempProviderId}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"dailyRate\":1}"
+            }
+          }
+        },
+        {
+          "name": "provider delete as admin",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', function () { pm.response.to.have.status(200);  });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/providers/{{tempProviderId}}"
+          }
+        },
+        {
+          "name": "create booking without token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 401', function () { pm.response.to.have.status(401);  });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/providers/{{alphaId}}/bookings",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"date\":\"2030-01-01\",\"returnDate\":\"2030-01-03\"}"
+            }
+          }
+        },
+        {
+          "name": "create booking returnDate before date",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 400', function () { pm.response.to.have.status(400);  });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bkAToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/providers/{{alphaId}}/bookings",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"date\":\"2030-01-03\",\"returnDate\":\"2030-01-01\"}"
+            }
+          }
+        },
+        {
+          "name": "create booking missing dates",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 400', function () { pm.response.to.have.status(400);  });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bkAToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/providers/{{alphaId}}/bookings",
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            }
+          }
+        },
+        {
+          "name": "create booking invalid date",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 400', function () { pm.response.to.have.status(400);  });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bkAToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/providers/{{alphaId}}/bookings",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"date\":\"garbage\",\"returnDate\":\"2030-01-03\"}"
+            }
+          }
+        },
+        {
+          "name": "create booking unknown provider",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 404', function () { pm.response.to.have.status(404);  });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bkAToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/providers/000000000000000000000000/bookings",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"date\":\"2030-01-01\",\"returnDate\":\"2030-01-03\"}"
+            }
+          }
+        },
+        {
+          "name": "create booking malformed provider id",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 404', function () { pm.response.to.have.status(404);  });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bkAToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/providers/not-an-id/bookings",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"date\":\"2030-01-01\",\"returnDate\":\"2030-01-03\"}"
+            }
+          }
+        },
+        {
+          "name": "create booking",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('booking created', function () {",
+                  "  pm.response.to.have.status(201);",
+                  "  const d = pm.response.json().data;",
+                  "  pm.expect(d.totalPrice).to.eql(2000);",
+                  "  pm.expect(d.user).to.eql(pm.collectionVariables.get('bkAId'));",
+                  "  pm.collectionVariables.set('bkA1', d._id);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bkAToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/providers/{{alphaId}}/bookings",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"date\":\"2030-01-01\",\"returnDate\":\"2030-01-03\",\"user\":\"000000000000000000000000\",\"totalPrice\":1}"
+            }
+          }
+        },
+        {
+          "name": "create booking same day counts one day",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('booking created', function () {",
+                  "  pm.response.to.have.status(201);",
+                  "  const d = pm.response.json().data;",
+                  "  pm.expect(d.totalPrice).to.eql(2500);",
+                  "  pm.expect(d.user).to.eql(pm.collectionVariables.get('bkAId'));",
+                  "  pm.collectionVariables.set('bkA2', d._id);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bkAToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/providers/{{betaId}}/bookings",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"date\":\"2030-01-01\",\"returnDate\":\"2030-01-01\"}"
+            }
+          }
+        },
+        {
+          "name": "create third booking",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('booking created', function () {",
+                  "  pm.response.to.have.status(201);",
+                  "  const d = pm.response.json().data;",
+                  "  pm.expect(d.totalPrice).to.eql(4000);",
+                  "  pm.expect(d.user).to.eql(pm.collectionVariables.get('bkAId'));",
+                  "  pm.collectionVariables.set('bkA3', d._id);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bkAToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/providers/{{alphaId}}/bookings",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"date\":\"2030-01-01\",\"returnDate\":\"2030-01-05\"}"
+            }
+          }
+        },
+        {
+          "name": "fourth booking",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('fourth booking rejected', function () {",
+                  "  pm.response.to.have.status(400);",
+                  "  pm.expect(pm.response.json().success).to.eql(false);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bkAToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/providers/{{alphaId}}/bookings",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"date\":\"2030-01-01\",\"returnDate\":\"2030-01-03\"}"
+            }
+          }
+        },
+        {
+          "name": "other user creates own booking",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('booking created', function () {",
+                  "  pm.response.to.have.status(201);",
+                  "  const d = pm.response.json().data;",
+                  "  pm.expect(d.totalPrice).to.eql(5000);",
+                  "  pm.expect(d.user).to.eql(pm.collectionVariables.get('bkBId'));",
+                  "  pm.collectionVariables.set('bkB1', d._id);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bkBToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/providers/{{betaId}}/bookings",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"date\":\"2030-01-01\",\"returnDate\":\"2030-01-03\"}"
+            }
+          }
+        },
+        {
+          "name": "list bookings without token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 401', function () { pm.response.to.have.status(401);  });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/bookings"
+          }
+        },
+        {
+          "name": "user lists own",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('only own bookings, provider populated', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  const data = pm.response.json().data;",
+                  "  pm.expect(data).to.have.lengthOf(3);",
+                  "  const me = pm.collectionVariables.get('bkAId');",
+                  "  data.forEach(function (b) {",
+                  "    pm.expect(b.user).to.eql(me);",
+                  "    pm.expect(b.provider).to.have.property('name');",
+                  "    pm.expect(b.provider).to.have.property('address');",
+                  "    pm.expect(b.provider).to.have.property('tel');",
+                  "  });",
+                  "  const ids = data.map(function (b) { return b._id; });",
+                  "  pm.expect(ids).to.not.include(pm.collectionVariables.get('bkB1'));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bkAToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/bookings"
+          }
+        },
+        {
+          "name": "user gets own booking",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', function () { pm.response.to.have.status(200);  });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bkAToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/bookings/{{bkA1}}"
+          }
+        },
+        {
+          "name": "user gets other's booking",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 403', function () { pm.response.to.have.status(403);  });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bkAToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/bookings/{{bkB1}}"
+          }
+        },
+        {
+          "name": "user edits other's booking",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 403', function () { pm.response.to.have.status(403);  });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bkAToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/bookings/{{bkB1}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"returnDate\":\"2030-01-05\"}"
+            }
+          }
+        },
+        {
+          "name": "user deletes other's booking",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 403', function () { pm.response.to.have.status(403);  });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bkAToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/bookings/{{bkB1}}"
+          }
+        },
+        {
+          "name": "malformed booking id",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 404', function () { pm.response.to.have.status(404);  });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bkAToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/bookings/not-an-id"
+          }
+        },
+        {
+          "name": "malformed booking id on put",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 404', function () { pm.response.to.have.status(404);  });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bkAToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/bookings/not-an-id",
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            }
+          }
+        },
+        {
+          "name": "malformed booking id on delete",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 404', function () { pm.response.to.have.status(404);  });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bkAToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/bookings/not-an-id"
+          }
+        },
+        {
+          "name": "unknown booking id",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 404', function () { pm.response.to.have.status(404);  });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bkAToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/bookings/000000000000000000000000"
+          }
+        },
+        {
+          "name": "get booking without token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 401', function () { pm.response.to.have.status(401);  });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/bookings/{{bkA1}}"
+          }
+        },
+        {
+          "name": "user edits own date",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('total recomputed, protected fields ignored', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  const d = pm.response.json().data;",
+                  "  pm.expect(d.totalPrice).to.eql(4000);",
+                  "  pm.expect(d.user).to.eql(pm.collectionVariables.get('bkAId'));",
+                  "  pm.expect(d.discount).to.eql(0);",
+                  "  pm.expect(d.promo).to.eql(null);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bkAToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/bookings/{{bkA1}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"returnDate\":\"2030-01-05\",\"user\":\"{{bkBId}}\",\"totalPrice\":1,\"discount\":999,\"promo\":\"000000000000000000000000\"}"
+            }
+          }
+        },
+        {
+          "name": "user edits provider",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('total recomputed for new provider', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.json().data.totalPrice).to.eql(10000);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bkAToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/bookings/{{bkA1}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"provider\":\"{{betaId}}\"}"
+            }
+          }
+        },
+        {
+          "name": "user edits returnDate before date",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 400', function () { pm.response.to.have.status(400);  });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bkAToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/bookings/{{bkA1}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"returnDate\":\"2029-12-01\"}"
+            }
+          }
+        },
+        {
+          "name": "user edits to unknown provider",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 404', function () { pm.response.to.have.status(404);  });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bkAToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/bookings/{{bkA1}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"provider\":\"000000000000000000000000\"}"
+            }
+          }
+        },
+        {
+          "name": "user deletes own",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', function () { pm.response.to.have.status(200);  });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bkAToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/bookings/{{bkA1}}"
+          }
+        },
+        {
+          "name": "deleted booking is gone",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 404', function () { pm.response.to.have.status(404);  });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bkAToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/bookings/{{bkA1}}"
+          }
+        },
+        {
+          "name": "admin lists all",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('admin sees bookings of several users', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  const ids = pm.response.json().data.map(function (b) { return b._id; });",
+                  "  pm.expect(ids).to.include(pm.collectionVariables.get('bkA2'));",
+                  "  pm.expect(ids).to.include(pm.collectionVariables.get('bkB1'));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/bookings"
+          }
+        },
+        {
+          "name": "admin views any booking",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', function () { pm.response.to.have.status(200);  });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/bookings/{{bkB1}}"
+          }
+        },
+        {
+          "name": "admin edits any booking",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('admin edit recomputed total', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.json().data.totalPrice).to.eql(10000);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/bookings/{{bkB1}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"returnDate\":\"2030-01-05\"}"
+            }
+          }
+        },
+        {
+          "name": "admin deletes any booking",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', function () { pm.response.to.have.status(200);  });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/bookings/{{bkB1}}"
+          }
+        },
+        {
+          "name": "admin creates booking 1",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('admin booking 1 created', function () {",
+                  "  pm.response.to.have.status(201);",
+                  "  pm.expect(pm.response.json().data.totalPrice).to.eql(2000);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/providers/{{alphaId}}/bookings",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"date\":\"2030-01-01\",\"returnDate\":\"2030-01-03\"}"
+            }
+          }
+        },
+        {
+          "name": "admin creates booking 2",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('admin booking 2 created', function () {",
+                  "  pm.response.to.have.status(201);",
+                  "  pm.expect(pm.response.json().data.totalPrice).to.eql(2000);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/providers/{{alphaId}}/bookings",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"date\":\"2030-01-01\",\"returnDate\":\"2030-01-03\"}"
+            }
+          }
+        },
+        {
+          "name": "admin creates booking 3",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('admin booking 3 created', function () {",
+                  "  pm.response.to.have.status(201);",
+                  "  pm.expect(pm.response.json().data.totalPrice).to.eql(2000);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/providers/{{alphaId}}/bookings",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"date\":\"2030-01-01\",\"returnDate\":\"2030-01-03\"}"
+            }
+          }
+        },
+        {
+          "name": "admin creates booking 4 (exempt from limit)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('admin booking 4 created', function () {",
+                  "  pm.response.to.have.status(201);",
+                  "  pm.expect(pm.response.json().data.totalPrice).to.eql(2000);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/providers/{{alphaId}}/bookings",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"date\":\"2030-01-01\",\"returnDate\":\"2030-01-03\"}"
+            }
+          }
+        }
+      ]
     }
   ]
 }
