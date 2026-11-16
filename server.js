@@ -37,6 +37,24 @@ app.use('/api/v1/audit', require('./routes/audit'));
 app.use('/api/v1/tickets', require('./routes/tickets'));
 app.use('/api/v1/stats', require('./routes/stats'));
 
+// Anything no route answered: a JSON 404 instead of Express's default HTML page.
+app.use((req, res) => {
+  res.status(404).json({ success: false, message: 'Route not found' });
+});
+
+// Last resort for errors thrown before a controller runs (body parsing) or outside one, always in the JSON envelope.
+// eslint-disable-next-line no-unused-vars
+app.use((err, req, res, next) => {
+  if (err.type === 'entity.parse.failed') {
+    return res.status(400).json({ success: false, message: 'Request body is not valid JSON' });
+  }
+  if (err.type === 'entity.too.large') {
+    return res.status(413).json({ success: false, message: 'Request body is too large' });
+  }
+  console.error(err.message);
+  return res.status(500).json({ success: false, message: 'Server error' });
+});
+
 const seedAdmin = async () => {
   const email = process.env.SEED_ADMIN_EMAIL;
   const password = process.env.SEED_ADMIN_PASSWORD;
