@@ -4210,6 +4210,444 @@
           }
         },
         {
+          "name": "create without a token is 401",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('create without a token is 401', function () {",
+                  "  pm.response.to.have.status(401);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/promos",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"code\":\"NOTOKEN{{pr_sfx}}\",\"type\":\"percentage\",\"value\":10,\"validFrom\":\"{{pr_from}}\",\"validTo\":\"{{pr_to}}\",\"maxRedemptions\":10}"
+            }
+          }
+        },
+        {
+          "name": "missing code is rejected",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('missing code is rejected', function () {",
+                  "  pm.response.to.have.status(400);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/promos",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"type\":\"percentage\",\"value\":10,\"validFrom\":\"{{pr_from}}\",\"validTo\":\"{{pr_to}}\",\"maxRedemptions\":10}"
+            }
+          }
+        },
+        {
+          "name": "whitespace-only code is rejected",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('whitespace-only code is rejected', function () {",
+                  "  pm.response.to.have.status(400);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/promos",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"code\":\"   \",\"type\":\"percentage\",\"value\":10,\"validFrom\":\"{{pr_from}}\",\"validTo\":\"{{pr_to}}\",\"maxRedemptions\":10}"
+            }
+          }
+        },
+        {
+          "name": "unknown type is rejected",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('unknown type is rejected', function () {",
+                  "  pm.response.to.have.status(400);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/promos",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"code\":\"BADTYPE{{pr_sfx}}\",\"type\":\"bogus\",\"value\":10,\"validFrom\":\"{{pr_from}}\",\"validTo\":\"{{pr_to}}\",\"maxRedemptions\":10}"
+            }
+          }
+        },
+        {
+          "name": "missing type is rejected",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('missing type is rejected', function () {",
+                  "  pm.response.to.have.status(400);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/promos",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"code\":\"NOTYPE{{pr_sfx}}\",\"value\":10,\"validFrom\":\"{{pr_from}}\",\"validTo\":\"{{pr_to}}\",\"maxRedemptions\":10}"
+            }
+          }
+        },
+        {
+          "name": "value 0 is rejected",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('value 0 is rejected', function () {",
+                  "  pm.response.to.have.status(400);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/promos",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"code\":\"ZERO{{pr_sfx}}\",\"type\":\"fixed\",\"value\":0,\"validFrom\":\"{{pr_from}}\",\"validTo\":\"{{pr_to}}\",\"maxRedemptions\":10}"
+            }
+          }
+        },
+        {
+          "name": "negative value is rejected",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('negative value is rejected', function () {",
+                  "  pm.response.to.have.status(400);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/promos",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"code\":\"NEG{{pr_sfx}}\",\"type\":\"fixed\",\"value\":-5,\"validFrom\":\"{{pr_from}}\",\"validTo\":\"{{pr_to}}\",\"maxRedemptions\":10}"
+            }
+          }
+        },
+        {
+          "name": "non-numeric value is rejected",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('non-numeric value is rejected', function () {",
+                  "  pm.response.to.have.status(400);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/promos",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"code\":\"NAN{{pr_sfx}}\",\"type\":\"fixed\",\"value\":\"abc\",\"validFrom\":\"{{pr_from}}\",\"validTo\":\"{{pr_to}}\",\"maxRedemptions\":10}"
+            }
+          }
+        },
+        {
+          "name": "fractional maxRedemptions is rejected",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('fractional maxRedemptions is rejected', function () {",
+                  "  pm.response.to.have.status(400);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/promos",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"code\":\"FRAC{{pr_sfx}}\",\"type\":\"fixed\",\"value\":5,\"validFrom\":\"{{pr_from}}\",\"validTo\":\"{{pr_to}}\",\"maxRedemptions\":1.5}"
+            }
+          }
+        },
+        {
+          "name": "perUserLimit 0 is rejected",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('perUserLimit 0 is rejected', function () {",
+                  "  pm.response.to.have.status(400);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/promos",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"code\":\"PUL0{{pr_sfx}}\",\"type\":\"fixed\",\"value\":5,\"validFrom\":\"{{pr_from}}\",\"validTo\":\"{{pr_to}}\",\"maxRedemptions\":10,\"perUserLimit\":0}"
+            }
+          }
+        },
+        {
+          "name": "fractional perUserLimit is rejected",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('fractional perUserLimit is rejected', function () {",
+                  "  pm.response.to.have.status(400);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/promos",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"code\":\"PULF{{pr_sfx}}\",\"type\":\"fixed\",\"value\":5,\"validFrom\":\"{{pr_from}}\",\"validTo\":\"{{pr_to}}\",\"maxRedemptions\":10,\"perUserLimit\":1.5}"
+            }
+          }
+        },
+        {
+          "name": "missing validFrom is rejected",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('missing validFrom is rejected', function () {",
+                  "  pm.response.to.have.status(400);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/promos",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"code\":\"NOFROM{{pr_sfx}}\",\"type\":\"fixed\",\"value\":5,\"validTo\":\"{{pr_to}}\",\"maxRedemptions\":10}"
+            }
+          }
+        },
+        {
+          "name": "invalid validTo date is rejected",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('invalid validTo date is rejected', function () {",
+                  "  pm.response.to.have.status(400);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/promos",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"code\":\"BADTO{{pr_sfx}}\",\"type\":\"fixed\",\"value\":5,\"validFrom\":\"{{pr_from}}\",\"validTo\":\"not-a-date\",\"maxRedemptions\":10}"
+            }
+          }
+        },
+        {
           "name": "non-admin cannot create a code",
           "event": [
             {
