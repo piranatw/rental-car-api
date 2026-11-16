@@ -8,7 +8,8 @@
     "dev": "nodemon server.js",
     "test": "bash scripts/run-newman.sh",
     "demo": "newman run __tests__/demo.postman_collection.json -e __tests__/demo.postman_environment.json --env-var baseUrl=http://localhost:5050 --env-var adminEmail=$adminEmail --env-var adminPassword=$adminPassword --reporters cli",
-    "demo:race": "bash scripts/demo-race.sh"
+    "demo:race": "bash scripts/demo-race.sh",
+    "test:unit": "node --test \"__tests__/unit/*.test.js\""
   },
   "license": "ISC",
   "dependencies": {
@@ -19,7 +20,9 @@
     "express": "^4.22.3",
     "express-rate-limit": "^8.7.4",
     "jsonwebtoken": "^9.0.3",
-    "mongoose": "^8.24.9"
+    "mongoose": "^8.24.9",
+    "swagger-ui-express": "^5.0.1",
+    "yaml": "^2.9.1"
   },
   "devDependencies": {
     "newman": "^6.2.3",

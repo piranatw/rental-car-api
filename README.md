@@ -58,6 +58,27 @@ npm run dev      # nodemon, restarts on file changes
 
 The API is served under `/api/v1`.
 
+## API documentation
+
+`openapi.yaml` describes all 28 endpoints (request bodies, responses, error messages, who may call what). With the server running, open `http://localhost:5050/api-docs` for the interactive Swagger UI: paste a token into **Authorize** and try the calls from the browser. The spec can also be imported into Postman.
+
+## Run with Docker
+
+```bash
+export JWT_SECRET=$(openssl rand -hex 32) SEED_ADMIN_EMAIL=admin@example.com SEED_ADMIN_PASSWORD=choose-a-password
+docker compose up --build
+```
+
+This starts the API on port 5050 together with its own MongoDB (a named volume keeps the data), so no Atlas cluster is needed.
+
+## Unit tests and continuous integration
+
+```bash
+npm run test:unit
+```
+
+Runs with Node's built-in test runner and needs no database. It covers the pricing and paging helpers and checks that `openapi.yaml` parses, resolves its references and lists exactly the routes registered in `routes/*.js`, so the documentation cannot drift from the code unnoticed. `.github/workflows/ci.yml` runs these on every push and pull request, then the full Newman suite against a MongoDB service container.
+
 ## Run the test suite
 
 ```bash

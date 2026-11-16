@@ -1,0 +1,11 @@
+node_modules
+.git
+.github
+config/config.env
+config/test-env.sh
+.env
+newman-report*
+__tests__
+docs
+scripts
+*.pdf

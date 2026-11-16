@@ -1,0 +1,1598 @@
+openapi: 3.0.3
+info:
+  title: Rental Car Booking API
+  version: 1.0.0
+  description: |
+    Backend-only REST API for renting cars from providers (SW Dev Practice term project, Project #7).
+
+    - Every path starts with `/api/v1`.
+    - Authenticate with `Authorization: Bearer <jwt>` (the token comes from register or login).
+    - Success bodies are `{ "success": true, "data": ... }`; errors are `{ "success": false, "message": "..." }`.
+    - Pagination uses `page` (default 1) and `limit` (default 20, at most 100). Out-of-range values are rejected with 400, never clamped.
+    - A malformed id in a path is answered like a missing resource (404).
+servers:
+  - url: http://localhost:5050
+    description: Local development
+tags:
+  - name: Auth
+    description: Register, login, logout and the current user
+  - name: Providers
+    description: Rental companies and creating a booking at one
+  - name: Bookings
+    description: Viewing, editing and deleting bookings, and applying a promo code
+  - name: Promos
+    description: Admin-created promotion codes
+  - name: Audit
+    description: Append-only log of admin actions on bookings
+  - name: Tickets
+    description: Support tickets about a booking
+  - name: Inspections
+    description: Return inspection, late fee and dispute
+  - name: Stats
+    description: Admin statistics report
+security:
+  - bearerAuth: []
+paths:
+  /api/v1/auth/register:
+    post:
+      tags: [Auth]
+      summary: Register a user
+      description: The role is always `user`; a `role` in the body is ignored. The password is hashed and never returned.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '201':
+          $ref: '#/components/responses/AuthSuccess'
+        '400':
+          description: Validation failed (for example `Email already registered`, `Please add a valid email`, `Password must be at least 6 characters`)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/v1/auth/login:
+    post:
+      tags: [Auth]
+      summary: Log in
+      description: |
+        Limited to 10 requests per minute per IP, checked before the controller. Five consecutive failed logins lock the
+        account for 15 minutes. Wrong password, unknown email and a locked account all answer with the same 401 body.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/AuthSuccess'
+        '400':
+          description: Email or password missing (`Please provide an email and password`)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          $ref: '#/components/responses/TooManyLogins'
+  /api/v1/auth/me:
+    get:
+      tags: [Auth]
+      summary: Current user
+      responses:
+        '200':
+          description: The caller. Password, attempt counter and lock time are never returned.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/User'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/v1/auth/logout:
+    post:
+      tags: [Auth]
+      summary: Log out and revoke the token
+      description: The SHA-256 hash of the token is stored until the token would have expired. Replaying it then gives 401.
+      responses:
+        '200':
+          $ref: '#/components/responses/EmptySuccess'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/v1/providers:
+    get:
+      tags: [Providers]
+      summary: List providers
+      description: Public and not paginated.
+      security: []
+      responses:
+        '200':
+          description: All providers
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  count:
+                    type: integer
+                    example: 2
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Provider'
+    post:
+      tags: [Providers]
+      summary: Create a provider (admin)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProviderInput'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProviderEnvelope'
+        '400':
+          description: Validation failed (`Please add a name`, `Please add an address`, `Please add a telephone number`, `dailyRate must be at least 0`, ...)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /api/v1/providers/{id}:
+    parameters:
+      - $ref: '#/components/parameters/Id'
+    get:
+      tags: [Providers]
+      summary: Get one provider
+      security: []
+      responses:
+        '200':
+          description: The provider
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProviderEnvelope'
+        '404':
+          $ref: '#/components/responses/ProviderNotFound'
+    put:
+      tags: [Providers]
+      summary: Update a provider (admin)
+      description: Any of the five provider fields. A later `lateFeePerHour` change does not alter an inspection already recorded.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProviderUpdate'
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProviderEnvelope'
+        '400':
+          description: Validation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/ProviderNotFound'
+    delete:
+      tags: [Providers]
+      summary: Delete a provider (admin)
+      description: Refused with 409 while any booking references the provider.
+      responses:
+        '200':
+          $ref: '#/components/responses/EmptySuccess'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/ProviderNotFound'
+        '409':
+          description: Provider has bookings and cannot be deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/v1/providers/{providerId}/bookings:
+    post:
+      tags: [Providers]
+      summary: Book a car at a provider
+      description: |
+        The price is the provider's `dailyRate` times the number of days (at least 1). A regular user holds at most 3
+        bookings; admins are exempt. The booking belongs to the caller.
+      parameters:
+        - name: providerId
+          in: path
+          required: true
+          description: Provider id (24 hex characters)
+          schema:
+            type: string
+            pattern: '^[a-f0-9]{24}$'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BookingInput'
+      responses:
+        '201':
+          description: Booking created with `discount` 0 and `promo` null
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookingEnvelope'
+        '400':
+          description: '`Please provide valid date and returnDate`, `returnDate must not be before date` or `A user can book at most 3 cars`'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/ProviderNotFound'
+  /api/v1/bookings:
+    get:
+      tags: [Bookings]
+      summary: List bookings
+      description: |
+        A user gets their own bookings (not paginated). An admin gets every booking, paginated, and one `view` audit entry
+        is written per returned booking before the response is sent.
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: The bookings, with `provider` populated (`name address tel`). `total`, `page` and `pages` appear for admins only.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  count:
+                    type: integer
+                  total:
+                    type: integer
+                  page:
+                    type: integer
+                  pages:
+                    type: integer
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Booking'
+        '400':
+          $ref: '#/components/responses/PagingError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/v1/bookings/{id}:
+    parameters:
+      - $ref: '#/components/parameters/Id'
+    get:
+      tags: [Bookings]
+      summary: Get one booking (owner or admin)
+      description: An admin view writes a `view` audit entry first.
+      responses:
+        '200':
+          description: The booking
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookingEnvelope'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/BookingForbidden'
+        '404':
+          $ref: '#/components/responses/BookingNotFound'
+    put:
+      tags: [Bookings]
+      summary: Edit a booking (owner or admin)
+      description: |
+        Any of `date`, `returnDate`, `provider`; anything else is ignored. The price is re-derived (and the promo discount
+        too, if a promo is attached). For an admin, an `edit` audit entry is written before the update.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BookingUpdate'
+      responses:
+        '200':
+          description: The updated booking
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookingEnvelope'
+        '400':
+          description: '`Invalid date`, `Invalid returnDate` or `returnDate must not be before date`'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/BookingForbidden'
+        '404':
+          description: Booking not found, or the new provider was not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          $ref: '#/components/responses/ConcurrentBooking'
+    delete:
+      tags: [Bookings]
+      summary: Delete a booking (owner or admin)
+      description: For an admin, a `delete` audit entry holding the removed values is written first. A redeemed promo is not released.
+      responses:
+        '200':
+          $ref: '#/components/responses/EmptySuccess'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/BookingForbidden'
+        '404':
+          $ref: '#/components/responses/BookingNotFound'
+        '409':
+          $ref: '#/components/responses/ConcurrentBooking'
+  /api/v1/bookings/{id}/promo:
+    post:
+      tags: [Bookings]
+      summary: Apply a promo code to a booking (owner or admin)
+      description: |
+        Claim, atomic reserve, redemption and a pinned finalise, with an undo if a step fails. The redemption counts against
+        the booking's owner even when an admin applies it.
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [code]
+              properties:
+                code:
+                  type: string
+                  description: Case-insensitive
+                  example: SAVE10
+      responses:
+        '200':
+          description: The booking with `promo`, `discount` and the lower `totalPrice`
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookingEnvelope'
+        '400':
+          description: |
+            One of: `Please provide a promo code`, `Promo code not found`, `Promo code is not yet valid`,
+            `Promo code has expired`, `Promo code has reached its maximum redemptions`,
+            `You have reached the per-user limit for this promo code`, `Booking already has a promo code`,
+            `Booking has no price to discount`
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/BookingForbidden'
+        '404':
+          $ref: '#/components/responses/BookingNotFound'
+        '409':
+          $ref: '#/components/responses/ConcurrentBooking'
+  /api/v1/bookings/{id}/inspection:
+    parameters:
+      - $ref: '#/components/parameters/Id'
+    post:
+      tags: [Inspections]
+      summary: Record the return inspection (admin)
+      description: |
+        One inspection per booking. The scheduled return is the end of `returnDate` in UTC (23:59:59.999Z).
+        `lateHours` is the overdue time rounded up to whole hours and `lateFee` is `lateHours` times the provider's
+        `lateFeePerHour` at that moment (stored as `feePerHourUsed`).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InspectionInput'
+      responses:
+        '201':
+          description: The inspection with the computed late fee and `dispute` null
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InspectionEnvelope'
+        '400':
+          description: |
+            `actualReturnTime` is malformed, has no zone, is before the pickup date or is more than 24 hours in the future,
+            or `fuelLevel`, `odometer` or `damageNotes` is out of range
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          description: Booking not found, or its provider was not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Inspection already recorded for this booking
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    get:
+      tags: [Inspections]
+      summary: Read the inspection (owner or admin)
+      description: After the booking is deleted an admin can still read the stored report; the owner gets 404.
+      responses:
+        '200':
+          description: The inspection
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InspectionEnvelope'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/BookingForbidden'
+        '404':
+          description: Booking not found, or `Inspection not found for this booking`
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/v1/bookings/{id}/inspection/dispute:
+    parameters:
+      - $ref: '#/components/parameters/Id'
+    post:
+      tags: [Inspections]
+      summary: Dispute the inspection (owner only)
+      description: |
+        One dispute, within 7 days of the inspection record (inclusive). It is a single atomic compare-and-set, so a
+        second attempt and a late attempt cannot both succeed. When both rules fail, `already been submitted` is the answer.
+        An admin is refused.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [comment]
+              properties:
+                comment:
+                  type: string
+                  minLength: 1
+                  maxLength: 2000
+                  description: Trimmed before the length check
+      responses:
+        '200':
+          description: The inspection with `dispute.status` open
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InspectionEnvelope'
+        '400':
+          description: '`comment must be a string`, `comment must be between 1 and 2000 characters`, `A dispute has already been submitted` or `Dispute window of 7 days has passed`'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: Not authorized to dispute this inspection
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Booking not found, or `Inspection not found for this booking`
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          $ref: '#/components/responses/ConcurrentInspection'
+    put:
+      tags: [Inspections]
+      summary: Resolve or dismiss the dispute (admin)
+      description: One atomic compare-and-set on an open dispute. Resolving records a decision and does not change `lateFee`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              properties:
+                status:
+                  type: string
+                  enum: [resolved, dismissed]
+                resolutionNote:
+                  type: string
+                  maxLength: 2000
+      responses:
+        '200':
+          description: The inspection with the closed dispute, `resolvedAt` and `resolvedBy`
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InspectionEnvelope'
+        '400':
+          description: '`status must be resolved or dismissed`, `resolutionNote must be a string` or `Dispute has already been closed`'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          description: Booking, inspection or dispute not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          $ref: '#/components/responses/ConcurrentInspection'
+  /api/v1/promos:
+    get:
+      tags: [Promos]
+      summary: List promo codes (admin)
+      description: Not paginated.
+      responses:
+        '200':
+          description: All promo codes
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  count:
+                    type: integer
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PromoCode'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+    post:
+      tags: [Promos]
+      summary: Create a promo code (admin)
+      description: The counters `redemptionCount` and `usage` are not accepted from the client.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PromoInput'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/PromoCode'
+        '400':
+          description: |
+            `type must be percentage or fixed`, `value must be greater than 0`, `A percentage value must not exceed 100`,
+            `validTo must not be before validFrom`, `maxRedemptions must be at least 1`, `maxRedemptions must be an integer`,
+            `perUserLimit must be at least 1`
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          description: Promo code already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/v1/audit:
+    get:
+      tags: [Audit]
+      summary: Query the admin audit log (admin)
+      description: |
+        Newest first (timestamp, then id, descending). This is the only audit route: there is no way to create, change or
+        delete an entry through the API.
+      parameters:
+        - name: admin
+          in: query
+          description: Only entries written by this admin
+          schema:
+            type: string
+            pattern: '^[a-f0-9]{24}$'
+        - name: booking
+          in: query
+          description: Only entries about this booking
+          schema:
+            type: string
+            pattern: '^[a-f0-9]{24}$'
+        - name: from
+          in: query
+          description: Earliest timestamp (ISO 8601)
+          schema:
+            type: string
+        - name: to
+          in: query
+          description: Latest timestamp (ISO 8601)
+          schema:
+            type: string
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: A page of audit entries
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  count:
+                    type: integer
+                  total:
+                    type: integer
+                  page:
+                    type: integer
+                  pages:
+                    type: integer
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AuditLog'
+        '400':
+          description: '`admin must be a valid id`, `booking must be a valid id`, `from must be an ISO date`, `to must be an ISO date`, `from must not be after to`, or a pagination message'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /api/v1/tickets:
+    post:
+      tags: [Tickets]
+      summary: Open a support ticket
+      description: The booking must belong to the caller, an admin included. The ticket starts as `open`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TicketInput'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TicketEnvelope'
+        '400':
+          description: '`booking is required`, `category must be one of: billing, vehicle issue, other`, or a `subject`/`description` length message'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: Not authorized to open a ticket for this booking
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          $ref: '#/components/responses/BookingNotFound'
+    get:
+      tags: [Tickets]
+      summary: List tickets
+      description: A user always sees only their own tickets; an admin sees all. Each item is a summary without the comments array.
+      parameters:
+        - name: status
+          in: query
+          schema:
+            $ref: '#/components/schemas/TicketStatus'
+        - name: category
+          in: query
+          schema:
+            $ref: '#/components/schemas/TicketCategory'
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: A page of ticket summaries
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  count:
+                    type: integer
+                  total:
+                    type: integer
+                  page:
+                    type: integer
+                  pages:
+                    type: integer
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/TicketSummary'
+        '400':
+          description: '`status must be one of: open, in progress, resolved`, `category must be one of: billing, vehicle issue, other`, or a pagination message'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/v1/tickets/{id}:
+    get:
+      tags: [Tickets]
+      summary: Get a ticket with its comment thread (owner or admin)
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      responses:
+        '200':
+          description: The ticket
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TicketEnvelope'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: Not authorized to access this ticket
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          $ref: '#/components/responses/TicketNotFound'
+  /api/v1/tickets/{id}/comments:
+    post:
+      tags: [Tickets]
+      summary: Add a comment (owner or admin)
+      description: |
+        One atomic push guarded by status not `resolved` and fewer than 200 comments. Author, role and time come from the
+        token and the server clock, never from the body.
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [text]
+              properties:
+                text:
+                  type: string
+                  minLength: 1
+                  maxLength: 2000
+      responses:
+        '200':
+          description: The ticket with the new comment
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TicketEnvelope'
+        '400':
+          description: '`text must not be empty` (or too long), `Ticket is resolved` or `Ticket has reached the maximum number of comments`'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: Not authorized to access this ticket
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          $ref: '#/components/responses/TicketNotFound'
+        '409':
+          description: Ticket changed while commenting, please retry
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/v1/tickets/{id}/status:
+    put:
+      tags: [Tickets]
+      summary: Set the ticket status (admin)
+      description: Reopening a resolved ticket is allowed.
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              properties:
+                status:
+                  $ref: '#/components/schemas/TicketStatus'
+      responses:
+        '200':
+          description: The updated ticket
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TicketEnvelope'
+        '400':
+          description: '`status must be one of: open, in progress, resolved`'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/TicketNotFound'
+  /api/v1/stats:
+    get:
+      tags: [Stats]
+      summary: Bookings per provider and per month (admin)
+      description: |
+        One MongoDB aggregation. The range is inclusive in UTC and is counted on the booking's `date`. Months without
+        bookings are omitted. Ties are ordered by count descending, then name, then id.
+      parameters:
+        - name: from
+          in: query
+          required: true
+          description: '`YYYY-MM-DD`, or a date-time with a zone (`Z` or `+hh:mm`)'
+          schema:
+            type: string
+            example: '2026-01-01'
+        - name: to
+          in: query
+          required: true
+          description: Same format as `from`. A date-only value covers that whole day. At most 3653 days after `from`.
+          schema:
+            type: string
+            example: '2026-12-31'
+      responses:
+        '200':
+          description: The report
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatsEnvelope'
+        '400':
+          description: '`from is required`, `to is required`, `to must not be before from`, the 10-year limit, or a malformed date'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  parameters:
+    Id:
+      name: id
+      in: path
+      required: true
+      description: MongoDB ObjectId (24 hex characters)
+      schema:
+        type: string
+        pattern: '^[a-f0-9]{24}$'
+    Page:
+      name: page
+      in: query
+      description: Positive integer, default 1
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+    Limit:
+      name: limit
+      in: query
+      description: Positive integer, default 20, at most 100
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+  responses:
+    Unauthorized:
+      description: No header, or a bad, expired or revoked token (`Not authorized to access this route`)
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Forbidden:
+      description: A non-admin called an admin route (`User role user is not authorized to access this route`)
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    EmptySuccess:
+      description: Done
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                example: true
+              data:
+                type: object
+                example: {}
+    AuthSuccess:
+      description: The user and a signed JWT. A http-only `token` cookie is also set, but the API reads only the header.
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                example: true
+              token:
+                type: string
+              data:
+                $ref: '#/components/schemas/AuthUser'
+    TooManyLogins:
+      description: Too many login attempts from this IP
+      headers:
+        Retry-After:
+          description: Seconds until the limiter resets
+          schema:
+            type: integer
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                example: false
+              message:
+                type: string
+              retryAfter:
+                type: integer
+    ProviderNotFound:
+      description: Provider not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    BookingNotFound:
+      description: Booking not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    BookingForbidden:
+      description: Not authorized to access this booking (not the owner and not an admin)
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    TicketNotFound:
+      description: Ticket not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    ConcurrentBooking:
+      description: Booking was modified concurrently, please retry
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    ConcurrentInspection:
+      description: Inspection changed concurrently, please retry
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    PagingError:
+      description: '`page must be a positive integer`, `limit must be a positive integer` or `limit must not exceed 100`'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+  schemas:
+    Error:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+    ObjectId:
+      type: string
+      pattern: '^[a-f0-9]{24}$'
+      example: 665f1c2a9b1e8a0012a4b7c3
+    RegisterRequest:
+      type: object
+      required: [name, telephone, email, password]
+      properties:
+        name:
+          type: string
+          example: Somchai Jaidee
+        telephone:
+          type: string
+          example: '0812345678'
+        email:
+          type: string
+          format: email
+          description: Stored lower-cased and unique
+        password:
+          type: string
+          format: password
+          minLength: 6
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          format: password
+    AuthUser:
+      type: object
+      properties:
+        id:
+          $ref: '#/components/schemas/ObjectId'
+        name:
+          type: string
+        email:
+          type: string
+        telephone:
+          type: string
+        role:
+          type: string
+          enum: [user, admin]
+    User:
+      type: object
+      properties:
+        _id:
+          $ref: '#/components/schemas/ObjectId'
+        name:
+          type: string
+        telephone:
+          type: string
+        email:
+          type: string
+        role:
+          type: string
+          enum: [user, admin]
+        createdAt:
+          type: string
+          format: date-time
+    Provider:
+      type: object
+      properties:
+        _id:
+          $ref: '#/components/schemas/ObjectId'
+        name:
+          type: string
+          example: Alpha Rentals
+        address:
+          type: string
+        tel:
+          type: string
+        lateFeePerHour:
+          type: number
+          minimum: 0
+          example: 200
+        dailyRate:
+          type: number
+          minimum: 0
+          example: 1000
+    ProviderInput:
+      type: object
+      required: [name, address, tel]
+      properties:
+        name:
+          type: string
+        address:
+          type: string
+        tel:
+          type: string
+        lateFeePerHour:
+          type: number
+          minimum: 0
+          default: 0
+        dailyRate:
+          type: number
+          minimum: 0
+          default: 0
+    ProviderUpdate:
+      type: object
+      description: Any of the five provider fields
+      properties:
+        name:
+          type: string
+        address:
+          type: string
+        tel:
+          type: string
+        lateFeePerHour:
+          type: number
+          minimum: 0
+        dailyRate:
+          type: number
+          minimum: 0
+    ProviderEnvelope:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          $ref: '#/components/schemas/Provider'
+    BookingInput:
+      type: object
+      required: [date, returnDate]
+      properties:
+        date:
+          type: string
+          format: date-time
+          example: '2026-12-01T00:00:00.000Z'
+        returnDate:
+          type: string
+          format: date-time
+          description: Not before `date`
+          example: '2026-12-04T00:00:00.000Z'
+    BookingUpdate:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date-time
+        returnDate:
+          type: string
+          format: date-time
+        provider:
+          $ref: '#/components/schemas/ObjectId'
+    Booking:
+      type: object
+      properties:
+        _id:
+          $ref: '#/components/schemas/ObjectId'
+        user:
+          $ref: '#/components/schemas/ObjectId'
+        provider:
+          description: A provider id, or the populated `name address tel` in lists
+          oneOf:
+            - $ref: '#/components/schemas/ObjectId'
+            - type: object
+              properties:
+                _id:
+                  $ref: '#/components/schemas/ObjectId'
+                name:
+                  type: string
+                address:
+                  type: string
+                tel:
+                  type: string
+        date:
+          type: string
+          format: date-time
+        returnDate:
+          type: string
+          format: date-time
+        totalPrice:
+          type: number
+          description: '`dailyRate` x days (at least 1) minus `discount`'
+        promo:
+          allOf:
+            - $ref: '#/components/schemas/ObjectId'
+          nullable: true
+        discount:
+          type: number
+        createdAt:
+          type: string
+          format: date-time
+    BookingEnvelope:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          $ref: '#/components/schemas/Booking'
+    PromoInput:
+      type: object
+      required: [code, type, value, validFrom, validTo, maxRedemptions]
+      properties:
+        code:
+          type: string
+          description: Stored upper-case and unique
+          example: SAVE10
+        type:
+          type: string
+          enum: [percentage, fixed]
+        value:
+          type: number
+          exclusiveMinimum: true
+          minimum: 0
+          description: At most 100 when `type` is `percentage`
+          example: 10
+        validFrom:
+          type: string
+          format: date-time
+        validTo:
+          type: string
+          format: date-time
+          description: Not before `validFrom`
+        maxRedemptions:
+          type: integer
+          minimum: 1
+        perUserLimit:
+          type: integer
+          minimum: 1
+          description: Optional
+    PromoCode:
+      type: object
+      properties:
+        _id:
+          $ref: '#/components/schemas/ObjectId'
+        code:
+          type: string
+        type:
+          type: string
+          enum: [percentage, fixed]
+        value:
+          type: number
+        validFrom:
+          type: string
+          format: date-time
+        validTo:
+          type: string
+          format: date-time
+        maxRedemptions:
+          type: integer
+        redemptionCount:
+          type: integer
+        perUserLimit:
+          type: integer
+        usage:
+          type: object
+          description: Redemption counts per user id
+          additionalProperties:
+            type: integer
+    AuditLog:
+      type: object
+      properties:
+        _id:
+          $ref: '#/components/schemas/ObjectId'
+        admin:
+          $ref: '#/components/schemas/ObjectId'
+        action:
+          type: string
+          enum: [view, edit, delete]
+        booking:
+          $ref: '#/components/schemas/ObjectId'
+        timestamp:
+          type: string
+          format: date-time
+        before:
+          type: object
+          description: Free-form values before the change
+        after:
+          type: object
+          description: Free-form values after the change
+        status:
+          type: string
+          enum: [recorded, failed]
+          description: '`failed` when the action did not complete'
+        reason:
+          type: string
+    TicketStatus:
+      type: string
+      enum: [open, in progress, resolved]
+    TicketCategory:
+      type: string
+      enum: [billing, vehicle issue, other]
+    TicketInput:
+      type: object
+      required: [booking, category, subject, description]
+      properties:
+        booking:
+          $ref: '#/components/schemas/ObjectId'
+        category:
+          $ref: '#/components/schemas/TicketCategory'
+        subject:
+          type: string
+          minLength: 1
+          maxLength: 200
+        description:
+          type: string
+          minLength: 1
+          maxLength: 5000
+    Comment:
+      type: object
+      properties:
+        author:
+          $ref: '#/components/schemas/ObjectId'
+        role:
+          type: string
+          enum: [user, admin]
+        text:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+    Ticket:
+      type: object
+      properties:
+        _id:
+          $ref: '#/components/schemas/ObjectId'
+        user:
+          $ref: '#/components/schemas/ObjectId'
+        booking:
+          $ref: '#/components/schemas/ObjectId'
+        category:
+          $ref: '#/components/schemas/TicketCategory'
+        subject:
+          type: string
+        description:
+          type: string
+        status:
+          $ref: '#/components/schemas/TicketStatus'
+        comments:
+          type: array
+          items:
+            $ref: '#/components/schemas/Comment'
+        createdAt:
+          type: string
+          format: date-time
+    TicketSummary:
+      type: object
+      description: A ticket without `comments`
+      properties:
+        _id:
+          $ref: '#/components/schemas/ObjectId'
+        user:
+          $ref: '#/components/schemas/ObjectId'
+        booking:
+          $ref: '#/components/schemas/ObjectId'
+        category:
+          $ref: '#/components/schemas/TicketCategory'
+        subject:
+          type: string
+        status:
+          $ref: '#/components/schemas/TicketStatus'
+        commentCount:
+          type: integer
+        lastCommentAt:
+          type: string
+          format: date-time
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+    TicketEnvelope:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          $ref: '#/components/schemas/Ticket'
+    InspectionInput:
+      type: object
+      required: [actualReturnTime, odometer, fuelLevel]
+      properties:
+        actualReturnTime:
+          type: string
+          format: date-time
+          description: ISO 8601 with a zone (`Z` or `+hh:mm`)
+          example: '2026-12-05T09:30:00Z'
+        odometer:
+          type: number
+          minimum: 0
+          maximum: 10000000
+        fuelLevel:
+          type: number
+          minimum: 0
+          maximum: 100
+        damageNotes:
+          type: string
+          maxLength: 5000
+    Dispute:
+      type: object
+      nullable: true
+      properties:
+        comment:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        status:
+          type: string
+          enum: [open, resolved, dismissed]
+        resolutionNote:
+          type: string
+        resolvedAt:
+          type: string
+          format: date-time
+        resolvedBy:
+          $ref: '#/components/schemas/ObjectId'
+    Inspection:
+      type: object
+      properties:
+        _id:
+          $ref: '#/components/schemas/ObjectId'
+        booking:
+          $ref: '#/components/schemas/ObjectId'
+        actualReturnTime:
+          type: string
+          format: date-time
+        odometer:
+          type: number
+        fuelLevel:
+          type: number
+        damageNotes:
+          type: string
+        scheduledReturnAt:
+          type: string
+          format: date-time
+        lateHours:
+          type: integer
+        lateFee:
+          type: number
+        feePerHourUsed:
+          type: number
+        recordedBy:
+          $ref: '#/components/schemas/ObjectId'
+        dispute:
+          $ref: '#/components/schemas/Dispute'
+        createdAt:
+          type: string
+          format: date-time
+    InspectionEnvelope:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          $ref: '#/components/schemas/Inspection'
+    StatsEnvelope:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+          properties:
+            range:
+              type: object
+              properties:
+                from:
+                  type: string
+                  format: date-time
+                to:
+                  type: string
+                  format: date-time
+            basis:
+              type: string
+              example: booking.date
+            total:
+              type: integer
+            perProvider:
+              type: array
+              items:
+                type: object
+                properties:
+                  provider:
+                    $ref: '#/components/schemas/ObjectId'
+                  name:
+                    type: string
+                  count:
+                    type: integer
+            perMonth:
+              type: array
+              items:
+                type: object
+                properties:
+                  month:
+                    type: string
+                    example: 2026-12
+                  count:
+                    type: integer
+            top5:
+              type: array
+              items:
+                type: object
+                properties:
+                  provider:
+                    $ref: '#/components/schemas/ObjectId'
+                  name:
+                    type: string
+                  count:
+                    type: integer

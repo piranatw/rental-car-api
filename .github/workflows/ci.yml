@@ -1,0 +1,52 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  unit:
+    name: Unit tests and OpenAPI check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run test:unit
+
+  newman:
+    name: Newman suite against MongoDB
+    runs-on: ubuntu-latest
+    needs: unit
+    services:
+      mongo:
+        image: mongo:7
+        ports:
+          - 27017:27017
+    env:
+      MONGO_URI: mongodb://127.0.0.1:27017/rental_car_api_test
+      JWT_SECRET: ci-only-secret-not-used-anywhere-else
+      JWT_EXPIRE: 30d
+      JWT_COOKIE_EXPIRE: "30"
+      adminEmail: ci-admin@example.com
+      adminPassword: ci-admin-password
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Run the Newman suite
+        run: npm test
+      - name: Keep the reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: newman-reports
+          path: newman-report*.json
+          if-no-files-found: ignore

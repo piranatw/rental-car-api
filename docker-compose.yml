@@ -1,0 +1,26 @@
+# Runs the API and its own MongoDB: docker compose up --build
+# The API is then at http://localhost:5050 and the documentation at http://localhost:5050/api-docs
+# Set JWT_SECRET, SEED_ADMIN_EMAIL and SEED_ADMIN_PASSWORD in your shell or a .env file first.
+services:
+  mongo:
+    image: mongo:7
+    volumes:
+      - mongo-data:/data/db
+
+  api:
+    build: .
+    depends_on:
+      - mongo
+    ports:
+      - "5050:5050"
+    environment:
+      PORT: 5050
+      MONGO_URI: mongodb://mongo:27017/rental_car_api
+      JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET}
+      JWT_EXPIRE: 30d
+      JWT_COOKIE_EXPIRE: "30"
+      SEED_ADMIN_EMAIL: ${SEED_ADMIN_EMAIL:?set SEED_ADMIN_EMAIL}
+      SEED_ADMIN_PASSWORD: ${SEED_ADMIN_PASSWORD:?set SEED_ADMIN_PASSWORD}
+
+volumes:
+  mongo-data:
